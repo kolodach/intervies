@@ -3,6 +3,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css";
 import { ReactQueryClientProvider } from "@/components/react-query-provider";
+import {
+  ClerkProvider,
+} from '@clerk/nextjs'
+import { dark, shadcn } from '@clerk/themes'
+import { Header } from "@/components/header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,16 +34,24 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ReactQueryClientProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
-        </ReactQueryClientProvider>
+        <ClerkProvider
+          appearance={{
+            theme: [dark, shadcn]
+          }}>
+          <ReactQueryClientProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="dark"
+              disableTransitionOnChange
+              enableSystem
+            >
+              <div className="h-screen grid grid-rows-[auto_1fr]">
+                <Header />
+                <div className="h-full overflow-hidden">{children}</div>
+              </div>
+            </ThemeProvider>
+          </ReactQueryClientProvider>
+        </ClerkProvider>
       </body>
     </html >
   );

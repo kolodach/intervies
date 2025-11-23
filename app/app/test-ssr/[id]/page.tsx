@@ -1,12 +1,12 @@
 import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query'
-import { createClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { fetchQuestionById } from '@/lib/queries/questions'
 import { QuestionDetails } from '@/components/question-details'
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const queryClient = new QueryClient()
-  const supabase = await createClient()
+  const supabase = await createServerSupabaseClient()
   const { id } = (await params)
 
   await prefetchQuery(queryClient, fetchQuestionById(supabase, id))

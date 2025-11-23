@@ -1,25 +1,32 @@
-import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/lib/database.types'
-import type { TypedSupabaseClient } from '@/lib/types'
-import { useMemo } from 'react'
+import type { Database } from "@/lib/database.types";
+import { useSession } from "@clerk/nextjs";
+import { createClient } from "@supabase/supabase-js";
 
-let client: TypedSupabaseClient | undefined
+export function useSupabaseBrowserClient() {
+  const { session } = useSession();
 
-function getSupabaseBrowserClient() {
-  if (client) {
-    return client
+  // Create a custom Supabase client that injects the Clerk session token into the request headers
+  function createClerkSupabaseClient() {
+    return createClient<Database>(
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      // biome-ignore lint/style/noNonNullAssertion: <explanation>
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      {
+        global: {
+          fetch: async (url, options = {}) => {
+            const clerkToken = await session?.getToken({
+              template: "supabase",
+            });
+            const headers = new Headers(options?.headers);
+            headers.set("Authorization", `Bearer ${clerkToken}`);
+            return fetch(url, { ...options, headers });
+          },
+        },
+      }
+    );
   }
 
-  client = createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  )
-
-  return client
+  // Create a `client` object for accessing Supabase data using the Clerk token
+  return createClerkSupabaseClient();
 }
-
-function useSupabaseBrowser() {
-  return useMemo(getSupabaseBrowserClient, [])
-}
-
-export default useSupabaseBrowser
