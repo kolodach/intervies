@@ -1,0 +1,21 @@
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
+import { prefetchQuery } from '@supabase-cache-helpers/postgrest-react-query'
+import { createClient } from '@/lib/supabase/server'
+import { fetchQuestionById } from '@/lib/queries/questions'
+import { QuestionDetails } from '@/components/question-details'
+
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const queryClient = new QueryClient()
+  const supabase = await createClient()
+  const { id } = (await params)
+
+  await prefetchQuery(queryClient, fetchQuestionById(supabase, id))
+
+  return (
+    // Neat! Serialization is now as easy as passing props.
+    // HydrationBoundary is a Client Component, so hydration will happen there.
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <QuestionDetails id={id} />
+    </HydrationBoundary>
+  )
+}
