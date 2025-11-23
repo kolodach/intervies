@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import * as Sentry from "@sentry/nextjs";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -17,7 +18,7 @@ export async function GET() {
       .limit(1);
 
     if (error) {
-      logger.error({ error }, "Supabase health check error");
+      Sentry.captureException(error);
       return NextResponse.json(
         {
           status: "unhealthy",
@@ -43,7 +44,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error({ error }, "Health check error");
+    Sentry.captureException(error);
     return NextResponse.json(
       {
         status: "unhealthy",

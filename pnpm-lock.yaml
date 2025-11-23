@@ -29,6 +29,9 @@ importers:
       '@supabase-cache-helpers/postgrest-react-query':
         specifier: ^1.13.6
         version: 1.13.6(@supabase/postgrest-js@2.84.0)(@tanstack/react-query@5.90.10(react@19.2.0))(react@19.2.0)
+      '@supabase/sentry-js-integration':
+        specifier: ^0.3.0
+        version: 0.3.0(@supabase/supabase-js@2.84.0)
       '@supabase/ssr':
         specifier: ^0.7.0
         version: 0.7.0(@supabase/supabase-js@2.84.0)
@@ -38,6 +41,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.90.10
         version: 5.90.10(react@19.2.0)
+      '@vercel/analytics':
+        specifier: ^1.5.0
+        version: 1.5.0(next@16.0.3(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -74,6 +80,9 @@ importers:
       require-in-the-middle:
         specifier: ^7.5.2
         version: 7.5.2
+      svix:
+        specifier: ^1.81.0
+        version: 1.81.0
       tailwind-merge:
         specifier: ^3.4.0
         version: 3.4.0
@@ -1367,6 +1376,11 @@ packages:
     resolution: {integrity: sha512-ThqjxiCwWiZAroHnYPmnNl6tZk6jxGcG2a7Hp/3kcolPcMj89kWjUTA3cHmhdIWYsP84fHp8MAQjYWMLf7HEUg==}
     engines: {node: '>=20.0.0'}
 
+  '@supabase/sentry-js-integration@0.3.0':
+    resolution: {integrity: sha512-L6tr+M9OlYu3Ge3G33Cf5BptYYs30feJmD3zovCSRQezJOdtkbA361WVNyzCpSoIbUo4rcDVY/apklAhBewFBw==}
+    peerDependencies:
+      '@supabase/supabase-js': 2.x
+
   '@supabase/ssr@0.7.0':
     resolution: {integrity: sha512-G65t5EhLSJ5c8hTCcXifSL9Q/ZRXvqgXeNo+d3P56f4U1IxwTqjB64UfmfixvmMcjuxnq2yGqEWVJqUcO+AzAg==}
     peerDependencies:
@@ -1685,6 +1699,32 @@ packages:
     resolution: {integrity: sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==}
     cpu: [x64]
     os: [win32]
+
+  '@vercel/analytics@1.5.0':
+    resolution: {integrity: sha512-MYsBzfPki4gthY5HnYN7jgInhAZ7Ac1cYDoRWFomwGHWEX7odTEzbtg9kf/QSo7XEsEAqlQugA6gJ2WS2DEa3g==}
+    peerDependencies:
+      '@remix-run/react': ^2
+      '@sveltejs/kit': ^1 || ^2
+      next: '>= 13'
+      react: ^18 || ^19 || ^19.0.0-rc
+      svelte: '>= 4'
+      vue: ^3
+      vue-router: ^4
+    peerDependenciesMeta:
+      '@remix-run/react':
+        optional: true
+      '@sveltejs/kit':
+        optional: true
+      next:
+        optional: true
+      react:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
+      vue-router:
+        optional: true
 
   '@webassemblyjs/ast@1.14.1':
     resolution: {integrity: sha512-nuBEDgQfm1ccRp/8bCQrx1frohyufl4JlbMMZ4P1wpeOfDhF6FQkxZJ1b/e+PLwr6X1Nhw6OLme5usuBWYBvuQ==}
@@ -3369,6 +3409,9 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
+  svix@1.81.0:
+    resolution: {integrity: sha512-Q4DiYb1ydhRYqez65vZES8AkGY2oxn26qP7mLVbMf8Orrveb54TZLkaVG5zr7eJT4T3zYRThkKf6aOnvzgwhYw==}
+
   swr@2.3.4:
     resolution: {integrity: sha512-bYd2lrhc+VarcpkgWclcUi92wYCpOgMws9Sd1hG1ntAu0NEy+14CbotuFjshBU2kt9rYj9TSmDcybpxpeTU1fg==}
     peerDependencies:
@@ -3516,6 +3559,10 @@ packages:
     resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
+  uuid@10.0.0:
+    resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    hasBin: true
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
@@ -4946,6 +4993,10 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
+  '@supabase/sentry-js-integration@0.3.0(@supabase/supabase-js@2.84.0)':
+    dependencies:
+      '@supabase/supabase-js': 2.84.0
+
   '@supabase/ssr@0.7.0(@supabase/supabase-js@2.84.0)':
     dependencies:
       '@supabase/supabase-js': 2.84.0
@@ -5260,6 +5311,11 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
+
+  '@vercel/analytics@1.5.0(next@16.0.3(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)':
+    optionalDependencies:
+      next: 16.0.3(@babel/core@7.28.5)(@opentelemetry/api@1.9.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react: 19.2.0
 
   '@webassemblyjs/ast@1.14.1':
     dependencies:
@@ -7177,6 +7233,12 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
+  svix@1.81.0:
+    dependencies:
+      '@stablelib/base64': 1.0.1
+      fast-sha256: 1.3.0
+      uuid: 10.0.0
+
   swr@2.3.4(react@19.2.0):
     dependencies:
       dequal: 2.0.3
@@ -7355,6 +7417,8 @@ snapshots:
   use-sync-external-store@1.6.0(react@19.2.0):
     dependencies:
       react: 19.2.0
+
+  uuid@10.0.0: {}
 
   uuid@9.0.1: {}
 

@@ -5,6 +5,7 @@ import "./globals.css";
 import { ReactQueryClientProvider } from "@/components/react-query-provider";
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark, shadcn } from "@clerk/themes";
+import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <Analytics />
         <ClerkProvider
           appearance={{
             theme: [dark, shadcn],

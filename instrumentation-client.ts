@@ -3,6 +3,8 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { supabaseIntegration } from "@supabase/sentry-js-integration";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 Sentry.init({
   dsn: "https://788b4e89c6a0a06499743c23e27458e4@o4510415400075264.ingest.us.sentry.io/4510415403417600",
@@ -10,6 +12,17 @@ Sentry.init({
   // Add optional integrations for additional features
   integrations: [
     Sentry.replayIntegration(),
+    supabaseIntegration(SupabaseClient, Sentry, {
+      tracing: true,
+      breadcrumbs: true,
+      errors: true,
+    }),
+    // Ignore Supabase requests for tracing
+    // Sentry.browserTracingIntegration({
+    //   shouldCreateSpanForRequest: (url) => {
+    //     return !url.startsWith(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest`);
+    //   },
+    // }),
   ],
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
@@ -28,6 +41,8 @@ Sentry.init({
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
   sendDefaultPii: true,
+  // Setting this option to true will print useful information to the console while you're setting up Sentry.  debug: true,
+  debug: true,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
