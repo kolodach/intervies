@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { ReactQueryClientProvider } from "@/components/react-query-provider";
 import {
   ClerkProvider,
-} from '@clerk/nextjs'
-import { dark, shadcn } from '@clerk/themes'
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+} from "@clerk/nextjs";
+import { dark, shadcn } from "@clerk/themes";
 import { Header } from "@/components/header";
+import { Hexagon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,8 +44,9 @@ export default function RootLayout({
       >
         <ClerkProvider
           appearance={{
-            theme: [dark, shadcn]
-          }}>
+            theme: [dark, shadcn],
+          }}
+        >
           <ReactQueryClientProvider>
             <ThemeProvider
               attribute="class"
@@ -45,14 +54,11 @@ export default function RootLayout({
               disableTransitionOnChange
               enableSystem
             >
-              <div className="h-screen grid grid-rows-[auto_1fr]">
-                <Header />
-                <div className="h-full overflow-hidden">{children}</div>
-              </div>
+              {children}
             </ThemeProvider>
           </ReactQueryClientProvider>
         </ClerkProvider>
       </body>
-    </html >
+    </html>
   );
 }

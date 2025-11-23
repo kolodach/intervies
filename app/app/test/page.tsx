@@ -15,5 +15,5 @@ export default function Page() {
     enabled: !!user,
   });
 
-  return <div>{JSON.stringify(questions, null, 2)}</div>;
+  return <pre>{JSON.stringify(questions, null, 2)}</pre>;
 }
