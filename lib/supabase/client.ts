@@ -13,15 +13,11 @@ export function useSupabaseBrowserClient() {
       // biome-ignore lint/style/noNonNullAssertion: <explanation>
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       {
-        global: {
-          fetch: async (url, options = {}) => {
-            const clerkToken = await session?.getToken({
-              template: "supabase",
-            });
-            const headers = new Headers(options?.headers);
-            headers.set("Authorization", `Bearer ${clerkToken}`);
-            return fetch(url, { ...options, headers });
-          },
+        async accessToken() {
+          const token =
+            (await session?.getToken({ template: "supabase" })) ?? null;
+          console.log("token: ", token);
+          return token;
         },
       }
     );
