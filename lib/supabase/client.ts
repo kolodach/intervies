@@ -14,10 +14,7 @@ export function useSupabaseBrowserClient() {
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
       {
         async accessToken() {
-          const token =
-            (await session?.getToken({ template: "supabase" })) ?? null;
-          console.log("token: ", token);
-          return token;
+          return session?.getToken() ?? null;
         },
       }
     );
