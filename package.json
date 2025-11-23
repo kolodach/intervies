@@ -10,6 +10,7 @@
     "add-component": "pnpm dlx shadcn@latest add"
   },
   "dependencies": {
+    "@brianmmdev/clerk-webhooks-handler": "^1.0.7",
     "@clerk/nextjs": "^6.35.4",
     "@clerk/themes": "^2.4.39",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -34,6 +35,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "require-in-the-middle": "^7.5.2",
+    "server": "link:@clerk/nextjs/server",
     "svix": "^1.81.0",
     "tailwind-merge": "^3.4.0"
   },
