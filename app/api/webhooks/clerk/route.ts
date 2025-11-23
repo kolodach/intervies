@@ -3,7 +3,11 @@ import * as Sentry from "@sentry/nextjs";
 import { Webhook } from "svix";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { captureNewUser, captureUserLogin } from "@/lib/observability";
+import {
+  captureNewUser,
+  captureUserLogin,
+  captureWebhookHit,
+} from "@/lib/observability";
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -15,6 +19,7 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
+  captureWebhookHit("clerk");
 
   // Get headers
   const headerPayload = await headers();

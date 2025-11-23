@@ -7,3 +7,7 @@ export function captureNewUser() {
 export function captureUserLogin() {
   Sentry.metrics.count("user_login", 1);
 }
+
+export function captureWebhookHit(webhook: string) {
+  Sentry.metrics.count(`webhook_hit_${webhook}`, 1);
+}
