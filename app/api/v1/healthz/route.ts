@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
@@ -16,7 +17,7 @@ export async function GET() {
       .limit(1);
 
     if (error) {
-      console.error("Supabase health check error:", error);
+      logger.error({ error }, "Supabase health check error");
       return NextResponse.json(
         {
           status: "unhealthy",
@@ -24,7 +25,7 @@ export async function GET() {
           error: error.message,
           timestamp: new Date().toISOString(),
         },
-        { status: 503 },
+        { status: 503 }
       );
     }
 
@@ -42,7 +43,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Health check error:", error);
+    logger.error({ error }, "Health check error");
     return NextResponse.json(
       {
         status: "unhealthy",
@@ -50,7 +51,7 @@ export async function GET() {
         error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
-      { status: 503 },
+      { status: 503 }
     );
   }
 }

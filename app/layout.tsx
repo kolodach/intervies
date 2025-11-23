@@ -3,19 +3,8 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { ReactQueryClientProvider } from "@/components/react-query-provider";
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { dark, shadcn } from "@clerk/themes";
-import { Header } from "@/components/header";
-import { Hexagon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
