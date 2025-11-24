@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useAuthenticatedQuery } from "@/lib/hooks/query-hooks";
-import { fetchAllQuestionsQuery } from "@/lib/queries/questions";
+import { fetchAllProblemsQuery } from "@/lib/queries/problems";
 import { capitalize } from "@/lib/utils";
 import { captureException } from "@sentry/nextjs";
 import {
@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
-import type { Question } from "@/lib/types";
+import type { Problem } from "@/lib/types";
 import {
-  createInterview,
-  findInterviewByQuestionId,
-} from "@/lib/queries/interviews";
+  createSolution,
+  findSolutionByProblemId,
+} from "@/lib/queries/solutions";
 import { useUser } from "@clerk/nextjs";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
@@ -28,60 +28,62 @@ import { useRouter } from "next/navigation";
 export default function Page() {
   const { user } = useUser();
   const router = useRouter();
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [problems, setProblems] = useState<Problem[]>([]);
   const [search, setSearch] = useState("");
-  const { data: questionsData, error } = useAuthenticatedQuery(
-    fetchAllQuestionsQuery
+  const { data: problemsData, error } = useAuthenticatedQuery(
+    fetchAllProblemsQuery
   );
   const supabase = useSupabaseBrowserClient();
   useEffect(() => {
     if (!search) {
-      setQuestions(questionsData ?? []);
+      setProblems(problemsData ?? []);
       return;
     }
-    if (questionsData) {
-      setQuestions(
-        questionsData.filter(
-          (question) =>
-            question.title.toLowerCase().includes(search.toLowerCase()) ||
-            question.categories.some((category) =>
+    if (problemsData) {
+      setProblems(
+        problemsData.filter(
+          (problem) =>
+            problem.title.toLowerCase().includes(search.toLowerCase()) ||
+            problem.categories.some((category) =>
               category.toLowerCase().includes(search.toLowerCase())
             ) ||
-            question.tags.some((tag) =>
+            problem.tags.some((tag) =>
               tag.toLowerCase().includes(search.toLowerCase())
             ) ||
-            question.difficulty.toLowerCase().includes(search.toLowerCase())
+            problem.difficulty.toLowerCase().includes(search.toLowerCase())
         )
       );
     }
-  }, [questionsData, search]);
+  }, [problemsData, search]);
 
-  const handleStart = async (question: Question) => {
+  const handleStart = async (problem: Problem) => {
     if (!user) return;
-    const { data: interview, error: interviewError } =
-      await findInterviewByQuestionId(supabase, question.id, user.id);
-    if (interviewError) {
-      captureException(interviewError);
-      toast.error("Error finding interview");
+    const { data: solution, error: solutionError } =
+      await findSolutionByProblemId(supabase, problem.id, user.id);
+    if (solutionError) {
+      captureException(solutionError);
+      toast.error("Error finding solution");
       return;
     }
-    if (interview) {
-      router.push(`/app/problems/${interview.id}`);
+    if (solution) {
+      router.push(`/app/problems/${solution.id}`);
       return;
     }
-    const { data: newInterview, error: newInterviewError } =
-      await createInterview(supabase, {
-        question_id: question.id,
+    const { data: newSolution, error: newSolutionError } = await createSolution(
+      supabase,
+      {
+        problem_id: problem.id,
         status: "in_progress",
-        title: question.title,
+        title: problem.title,
         user_id: user.id,
-      });
-    if (newInterviewError) {
-      captureException(newInterviewError);
-      toast.error("Error creating interview");
+      }
+    );
+    if (newSolutionError) {
+      captureException(newSolutionError);
+      toast.error("Error creating solution");
       return;
     }
-    router.push(`/app/problems/${newInterview.id}`);
+    router.push(`/app/problems/${newSolution.id}`);
   };
 
   return (
@@ -89,7 +91,7 @@ export default function Page() {
       {error && <div className="text-red-500">{error.message}</div>}
       <input
         type="text"
-        placeholder="Search questions..."
+        placeholder="Search problems..."
         className="mb-4 p-2 border rounded-md w-full max-w-[400px] focus:outline-none focus:ring-2 focus:ring-primary"
         // This is a dummy search bar, you may add state and handlers to enable search functionality.
         onChange={(e) => {
@@ -109,34 +111,34 @@ export default function Page() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {questions?.map((question) => (
-              <TableRow key={question.id}>
+            {problems?.map((problem) => (
+              <TableRow key={problem.id}>
                 {/* Difficulty */}
                 <TableCell>
                   <span
                     className={
-                      question.difficulty === "easy"
+                      problem.difficulty === "easy"
                         ? "text-green-600"
-                        : question.difficulty === "medium"
+                        : problem.difficulty === "medium"
                         ? "text-yellow-600"
-                        : question.difficulty === "hard"
+                        : problem.difficulty === "hard"
                         ? "text-red-600"
                         : undefined
                     }
                   >
-                    {capitalize(question.difficulty)}
+                    {capitalize(problem.difficulty)}
                   </span>
                 </TableCell>
-                <TableCell className="font-medium">{question.title}</TableCell>
+                <TableCell className="font-medium">{problem.title}</TableCell>
                 <TableCell>
-                  {question.categories.map((category) => (
+                  {problem.categories.map((category) => (
                     <Badge key={category} variant={"outline"}>
                       {category}
                     </Badge>
                   ))}
                 </TableCell>
                 <TableCell>
-                  {question.tags.map((tag) => (
+                  {problem.tags.map((tag) => (
                     <Badge key={tag} variant={"outline"}>
                       {tag}
                     </Badge>
@@ -145,16 +147,16 @@ export default function Page() {
                 <TableCell>
                   <span
                     className={
-                      question.is_active ? "text-green-600" : "text-red-600"
+                      problem.is_active ? "text-green-600" : "text-red-600"
                     }
                   >
-                    {question.is_active ? "Active" : "Inactive"}
+                    {problem.is_active ? "Active" : "Inactive"}
                   </span>
                 </TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
-                    onClick={() => handleStart(question)}
+                    onClick={() => handleStart(problem)}
                   >
                     Start
                   </Button>

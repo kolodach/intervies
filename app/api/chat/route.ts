@@ -1,6 +1,6 @@
 import { streamText, type UIMessage, convertToModelMessages } from "ai";
 import { openai } from "@ai-sdk/openai";
-import type { InterviewState } from "@/lib/types";
+import type { SolutionState } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { clerkClient } from "@clerk/nextjs/server";
 import { captureError } from "@/lib/observability";
@@ -10,7 +10,7 @@ import {
   buildInterviewerPrompt,
   getActiveTools,
 } from "@/lib/ai/interviewer-prompt-builder";
-import { fetchQuestionById } from "@/lib/queries/questions";
+import { fetchProblemById } from "@/lib/queries/problems";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
@@ -19,13 +19,13 @@ export async function POST(req: Request) {
     currentState,
     boardChanged,
     userId,
-    questionId,
+    problemId,
   }: {
     messages: UIMessage[];
-    currentState: InterviewState;
+    currentState: SolutionState;
     boardChanged: boolean;
     userId: string;
-    questionId: string;
+    problemId: string;
   } = await req.json();
 
   logger.info(
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
       currentState,
       boardChanged,
       userId,
-      questionId,
+      problemId,
     },
     "Received chat request"
   );
@@ -51,43 +51,43 @@ export async function POST(req: Request) {
       logger.error(error, "Error streaming chat response");
       throw error;
     },
-    activeTools: getActiveTools(
-      currentState
-    ) as // | "concludeInterview" // | "requestStateTransition" // | "getBoardDiff" // | "getBoardState"
-    ("fetchUserInfo" | "fetchQuestionDetails")[],
+    activeTools: getActiveTools(currentState) as ( // | "concludeInterview" // | "requestStateTransition" // | "getBoardDiff" // | "getBoardState"
+      | "fetchUserInfo"
+      | "fetchProblemDetails"
+    )[],
     tools: {
-      fetchQuestionDetails: {
-        description: "Fetch the question details",
+      fetchProblemDetails: {
+        description: "Fetch the problem details",
         inputSchema: z.object({}),
         execute: async () => {
           logger.info(
             {
-              questionId,
+              problemId,
             },
-            "Fetching question details"
+            "Fetching problem details"
           );
           const supabase = await createServerSupabaseClient();
-          const { data: question, error } = await fetchQuestionById(
+          const { data: problem, error } = await fetchProblemById(
             supabase,
-            questionId
+            problemId
           );
           if (error) {
             captureError(error);
             logger.error(
               error,
-              `Failed to fetch question details: ${questionId}`
+              `Failed to fetch problem details: ${problemId}`
             );
             throw new Error(
-              `Failed to fetch question details: ${error.message}`
+              `Failed to fetch problem details: ${error.message}`
             );
           }
           logger.info(
             {
-              question,
+              problem,
             },
-            "Fetched question details"
+            "Fetched problem details"
           );
-          return question;
+          return problem;
         },
       },
       fetchUserInfo: {

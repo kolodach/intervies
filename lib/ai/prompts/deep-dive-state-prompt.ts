@@ -9,7 +9,7 @@ OBJECTIVES:
 
 AREA SELECTION - Pick ONE based on:
 
-By Question Type:
+By Problem Type:
 - URL Shortener: Hash collision handling, database scaling
 - Instagram: Feed generation algorithm, image storage/CDN
 - Netflix: Video encoding/CDN strategy, recommendation system

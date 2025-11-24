@@ -4,10 +4,10 @@ import { DESIGN_STATE_PROMPT } from "@/lib/ai/prompts/design-state-prompt";
 import { GREETING_STATE_PROMPT } from "@/lib/ai/prompts/greeting-state-prompt";
 import { INTERVIEWER_PROMPT } from "@/lib/ai/prompts/interviewer-prompt";
 import { REQUIREMENT_STATE_PROMPT } from "@/lib/ai/prompts/requirements-state-prompt";
-import type { InterviewState } from "@/lib/types";
+import type { SolutionState } from "@/lib/types";
 
 export const buildInterviewerPrompt = (
-  currentState: InterviewState,
+  currentState: SolutionState,
   boardChanged: boolean
 ) => {
   const stateSpecificInstructions = getStateSpecificInstructions(currentState);
@@ -16,7 +16,7 @@ export const buildInterviewerPrompt = (
     .replace("{{state_specific_instructions}}", stateSpecificInstructions);
 };
 
-const getStateSpecificInstructions = (currentState: InterviewState) => {
+const getStateSpecificInstructions = (currentState: SolutionState) => {
   switch (currentState) {
     case "GREETING":
       return GREETING_STATE_PROMPT;
@@ -29,17 +29,17 @@ const getStateSpecificInstructions = (currentState: InterviewState) => {
     case "CONCLUSION":
       return CONCLUSION_STATE_PROMPT;
     default:
-      throw new Error(`Unknown interview state: ${currentState}`);
+      throw new Error(`Unknown solution state: ${currentState}`);
   }
 };
 
-export const getActiveTools = (currentState: InterviewState) => {
+export const getActiveTools = (currentState: SolutionState) => {
   switch (currentState) {
     case "GREETING":
-      return ["fetchUserInfo", "fetchQuestionDetails"];
+      return ["fetchUserInfo", "fetchProblemDetails"];
     case "REQUIREMENTS":
-      return ["fetchQuestionDetails"];
+      return ["fetchProblemDetails"];
     case "DESIGNING":
-      return ["fetchQuestionDetails"];
+      return ["fetchProblemDetails"];
   }
 };

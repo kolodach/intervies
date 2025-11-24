@@ -1,5 +1,5 @@
--- Insert sample questions
-INSERT INTO questions (title, description, difficulty, categories, tags, sample_requirements, evaluation_criteria)
+-- Insert sample problems
+INSERT INTO problems (title, description, difficulty, categories, tags, sample_requirements, evaluation_criteria)
 VALUES
   (
     'Design a URL Shortener',

@@ -11,9 +11,9 @@ export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
 
-    // Test connection by fetching questions
+    // Test connection by fetching problems
     const { data, error } = await supabase
-      .from("questions")
+      .from("problems")
       .select("id, title, difficulty")
       .limit(1);
 
@@ -35,7 +35,7 @@ export async function GET() {
       service: "supabase",
       database: {
         connected: true,
-        questionsAvailable: data?.length ?? 0,
+        problemsAvailable: data?.length ?? 0,
       },
       config: {
         hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,

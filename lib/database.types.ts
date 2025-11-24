@@ -14,43 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      interviews: {
-        Row: {
-          board_state: Json
-          conversation: Json
-          created_at: string | null
-          id: string
-          question_id: string
-          status: string
-          title: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          board_state?: Json
-          conversation?: Json
-          created_at?: string | null
-          id?: string
-          question_id: string
-          status: string
-          title: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          board_state?: Json
-          conversation?: Json
-          created_at?: string | null
-          id?: string
-          question_id?: string
-          status?: string
-          title?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      questions: {
+      problems: {
         Row: {
           categories: string[]
           created_at: string | null
@@ -89,6 +53,42 @@ export type Database = {
           tags?: string[]
           title?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      solutions: {
+        Row: {
+          board_state: Json
+          conversation: Json
+          created_at: string | null
+          id: string
+          problem_id: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          board_state?: Json
+          conversation?: Json
+          created_at?: string | null
+          id?: string
+          problem_id: string
+          status: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          board_state?: Json
+          conversation?: Json
+          created_at?: string | null
+          id?: string
+          problem_id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
