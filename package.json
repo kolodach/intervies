@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "add-component": "pnpm dlx shadcn@latest add"
+    "add-component": "pnpm dlx shadcn@latest add",
+    "db:gen": "supabase gen types typescript --linked --schema=public > lib/database.types.ts"
   },
   "dependencies": {
     "@brianmmdev/clerk-webhooks-handler": "^1.0.7",

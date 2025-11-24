@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      interviews: {
+        Row: {
+          board_state: Json
+          conversation: Json
+          created_at: string | null
+          id: string
+          question_id: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          board_state?: Json
+          conversation?: Json
+          created_at?: string | null
+          id?: string
+          question_id: string
+          status: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          board_state?: Json
+          conversation?: Json
+          created_at?: string | null
+          id?: string
+          question_id?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       questions: {
         Row: {
           categories: string[]
@@ -56,12 +92,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          id: number
+          name: string
+          user_id: string
+        }
+        Insert: {
+          id?: number
+          name: string
+          user_id?: string
+        }
+        Update: {
+          id?: number
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_user_by_clerk_id: { Args: { clerk_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
