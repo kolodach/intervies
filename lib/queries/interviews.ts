@@ -14,6 +14,19 @@ export function fetchInterviewById(client: TypedSupabaseClient, id: string) {
     .single();
 }
 
+export function findInterviewByQuestionId(
+  client: TypedSupabaseClient,
+  questionId: string,
+  userId: string
+) {
+  return client
+    .from("interviews")
+    .select("*")
+    .match({ question_id: questionId, user_id: userId })
+    .throwOnError()
+    .maybeSingle();
+}
+
 export function createInterview(
   client: TypedSupabaseClient,
   interview: TablesInsert<"interviews">

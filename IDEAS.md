@@ -1,0 +1,3 @@
+- Volonteer a problem.
+  - The user can volonteer a problem and solve it in the system.
+- Custom problem. The user can solve a custom problem.

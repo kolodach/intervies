@@ -16,3 +16,5 @@ export const InterviewStates: InterviewState[] = [
 ];
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
+
+export type Question = Database["public"]["Tables"]["questions"]["Row"];

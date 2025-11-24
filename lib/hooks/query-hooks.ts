@@ -6,6 +6,7 @@ import {
 } from "@supabase-cache-helpers/postgrest-react-query";
 import type { PostgrestError, PostgrestResponse } from "@supabase/supabase-js";
 import type { UseQueryOptions } from "@tanstack/react-query";
+import type { TypedSupabaseClient } from "../types";
 
 /**
  * Custom hook for running a PostgREST query only when the user is authenticated.
@@ -15,7 +16,9 @@ import type { UseQueryOptions } from "@tanstack/react-query";
  * @returns The query result.
  */
 export function useAuthenticatedQuery<Result>(
-  query: PromiseLike<PostgrestResponse<Result>>,
+  query: (
+    client: TypedSupabaseClient
+  ) => PromiseLike<PostgrestResponse<Result>>,
   config?: Omit<
     UseQueryOptions<PostgrestResponse<Result>, PostgrestError>,
     "queryKey" | "queryFn"
@@ -24,7 +27,7 @@ export function useAuthenticatedQuery<Result>(
   const { user } = useUser();
   const client = useSupabaseBrowserClient();
 
-  return useQuery<Result>(query, {
+  return useQuery<Result>(query(client), {
     enabled: !!user,
     ...config,
   });
