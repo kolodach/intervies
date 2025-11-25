@@ -12,7 +12,12 @@ import type {
   OrderedExcalidrawElement,
 } from "@excalidraw/excalidraw/element/types";
 import { WelcomeScreen } from "@excalidraw/excalidraw";
-import { Hexagon } from "lucide-react";
+import { Hexagon, Pen } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 
 export function Canvas({
   excalidrawRef,
@@ -25,7 +30,7 @@ export function Canvas({
 }) {
   const currElementsRef = useRef<ExcalidrawElement[]>([]);
   return (
-    <div className="h-full w-full theme-dark border rounded-md overflow-hidden">
+    <div className="h-full w-full theme-dark border border-input rounded-md overflow-hidden relative">
       <excalidraw.Excalidraw
         initialData={{
           elements: elements,

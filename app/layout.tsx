@@ -7,6 +7,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark, shadcn } from "@clerk/themes";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,7 +47,9 @@ export default function RootLayout({
               disableTransitionOnChange
               enableSystem
             >
-              <main>{children}</main>
+              <TooltipProvider>
+                <main>{children}</main>
+              </TooltipProvider>
               <Toaster />
             </ThemeProvider>
           </ReactQueryClientProvider>

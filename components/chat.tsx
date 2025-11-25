@@ -33,8 +33,13 @@ import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Solution } from "@/lib/types";
 import { type UIMessage, useChat } from "@ai-sdk/react";
 import { useUser } from "@clerk/nextjs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { GlobeIcon } from "lucide-react";
+import { Circle, GlobeIcon, Pen } from "lucide-react";
 import { useRef, useState } from "react";
 
 export default function Chat({ solution }: { solution: Solution }) {
@@ -104,43 +109,56 @@ export default function Chat({ solution }: { solution: Solution }) {
           <ConversationScrollButton />
         </Conversation>
 
-        <PromptInput onSubmit={handleSubmit} globalDrop multiple>
-          {/* <PromptInputHeader>
+        <div className="relative">
+          <PromptInput onSubmit={handleSubmit} globalDrop multiple>
+            {/* <PromptInputHeader>
             <PromptInputAttachments>
               {(attachment) => <PromptInputAttachment data={attachment} />}
             </PromptInputAttachments>
           </PromptInputHeader> */}
-          <PromptInputBody>
-            <PromptInputTextarea
-              className="text-sm p-2"
-              onChange={(e) => setText(e.target.value)}
-              ref={textareaRef}
-              value={text}
-            />
-          </PromptInputBody>
-          <PromptInputFooter>
-            <PromptInputTools>
-              <PromptInputActionMenu>
-                <PromptInputActionMenuTrigger />
-                <PromptInputActionMenuContent>
-                  <PromptInputActionAddAttachments />
-                </PromptInputActionMenuContent>
-              </PromptInputActionMenu>
-              <PromptInputSpeechButton
-                onTranscriptionChange={setText}
-                textareaRef={textareaRef}
+            <PromptInputBody>
+              <PromptInputTextarea
+                className="text-sm p-2"
+                onChange={(e) => setText(e.target.value)}
+                ref={textareaRef}
+                value={text}
               />
-              <PromptInputButton
-                onClick={() => setUseWebSearch(!useWebSearch)}
-                variant={useWebSearch ? "default" : "ghost"}
-              >
-                <GlobeIcon size={16} />
-                <span>Search</span>
-              </PromptInputButton>
-            </PromptInputTools>
-            <PromptInputSubmit disabled={!text && !status} status={status} />
-          </PromptInputFooter>
-        </PromptInput>
+            </PromptInputBody>
+            <PromptInputFooter>
+              <PromptInputTools>
+                <PromptInputActionMenu>
+                  <PromptInputActionMenuTrigger />
+                  <PromptInputActionMenuContent>
+                    <PromptInputActionAddAttachments />
+                  </PromptInputActionMenuContent>
+                </PromptInputActionMenu>
+                <PromptInputSpeechButton
+                  onTranscriptionChange={setText}
+                  textareaRef={textareaRef}
+                />
+                {/* <PromptInputButton
+                  onClick={() => setUseWebSearch(!useWebSearch)}
+                  variant={useWebSearch ? "default" : "ghost"}
+                >
+                  <GlobeIcon size={16} />
+                  <span>Search</span>
+                </PromptInputButton> */}
+              </PromptInputTools>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    Board changed
+                  </span>
+                  <div className="size-2 ml-auto bg-green-500 rounded-full " />
+                </div>
+                <PromptInputSubmit
+                  disabled={!text && !status}
+                  status={status}
+                />
+              </div>
+            </PromptInputFooter>
+          </PromptInput>
+        </div>
       </div>
     </div>
   );
