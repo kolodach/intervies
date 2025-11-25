@@ -56,4 +56,3 @@ export function updateSolution(
 export function deleteSolution(client: TypedSupabaseClient, id: string) {
   return client.from("solutions").delete().eq("id", id).throwOnError();
 }
-

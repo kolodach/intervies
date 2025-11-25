@@ -16,9 +16,7 @@ import type { TypedSupabaseClient } from "../types";
  * @returns The query result.
  */
 export function useAuthenticatedQuery<Result>(
-  query: (
-    client: TypedSupabaseClient
-  ) => PromiseLike<PostgrestResponse<Result>>,
+  query: (client: TypedSupabaseClient) => Promise<PostgrestResponse<Result>>,
   config?: Omit<
     UseQueryOptions<PostgrestResponse<Result>, PostgrestError>,
     "queryKey" | "queryFn"

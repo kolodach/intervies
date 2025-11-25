@@ -28,17 +28,28 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
-import { useChat } from "@ai-sdk/react";
+import { fetchProblemBySolutionId } from "@/lib/queries/problems";
+import { useSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { Solution } from "@/lib/types";
+import { type UIMessage, useChat } from "@ai-sdk/react";
 import { useUser } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 import { GlobeIcon } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
-export default function Chat() {
+export default function Chat({ solution }: { solution: Solution }) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useUser();
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status } = useChat({
+    messages: JSON.parse(
+      solution?.conversation?.toString() ?? "[]"
+    ) as UIMessage[],
+  });
+
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
+  const client = useSupabaseBrowserClient();
+
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
     const hasAttachments = Boolean(message.files?.length);
@@ -56,7 +67,8 @@ export default function Chat() {
         body: {
           webSearch: useWebSearch,
           userId: user?.id,
-          questionId: "5bc10acc-f791-4677-86d1-c0f54f959704",
+          problemId: solution.problem_id,
+          solutionId: solution.id,
           currentState: "GREETING",
           boardChanged: false,
         },
@@ -70,8 +82,8 @@ export default function Chat() {
       <div className="flex flex-col h-full">
         <Conversation>
           <ConversationContent>
-            {messages.map((message) => (
-              <Message from={message.role} key={message.id}>
+            {messages.map((message, index) => (
+              <Message from={message.role} key={`${message.id}-${index}`}>
                 <MessageContent>
                   {message.parts.map((part, i) => {
                     switch (part.type) {
@@ -93,13 +105,14 @@ export default function Chat() {
         </Conversation>
 
         <PromptInput onSubmit={handleSubmit} globalDrop multiple>
-          <PromptInputHeader>
+          {/* <PromptInputHeader>
             <PromptInputAttachments>
               {(attachment) => <PromptInputAttachment data={attachment} />}
             </PromptInputAttachments>
-          </PromptInputHeader>
+          </PromptInputHeader> */}
           <PromptInputBody>
             <PromptInputTextarea
+              className="text-sm p-2"
               onChange={(e) => setText(e.target.value)}
               ref={textareaRef}
               value={text}
