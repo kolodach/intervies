@@ -58,7 +58,7 @@ USING (
 -- Add default values for solutions table columns
 ALTER TABLE solutions 
   ALTER COLUMN conversation SET DEFAULT '[]'::jsonb,
-  ALTER COLUMN board_state SET DEFAULT '{}'::jsonb;
+  ALTER COLUMN board_state SET DEFAULT '[]'::jsonb;
 -- Ensure columns are NOT NULL with defaults
 ALTER TABLE solutions 
   ALTER COLUMN conversation SET NOT NULL,

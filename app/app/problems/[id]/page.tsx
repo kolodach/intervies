@@ -1,16 +1,23 @@
 "use client";
 
+import { Canvas } from "@/components/canvas";
 import Chat from "@/components/chat";
 import { useAuthenticatedQuery } from "@/lib/hooks/query-hooks";
-import { fetchSolutionById } from "@/lib/queries/solutions";
+import { fetchSolutionById, updateSolution } from "@/lib/queries/solutions";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useUser } from "@clerk/nextjs";
+import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useParams } from "next/navigation";
+import { useMemo, useRef, useState } from "react";
+import { useDebouncer } from "@tanstack/react-pacer";
+import { toast } from "sonner";
 
 export default function Page() {
   const { id } = useParams();
   const user = useUser();
+  const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
   const {
     data: solution,
@@ -19,6 +26,29 @@ export default function Page() {
   } = useQuery(fetchSolutionById(supabase, id as string), {
     enabled: !!user,
   });
+
+  const initialElements = useMemo(() => {
+    return JSON.parse(solution?.board_state?.toString() ?? "[]") as Readonly<
+      OrderedExcalidrawElement[]
+    >;
+  }, [solution]);
+  const [elements, setElements] = useState<
+    Readonly<OrderedExcalidrawElement[]>
+  >([]);
+  const onChange = async (elements: Readonly<OrderedExcalidrawElement[]>) => {
+    setElements(elements);
+    console.log("elements", elements);
+    if (!solution) {
+      return;
+    }
+    await updateSolution(client, solution?.id, {
+      board_state: JSON.stringify(elements),
+    });
+  };
+  const debouncedOnChange = useDebouncer(onChange, {
+    wait: 1000,
+  });
+  const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null);
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -32,13 +62,15 @@ export default function Page() {
 
   return (
     <div className="grid grid-cols-[400px_1fr] h-full">
-      <div className="border-r h-full p-2 min-h-0">
+      <div className="h-full p-2 min-h-0">
         <Chat solution={solution} />
       </div>
-      <div className="h-full">
-        <div className="w-full h-full flex items-center justify-center">
-          Board goes here
-        </div>
+      <div className="h-full relative pb-2 pr-2">
+        <Canvas
+          elements={initialElements}
+          excalidrawRef={excalidrawRef}
+          onChange={debouncedOnChange.maybeExecute}
+        />
       </div>
     </div>
   );
