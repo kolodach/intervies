@@ -10,14 +10,16 @@ export const buildInterviewerPrompt = (
   currentState: SolutionState,
   boardChanged: boolean,
   userInfo: string,
-  problemInfo: string
+  problemInfo: string,
+  boardDiff: string
 ) => {
   const stateSpecificInstructions = getStateSpecificInstructions(currentState);
   return INTERVIEWER_PROMPT.replace("{{user_info}}", userInfo)
     .replace("{{problem_info}}", problemInfo)
     .replace("{{current_state}}", currentState)
     .replace("{{board_changed}}", boardChanged.toString())
-    .replace("{{state_specific_instructions}}", stateSpecificInstructions);
+    .replace("{{state_specific_instructions}}", stateSpecificInstructions)
+    .replace("{{board_diff}}", boardDiff);
 };
 
 const getStateSpecificInstructions = (currentState: SolutionState) => {
@@ -42,11 +44,11 @@ export const getActiveTools = (currentState: SolutionState) => {
     case "GREETING":
       return ["request_state_transition"];
     case "REQUIREMENTS":
-      return ["request_state_transition"];
+      return ["request_state_transition", "get_board_state"];
     case "DESIGNING":
-      return ["request_state_transition"];
+      return ["request_state_transition", "get_board_state"];
     case "DEEP_DIVE":
-      return ["request_state_transition"];
+      return ["request_state_transition", "get_board_state"];
     case "CONCLUSION":
       return ["request_state_transition"];
   }

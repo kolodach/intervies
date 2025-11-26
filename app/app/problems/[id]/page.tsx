@@ -52,8 +52,18 @@ export default function Page() {
     setBoardChanged(true);
   };
 
-  const onMessageSent = () => {
+  const onMessageSent = async () => {
+    if (!solution) {
+      return;
+    }
     setBoardChanged(false);
+    // const { error } = await updateSolution(client, solution.id, {
+    //   prev_board_state: solution.board_state,
+    // });
+    // if (error) {
+    //   toast.error("Error updating solution");
+    //   return;
+    // }
   };
 
   const debouncedOnChange = useDebouncer(onChange, {
@@ -68,6 +78,7 @@ export default function Page() {
     excalidrawRef.current?.resetScene();
     elementsRef.current = [];
     const { error: updateError } = await updateSolution(client, solution.id, {
+      state: "GREETING",
       board_state: [] as unknown as Json[],
       conversation: [] as unknown as Json[],
     });

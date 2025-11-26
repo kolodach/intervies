@@ -40,7 +40,7 @@ import {
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { Circle, GlobeIcon, Pen, RotateCcw } from "lucide-react";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -140,7 +140,7 @@ export default function Chat({
                 key={`${message.id}-${index}`}
                 className="max-w-full"
               >
-                <MessageContent>
+                <MessageContent className="size-full">
                   {message.parts.map((part, i) => {
                     switch (part.type) {
                       case "text":
@@ -150,7 +150,26 @@ export default function Chat({
                           </MessageResponse>
                         );
                       default:
-                        return null;
+                        return (
+                          <pre
+                            key={`${message.id}-${i}`}
+                            className="text-xs border rounded-md p-2 overflow-x-scroll size-full"
+                          >
+                            {JSON.stringify(part, null, 2)
+                              .split("\\n")
+                              .map((line, i) => (
+                                <Fragment
+                                  key={`${line}-${
+                                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                                    i
+                                  }`}
+                                >
+                                  {line}
+                                  <br />
+                                </Fragment>
+                              ))}
+                          </pre>
+                        );
                     }
                   })}
                 </MessageContent>

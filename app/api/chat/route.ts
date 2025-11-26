@@ -12,21 +12,39 @@ import {
 } from "@/lib/ai/interviewer-prompt-builder";
 import { fetchProblemById } from "@/lib/queries/problems";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { updateSolution } from "@/lib/queries/solutions";
+import { fetchSolutionById, updateSolution } from "@/lib/queries/solutions";
 import type { Json } from "@/lib/database.types";
+import { createTwoFilesPatch } from "diff";
+
+function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
+  const oldStr = JSON.stringify(prevBoardState, null, 2);
+  const newStr = JSON.stringify(boardState, null, 2);
+
+  const patch = createTwoFilesPatch(
+    "prev_board_state",
+    "board_state",
+    oldStr,
+    newStr,
+    "OLD",
+    "NEW",
+    { context: 3 }
+  );
+
+  logger.debug({ patch, oldStr, newStr }, "Board diff");
+
+  return patch;
+}
 
 export async function POST(req: Request) {
   const {
     messages,
     currentState,
-    boardChanged,
     userId,
     problemId,
     solutionId,
   }: {
     messages: UIMessage[];
     currentState: SolutionState;
-    boardChanged: boolean;
     userId: string;
     problemId: string;
     solutionId: string;
@@ -36,7 +54,6 @@ export async function POST(req: Request) {
     {
       messages,
       currentState,
-      boardChanged,
       userId,
       problemId,
     },
@@ -63,12 +80,42 @@ export async function POST(req: Request) {
     throw problemError;
   }
 
+  const { data: solution, error: solutionError } = await fetchSolutionById(
+    supabase,
+    solutionId
+  );
+  if (solutionError) {
+    captureError(solutionError);
+    logger.error(solutionError, `Failed to fetch solution info: ${solutionId}`);
+    throw solutionError;
+  }
+  const boardChanged =
+    JSON.stringify(solution.board_state) !==
+    JSON.stringify(solution.prev_board_state);
+
+  let boardDiff = "";
+  if (boardChanged) {
+    try {
+      boardDiff = getBoardDiff(
+        solution.board_state as Json[],
+        solution.prev_board_state as Json[]
+      );
+    } catch (error) {
+      captureError(error as Error);
+      logger.error(error, "Error getting board diff");
+      throw error;
+    }
+  }
+
   const prompt = buildInterviewerPrompt(
     currentState,
     boardChanged,
     user.fullName ?? "",
-    JSON.stringify(problem, null, 2)
+    JSON.stringify(problem, null, 2),
+    boardDiff
   );
+
+  logger.info({ prompt }, "Interviewer prompt");
 
   const result = streamText({
     model: openai("gpt-5.1"),
@@ -99,6 +146,20 @@ export async function POST(req: Request) {
           return state;
         },
       },
+      get_board_state: {
+        description: "Get the board state",
+        inputSchema: z.object({}),
+        execute: async () => {
+          const { data: solution, error: solutionError } =
+            await fetchSolutionById(supabase, solutionId);
+          if (solutionError) {
+            captureError(solutionError);
+            logger.error(solutionError, "Error fetching solution");
+            throw solutionError;
+          }
+          return JSON.stringify(solution.board_state, null, 2);
+        },
+      },
     },
   });
 
@@ -109,16 +170,22 @@ export async function POST(req: Request) {
       logger.error(error, "Error streaming chat response");
       throw error;
     },
-    async onFinish({ messages }) {
-      logger.info({ messages }, "Chat response finished");
+    async onFinish({ messages, responseMessage }) {
+      logger.info({ responseMessage }, "Chat response finished");
       const supabase = await createServerSupabaseClient();
-      const { data: solution, error } = await updateSolution(
+      const { data: solution, error: solutionError } = await fetchSolutionById(
         supabase,
-        solutionId,
-        {
-          conversation: messages as unknown as Json[],
-        }
+        solutionId
       );
+      if (solutionError) {
+        captureError(solutionError);
+        logger.error(solutionError, "Error fetching solution");
+        throw solutionError;
+      }
+      const { error } = await updateSolution(supabase, solutionId, {
+        conversation: messages as unknown as Json[],
+        prev_board_state: solution.board_state as Json[],
+      });
       if (error) {
         captureError(error);
         logger.error(error, "Error updating solution");
