@@ -24,16 +24,23 @@ import { useUser } from "@clerk/nextjs";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import {
+  useQueriesForTableLoader,
+  useQuery,
+} from "@supabase-cache-helpers/postgrest-react-query";
 
 export default function Page() {
   const { user } = useUser();
   const router = useRouter();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [search, setSearch] = useState("");
-  const { data: problemsData, error } = useAuthenticatedQuery(
-    fetchAllProblemsQuery
-  );
   const supabase = useSupabaseBrowserClient();
+  const { data: problemsData, error } = useQuery(
+    fetchAllProblemsQuery(supabase),
+    {
+      enabled: !!user,
+    }
+  );
   useEffect(() => {
     if (!search) {
       setProblems(problemsData ?? []);

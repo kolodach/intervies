@@ -13,6 +13,7 @@ import {
 import { fetchProblemById } from "@/lib/queries/problems";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { updateSolution } from "@/lib/queries/solutions";
+import type { Json } from "@/lib/database.types";
 
 export async function POST(req: Request) {
   const {
@@ -41,8 +42,33 @@ export async function POST(req: Request) {
     },
     "Received chat request"
   );
+  const supabase = await createServerSupabaseClient();
+  const clerk = await clerkClient();
 
-  const prompt = buildInterviewerPrompt(currentState, boardChanged);
+  const user = await clerk.users.getUser(userId);
+  if (!user) {
+    const error = new Error(`Failed to fetch user info: ${userId}`);
+    captureError(error);
+    logger.error(error, `Failed to fetch user info: ${userId}`);
+    throw error;
+  }
+
+  const { data: problem, error: problemError } = await fetchProblemById(
+    supabase,
+    problemId
+  );
+  if (problemError) {
+    captureError(problemError);
+    logger.error(problemError, `Failed to fetch problem info: ${problemId}`);
+    throw problemError;
+  }
+
+  const prompt = buildInterviewerPrompt(
+    currentState,
+    boardChanged,
+    user.fullName ?? "",
+    JSON.stringify(problem, null, 2)
+  );
 
   const result = streamText({
     model: openai("gpt-5.1"),
@@ -54,75 +80,8 @@ export async function POST(req: Request) {
       logger.error(error, "Error streaming chat response");
       throw error;
     },
-    activeTools: getActiveTools(
-      currentState
-    ) as // | "concludeInterview" // | "requestStateTransition" // | "getBoardDiff" // | "getBoardState"
-    ("fetchUserInfo" | "fetchProblemDetails")[],
-    tools: {
-      fetchProblemDetails: {
-        description: "Fetch the problem details",
-        inputSchema: z.object({}),
-        execute: async () => {
-          logger.debug(
-            {
-              problemId,
-            },
-            "Fetching problem details"
-          );
-          const supabase = await createServerSupabaseClient();
-          const { data: problem, error } = await fetchProblemById(
-            supabase,
-            problemId
-          );
-          if (error) {
-            captureError(error);
-            logger.error(
-              error,
-              `Failed to fetch problem details: ${problemId}`
-            );
-            throw new Error(
-              `Failed to fetch problem details: ${error.message}`
-            );
-          }
-          logger.debug(
-            {
-              problem,
-            },
-            "Fetched problem details"
-          );
-          return problem;
-        },
-      },
-      fetchUserInfo: {
-        description: "Fetch the user info",
-        inputSchema: z.object({}),
-        execute: async () => {
-          logger.debug(
-            {
-              userId,
-            },
-            "Fetching user info"
-          );
-          const clerk = await clerkClient();
-          const user = await clerk.users.getUser(userId);
-          if (!user) {
-            const error = new Error(`Failed to fetch user info: ${userId}`);
-            captureError(error);
-            logger.error(error, `Failed to fetch user info: ${userId}`);
-            throw error;
-          }
-          logger.debug(
-            {
-              user,
-            },
-            "Fetched user info"
-          );
-          return {
-            name: user.fullName,
-          };
-        },
-      },
-    },
+    activeTools: getActiveTools(currentState) as [],
+    tools: {},
   });
 
   return result.toUIMessageStreamResponse({
@@ -139,7 +98,7 @@ export async function POST(req: Request) {
         supabase,
         solutionId,
         {
-          conversation: JSON.stringify(messages),
+          conversation: messages as unknown as Json[],
         }
       );
       if (error) {

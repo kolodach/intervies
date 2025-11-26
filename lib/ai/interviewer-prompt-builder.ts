@@ -8,10 +8,14 @@ import type { SolutionState } from "@/lib/types";
 
 export const buildInterviewerPrompt = (
   currentState: SolutionState,
-  boardChanged: boolean
+  boardChanged: boolean,
+  userInfo: string,
+  problemInfo: string
 ) => {
   const stateSpecificInstructions = getStateSpecificInstructions(currentState);
-  return INTERVIEWER_PROMPT.replace("{{current_state}}", currentState)
+  return INTERVIEWER_PROMPT.replace("{{user_info}}", userInfo)
+    .replace("{{problem_info}}", problemInfo)
+    .replace("{{current_state}}", currentState)
     .replace("{{board_changed}}", boardChanged.toString())
     .replace("{{state_specific_instructions}}", stateSpecificInstructions);
 };
@@ -36,10 +40,10 @@ const getStateSpecificInstructions = (currentState: SolutionState) => {
 export const getActiveTools = (currentState: SolutionState) => {
   switch (currentState) {
     case "GREETING":
-      return ["fetchUserInfo", "fetchProblemDetails"];
+      return [];
     case "REQUIREMENTS":
-      return ["fetchProblemDetails"];
+      return [];
     case "DESIGNING":
-      return ["fetchProblemDetails"];
+      return [];
   }
 };

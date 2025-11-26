@@ -13,6 +13,7 @@ import { useParams } from "next/navigation";
 import { useMemo, useRef, useState } from "react";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { toast } from "sonner";
+import type { Json } from "@/lib/database.types";
 
 export default function Page() {
   const { id } = useParams();
@@ -28,7 +29,7 @@ export default function Page() {
   });
 
   const initialElements = useMemo(() => {
-    return JSON.parse(solution?.board_state?.toString() ?? "[]") as Readonly<
+    return (solution?.board_state ?? []) as unknown as Readonly<
       OrderedExcalidrawElement[]
     >;
   }, [solution]);
@@ -42,7 +43,7 @@ export default function Page() {
       return;
     }
     await updateSolution(client, solution?.id, {
-      board_state: JSON.stringify(elements),
+      board_state: elements as unknown as Json[],
     });
   };
   const debouncedOnChange = useDebouncer(onChange, {

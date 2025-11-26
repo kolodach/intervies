@@ -47,9 +47,7 @@ export default function Chat({ solution }: { solution: Solution }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useUser();
   const { messages, sendMessage, status } = useChat({
-    messages: JSON.parse(
-      solution?.conversation?.toString() ?? "[]"
-    ) as UIMessage[],
+    messages: (solution?.conversation ?? []) as unknown as UIMessage[],
   });
 
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
