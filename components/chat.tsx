@@ -30,7 +30,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { fetchProblemBySolutionId } from "@/lib/queries/problems";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Solution } from "@/lib/types";
+import type { Solution, SolutionState } from "@/lib/types";
 import { type UIMessage, useChat } from "@ai-sdk/react";
 import { useUser } from "@clerk/nextjs";
 import {
@@ -120,7 +120,7 @@ export default function Chat({
           userId: user?.id,
           problemId: solution.problem_id,
           solutionId: solution.id,
-          currentState: "GREETING",
+          currentState: solution.state as SolutionState,
           boardChanged: boardChanged,
         },
       }
@@ -135,7 +135,11 @@ export default function Chat({
         <Conversation>
           <ConversationContent>
             {messages.map((message, index) => (
-              <Message from={message.role} key={`${message.id}-${index}`}>
+              <Message
+                from={message.role}
+                key={`${message.id}-${index}`}
+                className="max-w-full"
+              >
                 <MessageContent>
                   {message.parts.map((part, i) => {
                     switch (part.type) {

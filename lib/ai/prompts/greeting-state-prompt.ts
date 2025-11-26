@@ -1,3 +1,5 @@
+import { SolutionStates } from "@/lib/types";
+
 export const GREETING_STATE_PROMPT = `
 === STATE: GREETING ===
 
@@ -17,6 +19,12 @@ We'll be working on: '[problem_title]'
 Feel free to use the drawing board on the right to sketch out your design, and ask me any questions as we go.
 
 What questions do you have to get started?"
+
+TOOLS:
+- request_state_transition(state: SolutionState) - Set the state of the solution. Allowed states: ${SolutionStates.join(
+  ", "
+)}. Call this tool to move to the next state.
+
 
 TRANSITION TO REQUIREMENTS:
 When:

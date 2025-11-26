@@ -1,6 +1,6 @@
 import { streamText, type UIMessage, convertToModelMessages } from "ai";
 import { openai } from "@ai-sdk/openai";
-import type { SolutionState } from "@/lib/types";
+import { SolutionStates, type SolutionState } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { clerkClient } from "@clerk/nextjs/server";
 import { captureError } from "@/lib/observability";
@@ -81,7 +81,25 @@ export async function POST(req: Request) {
       throw error;
     },
     activeTools: getActiveTools(currentState) as [],
-    tools: {},
+    tools: {
+      request_state_transition: {
+        description: "Set the state",
+        inputSchema: z.object({
+          state: z.enum(SolutionStates),
+        }),
+        execute: async ({ state }) => {
+          const { error } = await updateSolution(supabase, solutionId, {
+            state: state,
+          });
+          if (error) {
+            captureError(error);
+            logger.error(error, "Error updating solution");
+            throw error;
+          }
+          return state;
+        },
+      },
+    },
   });
 
   return result.toUIMessageStreamResponse({

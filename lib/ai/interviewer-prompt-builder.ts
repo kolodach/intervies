@@ -40,10 +40,14 @@ const getStateSpecificInstructions = (currentState: SolutionState) => {
 export const getActiveTools = (currentState: SolutionState) => {
   switch (currentState) {
     case "GREETING":
-      return [];
+      return ["request_state_transition"];
     case "REQUIREMENTS":
-      return [];
+      return ["request_state_transition"];
     case "DESIGNING":
-      return [];
+      return ["request_state_transition"];
+    case "DEEP_DIVE":
+      return ["request_state_transition"];
+    case "CONCLUSION":
+      return ["request_state_transition"];
   }
 };
