@@ -1,17 +1,17 @@
 "use client";
 
-import "@excalidraw/excalidraw/index.css";
 import "./excalidraw-wrapper.css";
 
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import type {
   ExcalidrawElement,
   OrderedExcalidrawElement,
 } from "@excalidraw/excalidraw/element/types";
-import { WelcomeScreen } from "@excalidraw/excalidraw";
-import { Hexagon, Pen } from "lucide-react";
-import { Excalidraw } from "@/components/excalidraw";
+import { Hexagon } from "lucide-react";
+
+// Import CSS at build time (safe for SSR)
+import "@excalidraw/excalidraw/index.css";
 
 export function Canvas({
   excalidrawRef,
@@ -23,17 +23,65 @@ export function Canvas({
   elements: Readonly<OrderedExcalidrawElement[]>;
 }) {
   const currElementsRef = useRef<ExcalidrawElement[]>([]);
+  const [ExcalidrawComponent, setExcalidrawComponent] =
+    useState<React.ComponentType<unknown> | null>(null);
+  const [WelcomeScreenComponent, setWelcomeScreenComponent] =
+    useState<React.ComponentType<unknown> | null>(null);
+
+  useEffect(() => {
+    // Only import JavaScript modules on client side
+    import("@excalidraw/excalidraw").then((mod) => {
+      setExcalidrawComponent(
+        () => mod.Excalidraw as React.ComponentType<unknown>
+      );
+      setWelcomeScreenComponent(
+        () => mod.WelcomeScreen as React.ComponentType<unknown>
+      );
+    });
+  }, []);
+
+  if (!ExcalidrawComponent || !WelcomeScreenComponent) {
+    return (
+      <div className="h-full w-full theme-dark border border-input rounded-md overflow-hidden relative flex items-center justify-center">
+        <div>Loading canvas...</div>
+      </div>
+    );
+  }
+
+  // Type assertions for dynamically loaded components
+  const Excalidraw = ExcalidrawComponent as React.ComponentType<{
+    initialData?: { elements: Readonly<OrderedExcalidrawElement[]> };
+    onChange?: (elements: OrderedExcalidrawElement[]) => void;
+    excalidrawAPI?: (api: ExcalidrawImperativeAPI) => void;
+    theme?: string;
+    UIOptions?: unknown;
+    children?: React.ReactNode;
+  }>;
+
+  const WelcomeScreen = WelcomeScreenComponent as React.ComponentType<{
+    children?: React.ReactNode;
+  }> & {
+    Center: React.ComponentType<{ children?: React.ReactNode }> & {
+      Heading: React.ComponentType<{ children?: React.ReactNode }>;
+      Menu: React.ComponentType<{ children?: React.ReactNode }>;
+      MenuItemLink: React.ComponentType<{
+        children?: React.ReactNode;
+        href: string;
+      }>;
+    };
+  };
+
   return (
     <div className="h-full w-full theme-dark border border-input rounded-md overflow-hidden relative">
       <Excalidraw
         initialData={{
           elements: elements,
         }}
-        onChange={(elements) => {
+        onChange={(elements: OrderedExcalidrawElement[]) => {
           onChange(elements);
           currElementsRef.current = elements as ExcalidrawElement[];
         }}
-        excalidrawAPI={(api) => {
+        excalidrawAPI={(api: ExcalidrawImperativeAPI) => {
           excalidrawRef.current = api;
         }}
         theme="dark"
