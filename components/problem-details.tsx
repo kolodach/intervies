@@ -10,4 +10,3 @@ export function ProblemDetails({ id }: { id: string }) {
 
   return <div>{JSON.stringify(problem, null, 2)}</div>;
 }
-
