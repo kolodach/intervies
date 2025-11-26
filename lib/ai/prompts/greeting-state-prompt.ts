@@ -18,10 +18,6 @@ Feel free to use the drawing board on the right to sketch out your design, and a
 
 What questions do you have to get started?"
 
-REQUIRED TOOL CALLS:
-1. fetch_user_info() - Get candidate name
-2. fetch_problem_details() - Load problem
-
 TRANSITION TO REQUIREMENTS:
 When:
 ✓ User has greeted back (even brief: "hi", "hello", "thanks")
