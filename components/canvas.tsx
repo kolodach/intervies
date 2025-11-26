@@ -1,7 +1,5 @@
 "use client";
 
-import * as excalidraw from "@excalidraw/excalidraw";
-
 import "@excalidraw/excalidraw/index.css";
 import "./excalidraw-wrapper.css";
 
@@ -13,11 +11,7 @@ import type {
 } from "@excalidraw/excalidraw/element/types";
 import { WelcomeScreen } from "@excalidraw/excalidraw";
 import { Hexagon, Pen } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+import { Excalidraw } from "@/components/excalidraw";
 
 export function Canvas({
   excalidrawRef,
@@ -31,7 +25,7 @@ export function Canvas({
   const currElementsRef = useRef<ExcalidrawElement[]>([]);
   return (
     <div className="h-full w-full theme-dark border border-input rounded-md overflow-hidden relative">
-      <excalidraw.Excalidraw
+      <Excalidraw
         initialData={{
           elements: elements,
         }}
@@ -79,7 +73,7 @@ export function Canvas({
             </WelcomeScreen.Center.Menu>
           </WelcomeScreen.Center>
         </WelcomeScreen>
-      </excalidraw.Excalidraw>
+      </Excalidraw>
     </div>
   );
 }
