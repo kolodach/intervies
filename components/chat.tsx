@@ -39,10 +39,54 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { Circle, GlobeIcon, Pen } from "lucide-react";
+import { Circle, GlobeIcon, Pen, RotateCcw } from "lucide-react";
 import { useRef, useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 
-export default function Chat({ solution }: { solution: Solution }) {
+export function ResetDialog({ onReset }: { onReset: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <PromptInputButton>
+          <RotateCcw />
+          <span>Restart</span>
+        </PromptInputButton>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Start over?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action will reset the session and start over. You will lose any
+            progress you have made.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={onReset}>Restart</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export default function Chat({
+  solution,
+  onReset,
+}: {
+  solution: Solution;
+  onReset: () => void;
+}) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useUser();
@@ -134,6 +178,7 @@ export default function Chat({ solution }: { solution: Solution }) {
                   onTranscriptionChange={setText}
                   textareaRef={textareaRef}
                 />
+                <ResetDialog onReset={onReset} />
                 {/* <PromptInputButton
                   onClick={() => setUseWebSearch(!useWebSearch)}
                   variant={useWebSearch ? "default" : "ghost"}

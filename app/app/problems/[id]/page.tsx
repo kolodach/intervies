@@ -51,6 +51,23 @@ export default function Page() {
   });
   const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null);
 
+  const handleReset = async () => {
+    if (!solution) {
+      return;
+    }
+    excalidrawRef.current?.resetScene();
+    setElements([]);
+    const { error: updateError } = await updateSolution(client, solution.id, {
+      board_state: [] as unknown as Json[],
+      conversation: [] as unknown as Json[],
+    });
+    if (updateError) {
+      toast.error("Error resetting solution");
+      return;
+    }
+    window.location.reload();
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -64,7 +81,7 @@ export default function Page() {
   return (
     <div className="grid grid-cols-[400px_1fr] h-full">
       <div className="h-full p-2 min-h-0">
-        <Chat solution={solution} />
+        <Chat solution={solution} onReset={handleReset} />
       </div>
       <div className="h-full relative pb-2 pr-2">
         <Canvas
