@@ -28,16 +28,20 @@ export default function Page() {
     enabled: !!user,
   });
 
+  const [boardChanged, setBoardChanged] = useState(false);
+
   const initialElements = useMemo(() => {
     return (solution?.board_state ?? []) as unknown as Readonly<
       OrderedExcalidrawElement[]
     >;
   }, [solution]);
-  const [elements, setElements] = useState<
-    Readonly<OrderedExcalidrawElement[]>
-  >([]);
+  const elementsRef = useRef<Readonly<OrderedExcalidrawElement[]>>([]);
+
   const onChange = async (elements: Readonly<OrderedExcalidrawElement[]>) => {
-    setElements(elements);
+    if (JSON.stringify(elementsRef.current) === JSON.stringify(elements)) {
+      return;
+    }
+    elementsRef.current = elements;
     console.log("elements", elements);
     if (!solution) {
       return;
@@ -45,7 +49,13 @@ export default function Page() {
     await updateSolution(client, solution?.id, {
       board_state: elements as unknown as Json[],
     });
+    setBoardChanged(true);
   };
+
+  const onMessageSent = () => {
+    setBoardChanged(false);
+  };
+
   const debouncedOnChange = useDebouncer(onChange, {
     wait: 1000,
   });
@@ -56,7 +66,7 @@ export default function Page() {
       return;
     }
     excalidrawRef.current?.resetScene();
-    setElements([]);
+    elementsRef.current = [];
     const { error: updateError } = await updateSolution(client, solution.id, {
       board_state: [] as unknown as Json[],
       conversation: [] as unknown as Json[],
@@ -81,7 +91,12 @@ export default function Page() {
   return (
     <div className="grid grid-cols-[400px_1fr] h-full">
       <div className="h-full p-2 min-h-0">
-        <Chat solution={solution} onReset={handleReset} />
+        <Chat
+          solution={solution}
+          onReset={handleReset}
+          onMessageSent={onMessageSent}
+          boardChanged={boardChanged}
+        />
       </div>
       <div className="h-full relative pb-2 pr-2">
         <Canvas

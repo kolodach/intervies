@@ -83,9 +83,13 @@ export function ResetDialog({ onReset }: { onReset: () => void }) {
 export default function Chat({
   solution,
   onReset,
+  onMessageSent,
+  boardChanged,
 }: {
   solution: Solution;
   onReset: () => void;
+  onMessageSent: () => void;
+  boardChanged: boolean;
 }) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -117,11 +121,12 @@ export default function Chat({
           problemId: solution.problem_id,
           solutionId: solution.id,
           currentState: "GREETING",
-          boardChanged: false,
+          boardChanged: boardChanged,
         },
       }
     );
     setText("");
+    onMessageSent();
   };
 
   return (
@@ -188,12 +193,14 @@ export default function Chat({
                 </PromptInputButton> */}
               </PromptInputTools>
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Board changed
-                  </span>
-                  <div className="size-2 ml-auto bg-green-500 rounded-full " />
-                </div>
+                {boardChanged && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Board changed
+                    </span>
+                    <div className="size-2 ml-auto bg-green-500 rounded-full " />
+                  </div>
+                )}
                 <PromptInputSubmit
                   disabled={!text && !status}
                   status={status}

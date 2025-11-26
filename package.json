@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "add-component": "pnpm dlx shadcn@latest add",
-    "db:gen": "supabase gen types typescript --linked --schema=public > lib/database.types.ts"
+    "db:gen": "supabase gen types typescript --db-url 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --schema=public > lib/database.types.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.71",
