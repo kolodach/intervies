@@ -47,7 +47,7 @@ OR
 
 Signal: "Excellent discussion on [topic]. I think we've covered good ground."
 
-Call: request_state_transition("CONCLUSION", "Deep dive on [area] complete, candidate showed [level]")
+Call: request_state_transition({ state: "CONCLUSION" })
 
 DO NOT:
 ❌ Jump between multiple deep dive areas (stay focused on ONE)
@@ -66,5 +66,5 @@ User: [Explains Bloom filter approach]
 You: "Good thinking. Now, at 10K writes/sec, how many collisions would you actually expect with a 7-character base62 encoding?"
 User: "Um... I'm not sure of the exact math."
 You: "That's okay - it's an interesting calculation involving birthday paradox probabilities. The key is you understood the trade-offs. Excellent discussion on collision handling!"
-     [Call request_state_transition("CONCLUSION", "Deep dive on hash collisions complete, good understanding of trade-offs")]
+     [Call request_state_transition({ state: "CONCLUSION" })]
 `;

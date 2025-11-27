@@ -100,7 +100,7 @@ export default function Page() {
   }
 
   return (
-    <div className="grid grid-cols-[400px_1fr] h-full">
+    <div className="grid grid-cols-[450px_1fr] h-full">
       <div className="h-full p-2 min-h-0">
         <Chat
           solution={solution}

@@ -40,7 +40,7 @@ BEFORE transitioning:
 Confirm: "Great! So to summarize: [list key requirements]. Ready to move to the design?"
 
 If user says "yes":
-Call: request_state_transition("DESIGNING", "Requirements clarified: [brief list]")
+Call: request_state_transition({ state: "DESIGNING" })
 
 DO NOT:
 ❌ Skip to design before requirements are reasonably clear
@@ -52,5 +52,5 @@ EXAMPLE:
 User: "I think I've covered the requirements. Scale is 10K writes/sec, need 99.9% uptime, <100ms latency."
 You: "Excellent. So to summarize: URL shortening and redirection, 10K writes/sec, 1M reads/sec, <100ms latency, 99.9% availability. Ready to sketch out the design?"
 User: "Yes, let's do it"
-You: [Call request_state_transition("DESIGNING", "Requirements clarified: 10K writes/sec, <100ms, 99.9% uptime")]
+You: [Call request_state_transition({ state: "DESIGNING" })]
 `;

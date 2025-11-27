@@ -134,6 +134,10 @@ export default function Chat({
       <div className="flex flex-col h-full">
         <Conversation>
           <ConversationContent>
+            {/* Top and bottom gradient overlays */}
+            <div className="absolute top-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-b from-background to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-t from-background to-transparent" />
+            {/* Messages */}
             {messages.map((message, index) => (
               <Message
                 from={message.role}
@@ -178,7 +182,6 @@ export default function Chat({
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
-
         <div className="relative">
           <PromptInput onSubmit={handleSubmit} globalDrop multiple>
             {/* <PromptInputHeader>
