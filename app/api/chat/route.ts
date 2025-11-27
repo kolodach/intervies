@@ -157,7 +157,7 @@ export async function POST(req: Request) {
             logger.error(solutionError, "Error fetching solution");
             throw solutionError;
           }
-          return JSON.stringify(solution.board_state, null, 2);
+          return solution.board_state;
         },
       },
     },

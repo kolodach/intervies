@@ -53,6 +53,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  Tool,
+  ToolContent,
+  ToolHeader,
+  ToolInput,
+  ToolOutput,
+} from "./ai-elements/tool";
+import type { ToolUIPart } from "ai";
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -146,17 +154,38 @@ export default function Chat({
               >
                 <MessageContent className="size-full">
                   {message.parts.map((part, i) => {
+                    const key = `${message.id}-${i}`;
+                    const isTool = part.type.startsWith("tool-");
+                    if (isTool) {
+                      return (
+                        <Tool defaultOpen={false} key={key}>
+                          <ToolHeader
+                            type={part.type as ToolUIPart["type"]}
+                            state={(part as ToolUIPart).state}
+                          />
+                          <ToolContent>
+                            <ToolInput input={(part as ToolUIPart).input} />
+                            <ToolOutput
+                              output={(part as ToolUIPart).output}
+                              errorText={(part as ToolUIPart).errorText}
+                            />
+                          </ToolContent>
+                        </Tool>
+                      );
+                    }
                     switch (part.type) {
                       case "text":
                         return (
-                          <MessageResponse key={`${message.id}-${i}`}>
+                          <MessageResponse key={key}>
                             {part.text}
                           </MessageResponse>
                         );
+                      case "step-start":
+                        return null;
                       default:
                         return (
                           <pre
-                            key={`${message.id}-${i}`}
+                            key={key}
                             className="text-xs border rounded-md p-2 overflow-x-scroll size-full"
                           >
                             {JSON.stringify(part, null, 2)
