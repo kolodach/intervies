@@ -3,6 +3,7 @@ import {
   CircleDashed,
   HeartPlus,
   Hexagon,
+  Mail,
   MessageSquarePlus,
   Plus,
   Slash,
@@ -37,7 +38,7 @@ export function Header() {
         Contribute Problem
       </Button>
       <Button className="h-8 mr-2 text-xs py-1" variant="outline" size="sm">
-        <MessageSquarePlus className="w-2 h-2" />
+        <Mail className="w-2 h-2" />
         Give Feedback
       </Button>
       <Button className="h-8 mr-2 text-xs py-1" variant="default">
