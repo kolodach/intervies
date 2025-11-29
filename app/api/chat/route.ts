@@ -197,6 +197,14 @@ Only include the fields you want to mark as true.`,
         inputSchema: z
           .object({
             // GREETING PHASE
+            candidate_engaged_warmly: z
+              .boolean()
+              .describe("Candidate greeted back warmly (Hi, Hello, Thanks)")
+              .optional(),
+            candidate_asked_clarifying_question: z
+              .boolean()
+              .describe("Candidate asked a question about the problem")
+              .optional(),
             greeting_engagement: z
               .boolean()
               .describe("Candidate responded warmly and engaged")

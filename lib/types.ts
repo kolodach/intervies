@@ -29,6 +29,8 @@ export type ProblemRequirements = {
 
 export type EvaluationChecklist = {
   // Greeting
+  candidate_engaged_warmly: boolean;
+  candidate_asked_clarifying_question: boolean;
   greeting_engagement: boolean;
   greeting_sets_context: boolean;
   greeting_establishes_collaboration: boolean;
