@@ -116,13 +116,32 @@ export async function POST(req: Request) {
     }
   }
 
+  // Extract requirements from problem (with fallback to empty structure)
+  // Type assertion until database types are regenerated
+  const problemWithRequirements = problem as typeof problem & {
+    requirements?: Json;
+  };
+
+  const requirements = (problemWithRequirements.requirements as {
+    functional: string[];
+    non_functional: string[];
+    constraints?: string[];
+    out_of_scope?: string[];
+  }) || {
+    functional: [],
+    non_functional: [],
+    constraints: [],
+    out_of_scope: [],
+  };
+
   const prompt = buildInterviewerPrompt(
     currentState,
     boardChanged,
     user.fullName ?? "",
     JSON.stringify(problem, null, 2),
     boardDiff,
-    evaluationChecklist
+    evaluationChecklist,
+    requirements
   );
 
   logger.info({ prompt }, "Interviewer prompt");

@@ -20,6 +20,13 @@ export type TypedSupabaseClient = SupabaseClient<Database>;
 export type Problem = Database["public"]["Tables"]["problems"]["Row"];
 export type Solution = Database["public"]["Tables"]["solutions"]["Row"];
 
+export type ProblemRequirements = {
+  functional: string[];
+  non_functional: string[];
+  constraints?: string[];
+  out_of_scope?: string[];
+};
+
 export type EvaluationChecklist = {
   // Greeting
   greeting_engagement: boolean;
