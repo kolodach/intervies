@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import type { Json } from "@/lib/database.types";
 import { type UIMessage, useChat } from "@ai-sdk/react";
 import type { SolutionState } from "@/lib/types";
+import { logger } from "@/lib/logger";
+import { captureError } from "@/lib/observability";
 
 export default function Page() {
   const { id } = useParams();
@@ -35,7 +37,9 @@ export default function Page() {
     id: id as string,
     onError(error) {
       toast.error("Error fetching messages");
-      return;
+      captureError(error);
+      logger.error(error, "Error fetching messages");
+      throw error;
     },
     messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
   });
