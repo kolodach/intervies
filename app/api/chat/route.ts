@@ -1,4 +1,9 @@
-import { streamText, type UIMessage, convertToModelMessages } from "ai";
+import {
+  streamText,
+  type UIMessage,
+  convertToModelMessages,
+  generateId,
+} from "ai";
 import { openai } from "@ai-sdk/openai";
 import { SolutionStates, type SolutionState } from "@/lib/types";
 import { logger } from "@/lib/logger";
@@ -181,6 +186,16 @@ export async function POST(req: Request) {
         captureError(solutionError);
         logger.error(solutionError, "Error fetching solution");
         throw solutionError;
+      }
+      // INSERT_YOUR_CODE
+      // If the last message's id is null or empty string, assign a new id using generateId()
+      if (
+        Array.isArray(messages) &&
+        messages.length > 0 &&
+        (messages[messages.length - 1].id == null ||
+          messages[messages.length - 1].id === "")
+      ) {
+        messages[messages.length - 1].id = generateId();
       }
       const { error } = await updateSolution(supabase, solutionId, {
         conversation: messages as unknown as Json[],

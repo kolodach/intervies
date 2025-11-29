@@ -30,12 +30,37 @@ export default function Page() {
     enabled: !!user,
   });
 
-  const { messages, sendMessage, status } = useChat({
-    messages: (solution?.conversation ?? []) as unknown as UIMessage[],
+  // Only initialize useChat after solution is loaded
+  const { messages, sendMessage, status, setMessages } = useChat({
+    id: id as string,
+    onError(error) {
+      toast.error("Error fetching messages");
+      return;
+    },
+    messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
   });
+
+  // Sync messages from solution when it loads
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to sync only when solution changes
+  useEffect(() => {
+    if (solution?.conversation) {
+      const conversationMessages =
+        solution.conversation as unknown as UIMessage[];
+      // Only update if messages are different
+      if (JSON.stringify(messages) !== JSON.stringify(conversationMessages)) {
+        setMessages(conversationMessages);
+      }
+    }
+  }, [solution]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (!solution || !user || !id || messages.length > 0) {
+    if (
+      !user ||
+      !id ||
+      !solution ||
+      (solution.conversation as Json[]).length > 0
+    ) {
       return;
     }
     sendMessage(
