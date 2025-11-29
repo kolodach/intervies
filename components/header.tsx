@@ -16,6 +16,7 @@ import {
   SignInButton,
   SignUpButton,
   UserButton,
+  useUser,
 } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ function Breadcrumbs({ pathSegments }: { pathSegments: string[] }) {
 
 function HeaderTitle() {
   const pathname = usePathname();
+  const { user } = useUser();
   const client = useSupabaseBrowserClient();
 
   // Remove any query string/hash and split on /
@@ -83,7 +85,7 @@ function HeaderTitle() {
         if (error) throw error;
         return data;
       },
-      enabled: !!solutionId && !!client,
+      enabled: !!solutionId && !!client && !!user,
       staleTime: 2 * 60 * 1000,
     });
 

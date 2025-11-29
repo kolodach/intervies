@@ -10,14 +10,16 @@ import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/ty
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useParams } from "next/navigation";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useDebouncer } from "@tanstack/react-pacer";
 import { toast } from "sonner";
 import type { Json } from "@/lib/database.types";
+import { type UIMessage, useChat } from "@ai-sdk/react";
+import type { SolutionState } from "@/lib/types";
 
 export default function Page() {
   const { id } = useParams();
-  const user = useUser();
+  const { user } = useUser();
   const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
   const {
@@ -27,6 +29,30 @@ export default function Page() {
   } = useQuery(fetchSolutionById(supabase, id as string), {
     enabled: !!user,
   });
+
+  const { messages, sendMessage, status } = useChat({
+    messages: (solution?.conversation ?? []) as unknown as UIMessage[],
+  });
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
+  useEffect(() => {
+    if (!solution || !user || !id || messages.length > 0) {
+      return;
+    }
+    sendMessage(
+      {
+        text: "BEGIN_INTERVIEW",
+      },
+      {
+        body: {
+          userId: user.id,
+          problemId: solution.problem_id,
+          solutionId: solution.id,
+          currentState: solution.state as SolutionState,
+          boardChanged: boardChanged,
+        },
+      }
+    );
+  }, [id, user, solution]);
 
   const [boardChanged, setBoardChanged] = useState(false);
 
@@ -57,13 +83,13 @@ export default function Page() {
       return;
     }
     setBoardChanged(false);
-    // const { error } = await updateSolution(client, solution.id, {
-    //   prev_board_state: solution.board_state,
-    // });
-    // if (error) {
-    //   toast.error("Error updating solution");
-    //   return;
-    // }
+    const { error } = await updateSolution(client, solution.id, {
+      prev_board_state: solution.board_state,
+    });
+    if (error) {
+      toast.error("Error updating solution");
+      return;
+    }
   };
 
   const debouncedOnChange = useDebouncer(onChange, {
@@ -107,6 +133,10 @@ export default function Page() {
           onReset={handleReset}
           onMessageSent={onMessageSent}
           boardChanged={boardChanged}
+          messages={messages}
+          sendMessage={sendMessage}
+          status={status}
+          userId={user?.id}
         />
       </div>
       <div className="h-full relative pb-2 pr-2">

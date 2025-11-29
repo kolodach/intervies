@@ -31,8 +31,13 @@ import {
 import { fetchProblemBySolutionId } from "@/lib/queries/problems";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Solution, SolutionState } from "@/lib/types";
-import { type UIMessage, useChat } from "@ai-sdk/react";
-import { useUser } from "@clerk/nextjs";
+import type { UIMessage } from "@ai-sdk/react";
+import type {
+  ChatRequestOptions,
+  ChatStatus,
+  CreateUIMessage,
+  FileUIPart,
+} from "ai";
 import {
   Tooltip,
   TooltipContent,
@@ -93,18 +98,41 @@ export default function Chat({
   onReset,
   onMessageSent,
   boardChanged,
+  messages,
+  sendMessage,
+  status,
+  userId,
 }: {
   solution: Solution;
   onReset: () => void;
   onMessageSent: () => void;
   boardChanged: boolean;
+  messages: UIMessage[];
+  sendMessage: (
+    message?:
+      | (CreateUIMessage<UIMessage> & {
+          text?: never;
+          files?: never;
+          messageId?: string;
+        })
+      | {
+          text: string;
+          files?: FileList | FileUIPart[];
+          parts?: never;
+          messageId?: string;
+        }
+      | {
+          files: FileList | FileUIPart[];
+          parts?: never;
+          messageId?: string;
+        },
+    options?: ChatRequestOptions
+  ) => Promise<void>;
+  status: ChatStatus | undefined;
+  userId?: string;
 }) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { user } = useUser();
-  const { messages, sendMessage, status } = useChat({
-    messages: (solution?.conversation ?? []) as unknown as UIMessage[],
-  });
 
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
   const client = useSupabaseBrowserClient();
@@ -124,8 +152,7 @@ export default function Chat({
       },
       {
         body: {
-          webSearch: useWebSearch,
-          userId: user?.id,
+          userId: userId,
           problemId: solution.problem_id,
           solutionId: solution.id,
           currentState: solution.state as SolutionState,
@@ -146,7 +173,7 @@ export default function Chat({
             <div className="absolute top-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-b from-background to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-t from-background to-transparent" />
             {/* Messages */}
-            {messages.map((message, index) => (
+            {messages.slice(1).map((message, index) => (
               <Message
                 from={message.role}
                 key={`${message.id}-${index}`}
