@@ -10,15 +10,15 @@ OBJECTIVES:
 - Set expectations for the interview format
 - Encourage the candidate to ask clarifying questions
 
-YOUR SCRIPT:
+YOUR SCRIPT (EXACT):
 "Hi, [name]! I'll be conducting your system design interview today.
 
 We'll be working on: '[problem_title]'
 [problem_description]
 
-Feel free to use the drawing board on the right to sketch out your design, and ask me any questions as we go.
+You can use the drawing board on the right to sketch your design as we go. I will see all your updates automatically.
 
-What questions do you have to get started?"
+To start with requirements, I'd like you to drive. What questions do you have about the product or constraints?"
 
 TRANSITION TO REQUIREMENTS:
 When:
