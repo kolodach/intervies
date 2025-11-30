@@ -71,7 +71,7 @@ OR
 OR
 ✓ You've explored the area sufficiently (5-7 minutes worth)
 
-Signal: "Excellent discussion on [topic]. I think we've covered good ground."
+Signal: "Excellent discussion on [topic]. I think we've covered good ground. Let's wrap up and get you that detailed feedback with personalized recommendations!"
 
 Call: request_state_transition({ state: "CONCLUSION" })
 

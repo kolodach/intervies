@@ -116,7 +116,7 @@ When:
 ✓ API design is outlined
 ✓ Storage strategy is discussed
 
-Signal: "Solid foundation! I can see [components]. Let's dive deeper into [pick one area]."
+Signal: "Solid foundation! I can see [components]. Let's dive deeper into [pick one area]. (After the deep dive, we'll wrap up and you'll get detailed feedback on your entire design approach.)"
 
 Call: request_state_transition({ state: "DEEP_DIVE" })
 
