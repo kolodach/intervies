@@ -190,210 +190,146 @@ export async function POST(req: Request) {
         },
       },
       update_checklist: {
-        description: `Update evaluation checklist when candidate demonstrates competencies.
+        description: `Update evaluation checklist when candidate demonstrates competencies or red flags.
 Call immediately when you observe behaviors - don't batch at end of phase.
 Can update multiple items at once if candidate demonstrates multiple competencies.
-Only include the fields you want to mark as true.`,
+Only include the fields you want to mark as true.
+
+NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (being true is BAD).`,
         inputSchema: z
           .object({
-            // GREETING PHASE
-            candidate_engaged_warmly: z
-              .boolean()
-              .describe("Candidate greeted back warmly (Hi, Hello, Thanks)")
-              .optional(),
-            candidate_asked_clarifying_question: z
-              .boolean()
-              .describe("Candidate asked a question about the problem")
-              .optional(),
-            greeting_engagement: z
-              .boolean()
-              .describe("Candidate responded warmly and engaged")
-              .optional(),
-            greeting_sets_context: z
-              .boolean()
-              .describe("Acknowledged the problem/context")
-              .optional(),
-            greeting_establishes_collaboration: z
+            // REQUIREMENTS GATHERING (4 items)
+            requirements_asked_clarifying_questions: z
               .boolean()
               .describe(
-                'Signals collaboration ("let me ask...", "can you clarify...")'
+                "Asked questions to understand features, constraints, or scope. Example: 'What features should we support? What scale?'"
               )
               .optional(),
-
-            // REQUIREMENTS PHASE
-            requirements_clarified_requirements: z
+            requirements_discussed_scale_and_performance: z
               .boolean()
-              .describe("Asked specific questions about features/scope")
-              .optional(),
-            requirements_avoided_overanalysis: z
-              .boolean()
-              .describe("Moved forward without overthinking edge cases")
-              .optional(),
-            requirements_defined_scope: z
-              .boolean()
-              .describe("Stated clear boundaries (in/out of scope)")
+              .describe(
+                "Asked about or discussed QPS, users, latency, availability. Example: 'What's the expected QPS? Any latency requirements?'"
+              )
               .optional(),
             requirements_stated_assumptions: z
               .boolean()
-              .describe("Explicitly called out assumptions")
-              .optional(),
-            requirements_stated_scale_and_sla: z
-              .boolean()
-              .describe("Discussed QPS, users, latency, availability")
-              .optional(),
-            requirements_walked_through_user_scenarios: z
-              .boolean()
-              .describe("Described user flows/journeys")
-              .optional(),
-            requirements_validated_requirements: z
-              .boolean()
-              .describe("Confirmed understanding with you")
-              .optional(),
-
-            // DESIGN PHASE
-            design_provided_high_level_overview: z
-              .boolean()
-              .describe("Started with big picture before details")
-              .optional(),
-            design_modular_components_identified: z
-              .boolean()
-              .describe("Broke system into clear components")
-              .optional(),
-            design_covered_scalability: z
-              .boolean()
-              .describe("Addressed how system scales")
-              .optional(),
-            design_considered_future_growth: z
-              .boolean()
-              .describe("Thought about extensibility")
-              .optional(),
-            design_discussed_performance_and_latency: z
-              .boolean()
-              .describe("Addressed speed/latency concerns")
-              .optional(),
-            design_identified_spof_and_fault_tolerance: z
-              .boolean()
-              .describe("Called out failure points + mitigation")
-              .optional(),
-            design_covered_security_and_privacy: z
-              .boolean()
-              .describe("Addressed auth, data protection")
-              .optional(),
-            design_included_observability: z
-              .boolean()
-              .describe("Mentioned monitoring, logging, alerting")
-              .optional(),
-            design_chose_appropriate_databases: z
-              .boolean()
-              .describe("Selected suitable storage with reasoning")
-              .optional(),
-            design_covered_data_modeling: z
-              .boolean()
-              .describe("Discussed schema/data structure")
-              .optional(),
-            design_managed_data_growth_strategy: z
-              .boolean()
-              .describe("Addressed data volume growth (archival, partitioning)")
-              .optional(),
-            design_used_caching_properly: z
-              .boolean()
-              .describe("Applied caching where appropriate with reasoning")
-              .optional(),
-            design_avoided_over_under_engineering: z
-              .boolean()
-              .describe("Balanced complexity for requirements")
-              .optional(),
-            design_diagram_provided: z
-              .boolean()
-              .describe("Used board to create visual representations")
-              .optional(),
-            design_discussed_cost_implications: z
-              .boolean()
-              .describe("Mentioned infrastructure costs/tradeoffs")
-              .optional(),
-
-            // DEEP DIVE PHASE
-            deep_dive_explained_tradeoffs: z
-              .boolean()
-              .describe("Articulated pros/cons of choices")
-              .optional(),
-            deep_dive_considered_alternative_solutions: z
-              .boolean()
-              .describe("Compared multiple approaches")
-              .optional(),
-            deep_dive_used_specifics_not_buzzwords: z
-              .boolean()
-              .describe('Used concrete numbers/tech, not "at scale"')
-              .optional(),
-            deep_dive_demonstrated_conceptual_depth: z
-              .boolean()
-              .describe("Showed deep understanding of technologies")
-              .optional(),
-            deep_dive_did_back_of_envelope_calculations: z
-              .boolean()
-              .describe("Calculated capacity/bandwidth/storage")
-              .optional(),
-            deep_dive_addressed_edge_cases: z
-              .boolean()
-              .describe("Handled corner cases and failure scenarios")
-              .optional(),
-            deep_dive_covered_consistency_vs_availability: z
-              .boolean()
-              .describe("Discussed CAP theorem tradeoffs")
-              .optional(),
-            deep_dive_focused_on_relevant_failures: z
-              .boolean()
-              .describe("Prioritized likely/important failure modes")
-              .optional(),
-
-            // INTERACTION QUALITY (throughout all phases)
-            interaction_explained_thought_process: z
-              .boolean()
               .describe(
-                'Verbalized thinking ("I\'m considering...", "My reasoning...")'
+                "Explicitly called out assumptions when requirements were unclear. Example: 'I'm assuming we need strong consistency for payments'"
               )
               .optional(),
-            interaction_engaged_dialog_not_monologue: z
+            requirements_validated_understanding: z
               .boolean()
-              .describe("Asked questions, didn't just lecture")
-              .optional(),
-            interaction_reacted_to_hints: z
-              .boolean()
-              .describe("Picked up on guidance and adjusted")
-              .optional(),
-            interaction_communicated_clearly: z
-              .boolean()
-              .describe("Organized, easy to follow")
-              .optional(),
-            interaction_time_management_good: z
-              .boolean()
-              .describe("Appropriate pacing")
-              .optional(),
-            interaction_did_not_get_lost_in_details: z
-              .boolean()
-              .describe("Stayed appropriately high-level")
-              .optional(),
-            interaction_did_not_use_one_size_template: z
-              .boolean()
-              .describe("Tailored to problem, not generic")
-              .optional(),
-            interaction_honest_about_unknowns: z
-              .boolean()
-              .describe("Admitted knowledge gaps gracefully")
+              .describe(
+                "Confirmed understanding before moving to design. Example: 'So to summarize: 10M DAU, 99.9% uptime. Ready to design?'"
+              )
               .optional(),
 
-            // CONCLUSION PHASE
-            conclusion_validated_design_against_requirements: z
+            // DESIGN (8 items)
+            design_started_with_high_level: z
               .boolean()
-              .describe("Verified design meets requirements")
+              .describe(
+                "Provided high-level architecture before diving into details. Example: 'Let me start with the big picture: clients, API, services, databases'"
+              )
               .optional(),
-            conclusion_summarized_solution: z
+            design_drew_diagram: z
               .boolean()
-              .describe("Provided clear summary")
+              .describe(
+                "Used the whiteboard to draw components and connections. Example: Board shows boxes/arrows with labeled components"
+              )
               .optional(),
-            conclusion_closed_loop_with_interviewer: z
+            design_explained_data_flow: z
               .boolean()
-              .describe("Asked for feedback/concerns/questions")
+              .describe(
+                "Walked through how requests flow through the system. Example: 'When user clicks, request goes from client → LB → service → DB'"
+              )
+              .optional(),
+            design_justified_technology_choices: z
+              .boolean()
+              .describe(
+                "Explained WHY they chose specific technologies. Example: 'I chose Cassandra because we need high write throughput'"
+              )
+              .optional(),
+            design_discussed_scalability: z
+              .boolean()
+              .describe(
+                "Addressed how the system handles scale requirements. Example: 'We'll shard by user_id, use caching, add read replicas'"
+              )
+              .optional(),
+            design_considered_failures: z
+              .boolean()
+              .describe(
+                "Discussed what happens when components fail. Example: 'If primary DB fails, we failover to replica'"
+              )
+              .optional(),
+            design_discussed_tradeoffs: z
+              .boolean()
+              .describe(
+                "Acknowledged pros/cons of design decisions. Example: 'SQL gives us ACID, but NoSQL scales better for our use case'"
+              )
+              .optional(),
+            design_did_capacity_planning: z
+              .boolean()
+              .describe(
+                "Did back-of-envelope calculations for capacity/storage/bandwidth before choosing technologies. Example: '500k QPS × 1KB = 500MB/s throughput, 100M URLs × 500 bytes = 50GB storage'"
+              )
+              .optional(),
+            design_over_engineered: z
+              .boolean()
+              .describe(
+                "RED FLAG: Added unnecessary complexity or premature optimization. Example: 'Designed microservices with service mesh for a simple CRUD app'. This is INVERTED: true is BAD."
+              )
+              .optional(),
+
+            // DEEP DIVE (4 items)
+            deep_dive_showed_depth: z
+              .boolean()
+              .describe(
+                "Demonstrated deep knowledge in the focus area. Example: 'Explained consistent hashing, virtual nodes, rebalancing'"
+              )
+              .optional(),
+            deep_dive_considered_alternatives: z
+              .boolean()
+              .describe(
+                "Discussed alternative approaches and why they chose one. Example: 'We could use push or pull for feeds. Pull is simpler but...'"
+              )
+              .optional(),
+            deep_dive_did_calculations: z
+              .boolean()
+              .describe(
+                "Did back-of-envelope calculations or estimations. Example: '500k QPS × 1KB = 500MB/s, so we need...'"
+              )
+              .optional(),
+            deep_dive_handled_pushback: z
+              .boolean()
+              .describe(
+                "Responded well to challenging questions or critique. Example: 'Good point, I didn't consider that. Let me rethink...'"
+              )
+              .optional(),
+
+            // COMMUNICATION (4 items)
+            communication_clear_and_structured: z
+              .boolean()
+              .describe(
+                "Explained thoughts in organized, easy-to-follow manner. Example: 'First I'll cover requirements, then design, then dive into X'"
+              )
+              .optional(),
+            communication_collaborative: z
+              .boolean()
+              .describe(
+                "Engaged in dialogue, asked for feedback, not monologuing. Example: 'Does this make sense? What do you think about this approach?'"
+              )
+              .optional(),
+            communication_thought_out_loud: z
+              .boolean()
+              .describe(
+                "Shared their thinking process, not just conclusions. Example: 'I'm thinking we need caching because of the read:write ratio'"
+              )
+              .optional(),
+            communication_got_defensive: z
+              .boolean()
+              .describe(
+                "RED FLAG: Became defensive, dismissive, or argumentative. Example: 'That wouldn't be a problem because... (without considering the concern)'. This is INVERTED: true is BAD."
+              )
               .optional(),
           })
           .describe(

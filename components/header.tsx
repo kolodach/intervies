@@ -64,11 +64,6 @@ function HeaderTitle() {
   const problemsIdx = segments.indexOf("problems");
   const isProblemRoute = problemsIdx === 0 && segments.length === 2; // /problems/{id}
 
-  if (segments.length === 0) {
-    // /app or /
-    return <span className="ml-2 text-sm font-medium">Home</span>;
-  }
-
   // If route is /problems/{id}
   if (isProblemRoute) {
     // The second segment is the solutions id
@@ -94,6 +89,11 @@ function HeaderTitle() {
         {isLoading ? "Loading..." : data?.title ?? "Problem"}
       </span>
     );
+  }
+
+  if (segments.length === 0) {
+    // /app or /
+    return <span className="ml-2 text-sm font-medium">Home</span>;
   }
 
   // Otherwise, show breadcrumbs
