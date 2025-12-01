@@ -134,6 +134,6 @@ export const getActiveTools = (currentState: SolutionState) => {
     case "DEEP_DIVE":
       return [...commonTools, "request_state_transition", "get_board_state"];
     case "CONCLUSION":
-      return [...commonTools, "request_state_transition"];
+      return [...commonTools, "conclude_interview"];
   }
 };

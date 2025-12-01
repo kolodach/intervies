@@ -18,6 +18,7 @@ import { type UIMessage, useChat } from "@ai-sdk/react";
 import type { SolutionState } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/observability";
+import { useEvaluationPolling } from "@/lib/hooks/use-evaluation-polling";
 
 export default function Page() {
   const { id } = useParams();
@@ -33,7 +34,7 @@ export default function Page() {
   });
 
   // Only initialize useChat after solution is loaded
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status, setMessages, regenerate } = useChat({
     id: id as string,
     onError(error) {
       toast.error("Error fetching messages");
@@ -42,6 +43,32 @@ export default function Page() {
       throw error;
     },
     messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
+    onToolCall: async ({ toolCall }) => {
+      if (toolCall.toolName === "conclude_interview") {
+        logger.info({ solutionId: id }, "Concluding interview");
+
+        try {
+          // Trigger backend evaluation
+          const response = await fetch(`/api/v1/solutions/${id}/conclude`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to conclude interview");
+          }
+
+          toast.info("Interview concluded. Generating evaluation...");
+
+          // Start polling for evaluation results
+          startPolling();
+        } catch (error) {
+          logger.error({ error }, "Failed to conclude interview");
+          captureError(error as Error);
+          toast.error("Failed to start evaluation");
+        }
+      }
+    },
   });
 
   // Sync messages from solution when it loads
@@ -85,6 +112,27 @@ export default function Page() {
 
   const [boardChanged, setBoardChanged] = useState(false);
 
+  // Evaluation polling
+  const {
+    evaluation,
+    isEvaluating,
+    isCompleted,
+    isFailed,
+    error: evaluationError,
+    startPolling,
+  } = useEvaluationPolling(id as string);
+
+  // Show evaluation status toasts
+  useEffect(() => {
+    if (isCompleted && evaluation) {
+      toast.success("Evaluation complete! Check the results below.");
+      logger.info({ evaluation }, "Evaluation completed");
+    }
+    if (isFailed || evaluationError) {
+      toast.error(evaluationError || "Evaluation failed");
+    }
+  }, [isCompleted, isFailed, evaluation, evaluationError]);
+
   const initialElements = useMemo(() => {
     return (solution?.board_state ?? []) as unknown as Readonly<
       OrderedExcalidrawElement[]
@@ -126,6 +174,24 @@ export default function Page() {
   });
   const excalidrawRef = useRef<ExcalidrawImperativeAPI>(null);
 
+  // HANDLERS
+
+  const handleRegenerate = async (messageId: string) => {
+    if (!solution) {
+      return;
+    }
+    await regenerate({
+      messageId,
+      body: {
+        userId: user?.id,
+        problemId: solution.problem_id,
+        solutionId: solution.id,
+        currentState: solution.state as SolutionState,
+        boardChanged: boardChanged,
+      },
+    });
+  };
+
   const handleReset = async () => {
     if (!solution) {
       return;
@@ -159,6 +225,7 @@ export default function Page() {
       <div className="h-full p-2 min-h-0">
         <Chat
           solution={solution}
+          onRegenerate={handleRegenerate}
           onReset={handleReset}
           onMessageSent={onMessageSent}
           boardChanged={boardChanged}
@@ -167,6 +234,42 @@ export default function Page() {
           status={status}
           userId={user?.id}
         />
+
+        {/* Evaluation Status */}
+        {isEvaluating && (
+          <div className="fixed bottom-4 left-4 right-4 bg-blue-500 text-white p-4 rounded-lg shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+              <span>
+                Generating evaluation... This may take up to 2 minutes.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Evaluation Complete */}
+        {isCompleted && evaluation && (
+          <div className="fixed bottom-4 left-4 right-4 bg-green-500 text-white p-4 rounded-lg shadow-lg">
+            <div className="space-y-2">
+              <div className="text-xl font-bold">
+                Overall Score: {evaluation.overall_score}/100
+              </div>
+              <div className="text-sm">
+                Level: {evaluation.level_assessment.toUpperCase()}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  // TODO: Navigate to evaluation page or show modal
+                  logger.info("View evaluation clicked");
+                }}
+                className="mt-2 px-4 py-2 bg-white text-green-600 rounded hover:bg-gray-100"
+              >
+                View Full Evaluation
+              </button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="h-full relative pb-2 pr-2">
         <Canvas

@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
-  }
   public: {
     Tables: {
       problems: {
@@ -23,6 +18,7 @@ export type Database = {
           evaluation_criteria: Json
           id: string
           is_active: boolean | null
+          requirements: Json
           sample_requirements: string[]
           tags: string[]
           title: string
@@ -36,6 +32,7 @@ export type Database = {
           evaluation_criteria?: Json
           id?: string
           is_active?: boolean | null
+          requirements?: Json
           sample_requirements?: string[]
           tags?: string[]
           title: string
@@ -49,6 +46,7 @@ export type Database = {
           evaluation_criteria?: Json
           id?: string
           is_active?: boolean | null
+          requirements?: Json
           sample_requirements?: string[]
           tags?: string[]
           title?: string
@@ -59,10 +57,16 @@ export type Database = {
       solutions: {
         Row: {
           board_state: Json
+          concluded_at: string | null
           conversation: Json
           created_at: string | null
+          evaluated_at: string | null
+          evaluation: Json | null
+          evaluation_checklist: Json | null
           id: string
+          prev_board_state: Json
           problem_id: string
+          state: string
           status: string
           title: string
           updated_at: string | null
@@ -70,10 +74,16 @@ export type Database = {
         }
         Insert: {
           board_state?: Json
+          concluded_at?: string | null
           conversation?: Json
           created_at?: string | null
+          evaluated_at?: string | null
+          evaluation?: Json | null
+          evaluation_checklist?: Json | null
           id?: string
+          prev_board_state?: Json
           problem_id: string
+          state?: string
           status: string
           title: string
           updated_at?: string | null
@@ -81,10 +91,16 @@ export type Database = {
         }
         Update: {
           board_state?: Json
+          concluded_at?: string | null
           conversation?: Json
           created_at?: string | null
+          evaluated_at?: string | null
+          evaluation?: Json | null
+          evaluation_checklist?: Json | null
           id?: string
+          prev_board_state?: Json
           problem_id?: string
+          state?: string
           status?: string
           title?: string
           updated_at?: string | null
@@ -248,3 +264,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

@@ -44,7 +44,7 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { Circle, GlobeIcon, Pen, RotateCcw } from "lucide-react";
+import { Circle, GlobeIcon, Link, Pen, RotateCcw } from "lucide-react";
 import { Fragment, useRef, useState } from "react";
 import {
   AlertDialog,
@@ -66,6 +66,13 @@ import {
   ToolOutput,
 } from "./ai-elements/tool";
 import type { ToolUIPart } from "ai";
+import { Json } from "@/lib/database.types";
+import {
+  FinalEvaluation,
+  FinalEvaluationSchema,
+} from "@/lib/evaluation/schemas";
+import { capitalize } from "@/lib/utils";
+import { Badge } from "./ui/badge";
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -95,6 +102,7 @@ export function ResetDialog({ onReset }: { onReset: () => void }) {
 
 export default function Chat({
   solution,
+  onRegenerate,
   onReset,
   onMessageSent,
   boardChanged,
@@ -104,6 +112,7 @@ export default function Chat({
   userId,
 }: {
   solution: Solution;
+  onRegenerate: (messageId: string) => void;
   onReset: () => void;
   onMessageSent: () => void;
   boardChanged: boolean;
@@ -173,68 +182,243 @@ export default function Chat({
             <div className="absolute top-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-b from-background to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-t from-background to-transparent" />
             {/* Messages */}
-            {messages.slice(1).map((message, index) => (
-              <Message
-                from={message.role}
-                key={`${message.id}-${index}`}
-                className="max-w-full"
-              >
-                <MessageContent className="size-full">
-                  {message.parts.map((part, i) => {
-                    const key = `${message.id}-${i}`;
-                    const isTool = part.type.startsWith("tool-");
-                    if (isTool) {
-                      return (
-                        <Tool defaultOpen={false} key={key}>
-                          <ToolHeader
-                            type={part.type as ToolUIPart["type"]}
-                            state={(part as ToolUIPart).state}
-                          />
-                          <ToolContent>
-                            <ToolInput input={(part as ToolUIPart).input} />
-                            <ToolOutput
-                              output={(part as ToolUIPart).output}
-                              errorText={(part as ToolUIPart).errorText}
+            {messages.slice(1).map((message, index) => {
+              const key = `${message.id}-${index}`;
+
+              const containsEvaluation =
+                message.metadata &&
+                typeof message.metadata === "object" &&
+                "evaluation" in message.metadata;
+              if (containsEvaluation) {
+                const evaluation = (message.metadata as { evaluation: Json })
+                  ?.evaluation as FinalEvaluation;
+                const scoreColor =
+                  evaluation.overall_score >= 80
+                    ? "text-green-500"
+                    : evaluation.overall_score >= 50
+                    ? "text-yellow-500"
+                    : evaluation.overall_score >= 30
+                    ? "text-orange-500"
+                    : "text-red-500";
+
+                const scoreIcon =
+                  evaluation.overall_score >= 80
+                    ? "🏆"
+                    : evaluation.overall_score >= 50
+                    ? "💪"
+                    : evaluation.overall_score >= 30
+                    ? "🤝"
+                    : "👋";
+                return (
+                  <Message
+                    from={message.role}
+                    key={key}
+                    className="max-w-full border rounded-md p-4"
+                  >
+                    <MessageContent className="size-full">
+                      <div>
+                        <h3 className="text-lg font-bold">
+                          Overall Score:{" "}
+                          <span className={scoreColor}>
+                            {evaluation.overall_score} / 100
+                          </span>{" "}
+                          {scoreIcon}
+                        </h3>
+                        <p className="text-md font-bold mb-4">
+                          Level Assessment:{" "}
+                          {capitalize(evaluation.level_assessment)}
+                        </p>
+                        <MessageResponse>{evaluation.summary}</MessageResponse>
+
+                        <h3 className="text-lg font-bold my-2">
+                          Category Scores:
+                        </h3>
+
+                        <ul className="list-disc list-inside">
+                          <li>
+                            <span className="font-bold">
+                              {
+                                evaluation.category_scores.requirements
+                                  .percentage
+                              }
+                            </span>
+                            % for Requirements
+                          </li>
+                          for Requirements
+                          <li>
+                            <span className="font-bold">
+                              {evaluation.category_scores.design.percentage}
+                            </span>
+                            % for Design Design
+                          </li>
+                          <li>
+                            <span className="font-bold">
+                              {evaluation.category_scores.deep_dive.percentage}%
+                            </span>
+                            for Deep Dive
+                          </li>
+                          <li>
+                            <span className="font-bold">
+                              {
+                                evaluation.category_scores.communication
+                                  .percentage
+                              }
+                            </span>
+                            % for Communication
+                          </li>
+                        </ul>
+
+                        <details className="border rounded-md py-2 px-4 mt-2">
+                          <summary className="text-md font-bold">
+                            Top Strengths:
+                          </summary>
+                          {evaluation.top_strengths.map((strength) => (
+                            <div key={strength.strength} className="mt-2">
+                              <h4 className="text-md font-bold">
+                                {strength.strength}
+                              </h4>
+                              <p>{strength.evidence}</p>
+                            </div>
+                          ))}
+                        </details>
+
+                        <details className="border rounded-md py-2 px-4 mt-2">
+                          <summary className="text-md font-bold">
+                            Areas for Improvement:
+                          </summary>
+                          {evaluation.areas_for_improvement.map((area) => (
+                            <div key={area.area} className="mt-2">
+                              <h4 className="text-md font-bold">{area.area}</h4>
+                              <p>{area.why_important}</p>
+                            </div>
+                          ))}
+                        </details>
+
+                        <details className="border rounded-md py-2 px-4 mt-2">
+                          <summary className="text-md font-bold">
+                            Recommendations:
+                          </summary>
+                          {evaluation.recommendations.topics_to_revisit.map(
+                            (topic) => (
+                              <div key={topic.topic} className="mt-2">
+                                <h4 className="text-md font-bold">
+                                  {topic.topic}
+                                </h4>
+                                <p>{topic.why}</p>
+                                <ul className="list-disc list-inside">
+                                  {topic.resources.map((resource) => (
+                                    <li key={resource.title}>
+                                      {resource.title}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )
+                          )}
+                          {evaluation.recommendations.practice_strategies.map(
+                            (strategy) => (
+                              <div key={strategy}>
+                                <h4 className="text-md">{strategy}</h4>
+                              </div>
+                            )
+                          )}
+                        </details>
+                        <h3 className="text-lg font-bold my-2">
+                          Next Problems to Practice:
+                        </h3>
+                        {evaluation.recommendations.next_problems_to_practice.map(
+                          (problem) => (
+                            <div key={problem} className="inline-block">
+                              <Badge variant="outline">
+                                <Link />
+                                {problem}
+                              </Badge>
+                            </div>
+                          )
+                        )}
+                      </div>
+                    </MessageContent>
+                  </Message>
+                );
+              }
+
+              return (
+                <Message from={message.role} key={key} className="max-w-full">
+                  <MessageContent className="size-full">
+                    {message.parts.map((part, i) => {
+                      const key = `${message.id}-${i}`;
+                      const isTool = part.type.startsWith("tool-");
+                      if (isTool) {
+                        return (
+                          <Tool defaultOpen={false} key={key}>
+                            <ToolHeader
+                              type={part.type as ToolUIPart["type"]}
+                              state={(part as ToolUIPart).state}
                             />
-                          </ToolContent>
-                        </Tool>
-                      );
-                    }
-                    switch (part.type) {
-                      case "text":
-                        return (
-                          <MessageResponse key={key}>
-                            {part.text}
-                          </MessageResponse>
+                            <ToolContent>
+                              <ToolInput input={(part as ToolUIPart).input} />
+                              <ToolOutput
+                                output={(part as ToolUIPart).output}
+                                errorText={(part as ToolUIPart).errorText}
+                              />
+                            </ToolContent>
+                          </Tool>
                         );
-                      case "step-start":
-                        return null;
-                      default:
-                        return (
-                          <pre
-                            key={key}
-                            className="text-xs border rounded-md p-2 overflow-x-scroll size-full"
-                          >
-                            {JSON.stringify(part, null, 2)
-                              .split("\\n")
-                              .map((line, i) => (
-                                <Fragment
-                                  key={`${line}-${
-                                    // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-                                    i
-                                  }`}
-                                >
-                                  {line}
-                                  <br />
-                                </Fragment>
-                              ))}
-                          </pre>
-                        );
-                    }
-                  })}
-                </MessageContent>
-              </Message>
-            ))}
+                      }
+                      switch (part.type) {
+                        case "text":
+                          return (
+                            <div
+                              className="flex flex-col items-center gap-2 group"
+                              key={key}
+                            >
+                              <MessageResponse>{part.text}</MessageResponse>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    onClick={() => onRegenerate(message.id)}
+                                    variant="ghost"
+                                    size="icon"
+                                    className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <RotateCcw />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  Regenerate response
+                                </TooltipContent>
+                              </Tooltip>
+                            </div>
+                          );
+                        case "step-start":
+                          return null;
+                        default:
+                          return (
+                            <pre
+                              key={key}
+                              className="text-xs border rounded-md p-2 overflow-x-scroll size-full"
+                            >
+                              {JSON.stringify(part, null, 2)
+                                .split("\\n")
+                                .map((line, i) => (
+                                  <Fragment
+                                    key={`${line}-${
+                                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                                      i
+                                    }`}
+                                  >
+                                    {line}
+                                    <br />
+                                  </Fragment>
+                                ))}
+                            </pre>
+                          );
+                      }
+                    })}
+                  </MessageContent>
+                </Message>
+              );
+            })}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>

@@ -189,6 +189,14 @@ export async function POST(req: Request) {
           return solution.board_state;
         },
       },
+      conclude_interview: {
+        description: `Conclude the interview and trigger evaluation.
+Call this ONLY in CONCLUSION state after providing closing remarks to the candidate.
+The interview will become read-only and evaluation will begin immediately.
+This is a client-side tool - the frontend will handle the actual API call.`,
+        inputSchema: z.object({}),
+        // No execute function - client-side tool
+      },
       update_checklist: {
         description: `Update evaluation checklist when candidate demonstrates competencies or red flags.
 Call immediately when you observe behaviors - don't batch at end of phase.
