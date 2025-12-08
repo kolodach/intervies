@@ -4,35 +4,9 @@ import { useAuthenticatedQuery } from "@/lib/hooks/query-hooks";
 import { fetchAllProblemsQuery } from "@/lib/queries/problems";
 import { capitalize } from "@/lib/utils";
 import { captureException } from "@sentry/nextjs";
-import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useState, useMemo } from "react";
 import type { Problem, Solution } from "@/lib/types";
-import {
-  CircleDashed,
-  Circle,
-  CircleCheck,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-  Filter,
-  Search,
-} from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuCheckboxItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { ProblemsTable } from "@/components/problems-table";
 import {
   createSolution,
   findSolutionByProblemId,
@@ -246,212 +220,24 @@ export default function Page() {
     router.push(`/app/problems/${newSolution.id}`);
   };
 
-  const getSortLabel = () => {
-    if (!sortBy) return null;
-    const labels: Record<string, string> = {
-      status: "Status",
-      title: "Title",
-      difficulty: "Difficulty",
-    };
-    return labels[sortBy];
-  };
-
   return (
     <div className="w-full h-full flex flex-col items-center p-4">
       {error && <div className="text-red-500">{error.message}</div>}
       <div className="w-full mb-4 max-w-[800px]">
-        {/* Search and Controls */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search problems..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          {/* Sort Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                {sortBy ? (
-                  <>
-                    {sortDirection === "asc" ? (
-                      <ArrowUp className="w-4 h-4" />
-                    ) : (
-                      <ArrowDown className="w-4 h-4" />
-                    )}
-                    <span className="ml-2">{getSortLabel()}</span>
-                  </>
-                ) : (
-                  <ArrowUpDown className="w-4 h-4" />
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleSort("status")}>
-                <div className="flex items-center gap-2">
-                  {sortBy === "status" ? (
-                    sortDirection === "asc" ? (
-                      <ArrowDown className="w-4 h-4" />
-                    ) : (
-                      <ArrowUp className="w-4 h-4" />
-                    )
-                  ) : (
-                    <ArrowUpDown className="w-4 h-4" />
-                  )}
-                  <span>Status</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort("title")}>
-                <div className="flex items-center gap-2">
-                  {sortBy === "title" ? (
-                    sortDirection === "asc" ? (
-                      <ArrowDown className="w-4 h-4" />
-                    ) : (
-                      <ArrowUp className="w-4 h-4" />
-                    )
-                  ) : (
-                    <ArrowUpDown className="w-4 h-4" />
-                  )}
-                  <span>Title</span>
-                </div>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleSort("difficulty")}>
-                <div className="flex items-center gap-2">
-                  {sortBy === "difficulty" ? (
-                    sortDirection === "asc" ? (
-                      <ArrowDown className="w-4 h-4" />
-                    ) : (
-                      <ArrowUp className="w-4 h-4" />
-                    )
-                  ) : (
-                    <ArrowUpDown className="w-4 h-4" />
-                  )}
-                  <span>Difficulty</span>
-                </div>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {/* Filter Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <Filter className="w-4 h-4" />
-                {(statusFilters.size > 0 || difficultyFilters.size > 0) && (
-                  <span className="ml-2">
-                    {statusFilters.size + difficultyFilters.size}
-                  </span>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel>Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={statusFilters.has("Active")}
-                onCheckedChange={() => toggleStatusFilter("Active")}
-              >
-                Active
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilters.has("Completed")}
-                onCheckedChange={() => toggleStatusFilter("Completed")}
-              >
-                Completed
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilters.has("Not Started")}
-                onCheckedChange={() => toggleStatusFilter("Not Started")}
-              >
-                Not Started
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Difficulty</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={difficultyFilters.has("Easy")}
-                onCheckedChange={() => toggleDifficultyFilter("Easy")}
-              >
-                Easy
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={difficultyFilters.has("Normal")}
-                onCheckedChange={() => toggleDifficultyFilter("Normal")}
-              >
-                Normal
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={difficultyFilters.has("Hard")}
-                onCheckedChange={() => toggleDifficultyFilter("Hard")}
-              >
-                Hard
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        {/* Table */}
-        <div className="rounded-md border">
-          <Table>
-            <TableBody>
-              {problems?.map((problem) => {
-                const status = getProblemStatus(problem.id);
-                return (
-                  <TableRow
-                    key={problem.id}
-                    onClick={() => handleStart(problem)}
-                    className="cursor-pointer hover:bg-muted/50"
-                  >
-                    {/* Status and Title merged */}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center">
-                              {status === "completed" ? (
-                                <CircleCheck className="w-5 h-5 text-green-600" />
-                              ) : status === "in_progress" ? (
-                                <Circle className="w-5 h-5 text-orange-500" />
-                              ) : (
-                                <CircleDashed className="w-5 h-5 text-gray-500" />
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>
-                              {status === "Not Started"
-                                ? status
-                                : capitalize(status.replace(/_/g, " "))}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                        <span className="font-medium">{problem.title}</span>
-                      </div>
-                    </TableCell>
-                    {/* Difficulty */}
-                    <TableCell className="text-right">
-                      <span
-                        className={
-                          problem.difficulty === "easy"
-                            ? "text-green-600"
-                            : problem.difficulty === "medium"
-                            ? "text-yellow-600"
-                            : problem.difficulty === "hard"
-                            ? "text-red-600"
-                            : undefined
-                        }
-                      >
-                        {capitalize(problem.difficulty)}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+        <ProblemsTable
+          problems={problems}
+          getProblemStatus={getProblemStatus}
+          onRowClick={handleStart}
+          search={search}
+          onSearchChange={setSearch}
+          sortBy={sortBy}
+          sortDirection={sortDirection}
+          onSort={handleSort}
+          statusFilters={statusFilters}
+          difficultyFilters={difficultyFilters}
+          onToggleStatusFilter={toggleStatusFilter}
+          onToggleDifficultyFilter={toggleDifficultyFilter}
+        />
       </div>
     </div>
   );
