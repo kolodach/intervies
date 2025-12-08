@@ -1,19 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { useAuthenticatedQuery } from "@/lib/hooks/query-hooks";
 import { fetchAllProblemsQuery } from "@/lib/queries/problems";
 import { capitalize } from "@/lib/utils";
 import { captureException } from "@sentry/nextjs";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { useEffect, useState, useMemo } from "react";
 import type { Problem, Solution } from "@/lib/types";
 import { CircleDashed, Circle, CircleCheck } from "lucide-react";
@@ -82,9 +73,6 @@ export default function Page() {
         problemsData.filter(
           (problem) =>
             problem.title.toLowerCase().includes(search.toLowerCase()) ||
-            problem.tags.some((tag) =>
-              tag.toLowerCase().includes(search.toLowerCase())
-            ) ||
             problem.difficulty.toLowerCase().includes(search.toLowerCase())
         )
       );
@@ -133,47 +121,45 @@ export default function Page() {
           setSearch(e.target.value);
         }}
       />
-      <div className="w-full mb-4 max-w-[1200px] rounded-md border mt-4">
+      <div className="w-full mb-4 max-w-[800px] rounded-md border mt-4">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Status</TableHead>
-              <TableHead>Difficulty</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Tags</TableHead>
-              <TableHead>{""}</TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
             {problems?.map((problem) => {
               const status = getProblemStatus(problem.id);
               return (
-                <TableRow key={problem.id}>
-                  {/* Status */}
+                <TableRow
+                  key={problem.id}
+                  onClick={() => handleStart(problem)}
+                  className="cursor-pointer hover:bg-muted/50"
+                >
+                  {/* Status and Title merged */}
                   <TableCell>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="flex items-center">
-                          {status === "completed" ? (
-                            <CircleCheck className="w-5 h-5 text-green-600" />
-                          ) : status === "in_progress" ? (
-                            <Circle className="w-5 h-5 text-orange-500" />
-                          ) : (
-                            <CircleDashed className="w-5 h-5 text-gray-500" />
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          {status === "Not Started"
-                            ? status
-                            : capitalize(status.replace(/_/g, " "))}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
+                    <div className="flex items-center gap-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="flex items-center">
+                            {status === "completed" ? (
+                              <CircleCheck className="w-5 h-5 text-green-600" />
+                            ) : status === "in_progress" ? (
+                              <Circle className="w-5 h-5 text-orange-500" />
+                            ) : (
+                              <CircleDashed className="w-5 h-5 text-gray-500" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            {status === "Not Started"
+                              ? status
+                              : capitalize(status.replace(/_/g, " "))}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <span className="font-medium">{problem.title}</span>
+                    </div>
                   </TableCell>
                   {/* Difficulty */}
-                  <TableCell>
+                  <TableCell className="text-right">
                     <span
                       className={
                         problem.difficulty === "easy"
@@ -187,22 +173,6 @@ export default function Page() {
                     >
                       {capitalize(problem.difficulty)}
                     </span>
-                  </TableCell>
-                  <TableCell className="font-medium">{problem.title}</TableCell>
-                  <TableCell>
-                    {problem.tags.map((tag) => (
-                      <Badge key={tag} variant={"outline"}>
-                        {tag}
-                      </Badge>
-                    ))}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      onClick={() => handleStart(problem)}
-                    >
-                      Start
-                    </Button>
                   </TableCell>
                 </TableRow>
               );

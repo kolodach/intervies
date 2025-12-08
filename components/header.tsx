@@ -121,16 +121,16 @@ export function Header() {
         variant="outline"
         size="sm"
       >
-        <HeartPlus className="w-2 h-2" />
-        Contribute Problem
+        <HeartPlus className="w-4 h-4 md:w-2 md:h-2" />
+        <span className="hidden md:inline ml-1">Contribute Problem</span>
       </Button>
       <Button className="h-8 mr-2 text-xs py-1" variant="outline" size="sm">
-        <Mail className="w-2 h-2" />
-        Give Feedback
+        <Mail className="w-4 h-4 md:w-2 md:h-2" />
+        <span className="hidden md:inline ml-1">Give Feedback</span>
       </Button>
       <Button className="h-8 mr-2 text-xs py-1" variant="default">
-        <Plus className="w-2 h-2" />
-        New Problem
+        <Plus className="w-4 h-4 md:w-2 md:h-2" />
+        <span className="hidden md:inline ml-1">New Problem</span>
       </Button>
       <SignedOut>
         <SignInButton />
