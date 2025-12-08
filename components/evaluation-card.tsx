@@ -18,12 +18,12 @@ export function EvaluationCard({ evaluation }: EvaluationCardProps) {
 
   const scoreBackground =
     evaluation.overall_score >= 80
-      ? "bg-green-500"
+      ? "bg-green-500/30"
       : evaluation.overall_score >= 50
-      ? "bg-yellow-500"
+      ? "bg-yellow-500/30"
       : evaluation.overall_score >= 30
-      ? "bg-orange-500"
-      : "bg-red-500";
+      ? "bg-orange-500/30"
+      : "bg-red-500/30";
 
   const scoreIcon =
     evaluation.overall_score >= 80
@@ -37,8 +37,8 @@ export function EvaluationCard({ evaluation }: EvaluationCardProps) {
   return (
     <div>
       {/* Overall Score Header */}
-      <div className={cn("p-4 rounded-md mb-4", scoreBackground)}>
-        <h3 className="text-xl font-bold">
+      <div className={cn("p-2 rounded-sm mb-4", scoreBackground)}>
+        <h3 className="text-lg font-bold">
           Overall Score:{" "}
           <span className="font-black">{evaluation.overall_score} / 100</span>{" "}
           {scoreIcon}

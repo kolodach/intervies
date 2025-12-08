@@ -1,4 +1,5 @@
 import {
+  Circle,
   CircleCheck,
   CircleDashed,
   HeartPlus,
@@ -19,8 +20,9 @@ import {
   useUser,
 } from "@clerk/nextjs";
 import { usePathname } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
+import { fetchSolutionById } from "@/lib/queries/solutions";
 
 function formatBreadcrumb(segment: string) {
   if (!segment) return "";
@@ -66,26 +68,29 @@ function HeaderTitle() {
 
   // The second segment is the solutions id
   const solutionId = segments[1];
-  // Query for the solution by id
-  const { data, isLoading } = useQuery({
-    queryKey: ["solution-title", solutionId],
-    queryFn: async () => {
-      const { data, error } = await client
-        .from("solutions")
-        .select("title")
-        .eq("id", solutionId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
+  // Query for the solution by id using supabase-cache-helpers
+  const { data, isLoading } = useQuery(fetchSolutionById(client, solutionId), {
     enabled: !!solutionId && !!client && !!user,
     staleTime: 2 * 60 * 1000,
   });
 
   if (isProblemRoute) {
+    const isCompleted = data?.status === "completed";
+
     return (
-      <span className="ml-2 text-sm font-medium overflow-ellipsis line-clamp-1">
-        {isLoading ? "Loading..." : data?.title ?? "Problem"}
+      <span className="ml-2 text-sm font-medium overflow-ellipsis line-clamp-1 flex items-center gap-2">
+        {isLoading ? (
+          "Loading..."
+        ) : (
+          <>
+            {isCompleted ? (
+              <CircleCheck className="w-4 h-4 text-green-500" />
+            ) : (
+              <Circle className="w-4 h-4 text-orange-500" />
+            )}
+            {data?.title ?? "Problem"}
+          </>
+        )}
       </span>
     );
   }
