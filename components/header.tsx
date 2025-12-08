@@ -64,26 +64,25 @@ function HeaderTitle() {
   const problemsIdx = segments.indexOf("problems");
   const isProblemRoute = problemsIdx === 0 && segments.length === 2; // /problems/{id}
 
-  // If route is /problems/{id}
-  if (isProblemRoute) {
-    // The second segment is the solutions id
-    const solutionId = segments[1];
-    // Query for the solution by id
-    const { data, isLoading } = useQuery({
-      queryKey: ["solution-title", solutionId],
-      queryFn: async () => {
-        const { data, error } = await client
-          .from("solutions")
-          .select("title")
-          .eq("id", solutionId)
-          .single();
-        if (error) throw error;
-        return data;
-      },
-      enabled: !!solutionId && !!client && !!user,
-      staleTime: 2 * 60 * 1000,
-    });
+  // The second segment is the solutions id
+  const solutionId = segments[1];
+  // Query for the solution by id
+  const { data, isLoading } = useQuery({
+    queryKey: ["solution-title", solutionId],
+    queryFn: async () => {
+      const { data, error } = await client
+        .from("solutions")
+        .select("title")
+        .eq("id", solutionId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!solutionId && !!client && !!user,
+    staleTime: 2 * 60 * 1000,
+  });
 
+  if (isProblemRoute) {
     return (
       <span className="ml-2 text-sm font-medium overflow-ellipsis line-clamp-1">
         {isLoading ? "Loading..." : data?.title ?? "Problem"}

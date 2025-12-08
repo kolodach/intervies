@@ -1,8 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import {
-  InterviewEvaluationSchema,
-  FinalEvaluationSchema,
-  type InterviewEvaluation,
+  EvaluationSchema,
+  type Evaluation,
   type FinalEvaluation,
 } from "./schemas";
 import { COMPREHENSIVE_EVALUATOR_PROMPT, SUMMARIZER_PROMPT } from "./prompts";
@@ -16,12 +15,50 @@ export async function runComprehensiveEvaluation(
   boardState: Json,
   checklist: EvaluationChecklist,
   problem: Problem
-): Promise<InterviewEvaluation> {
-  logger.info("Running comprehensive evaluation");
+): Promise<Evaluation> {
+  const startTime = Date.now();
+  const conversationLength = Array.isArray(conversation)
+    ? conversation.length
+    : 0;
+  const boardStateSize = JSON.stringify(boardState).length;
+  const checklistItems = Object.keys(checklist).filter(
+    (k) => checklist[k as keyof EvaluationChecklist] === true
+  ).length;
+
+  logger.info(
+    {
+      problemTitle: problem.title,
+      conversationLength,
+      boardStateSize,
+      checklistItems,
+    },
+    "Starting evaluation"
+  );
 
   try {
-    const { object } = await generateObject({
-      model: openai("gpt-4o-2024-08-06"),
+    const inputSize = JSON.stringify({
+      conversation,
+      boardState,
+      checklist,
+      problem: {
+        title: problem.title,
+        description: problem.description,
+        requirements: problem.requirements,
+      },
+    }).length;
+
+    logger.info(
+      {
+        model: "gpt-4.1-mini-2025-04-14",
+        inputSize,
+        promptSize: COMPREHENSIVE_EVALUATOR_PROMPT.length,
+      },
+      "Calling LLM for evaluation"
+    );
+
+    const evaluationStartTime = Date.now();
+    const { object, usage } = await generateObject({
+      model: openai("gpt-4.1-mini-2025-04-14"),
       messages: [
         {
           role: "system",
@@ -41,30 +78,79 @@ export async function runComprehensiveEvaluation(
           }),
         },
       ],
-      schema: InterviewEvaluationSchema,
+      schema: EvaluationSchema,
     });
 
-    const evaluation = object;
+    const evaluationDuration = Date.now() - evaluationStartTime;
+    const totalDuration = Date.now() - startTime;
 
-    logger.info("Comprehensive evaluation completed");
-    return evaluation;
+    logger.info(
+      {
+        duration: `${evaluationDuration}ms`,
+        totalDuration: `${totalDuration}ms`,
+        usage: usage
+          ? {
+              inputTokens: usage.inputTokens,
+              outputTokens: usage.outputTokens,
+              totalTokens: usage.totalTokens,
+              tokensPerSecond: Math.round(
+                (usage.totalTokens || 0) / (evaluationDuration / 1000)
+              ),
+            }
+          : undefined,
+        overallScore: object.overall_score,
+        technicalPercentage: object.categories.technical.percentage,
+        communicationPercentage: object.categories.communication.percentage,
+      },
+      "Evaluation completed"
+    );
+
+    return object;
   } catch (error) {
-    logger.error(error, "Comprehensive evaluation failed");
-    throw new Error("Failed to generate comprehensive evaluation");
+    const duration = Date.now() - startTime;
+    logger.error({ error, duration: `${duration}ms` }, "Evaluation failed");
+    throw new Error("Failed to generate evaluation");
   }
 }
 
 export async function generateFinalEvaluation(
-  evaluation1: InterviewEvaluation,
-  evaluation2: InterviewEvaluation,
+  evaluations: Evaluation[],
   checklist: EvaluationChecklist,
   problem: Problem
-): Promise<FinalEvaluation> {
-  logger.info("Starting final evaluation summary");
+): Promise<Evaluation> {
+  const startTime = Date.now();
+
+  logger.info(
+    {
+      problemTitle: problem.title,
+      evaluationCount: evaluations.length,
+      evaluationScores: evaluations.map((e) => e.overall_score),
+    },
+    "Starting final evaluation synthesis"
+  );
 
   try {
-    const { object } = await generateObject({
-      model: openai("gpt-4o-2024-08-06"),
+    const inputSize = JSON.stringify({
+      evaluations,
+      checklist,
+      problem: {
+        title: problem.title,
+        description: problem.description,
+      },
+    }).length;
+
+    logger.info(
+      {
+        model: "gpt-4.1-mini-2025-04-14",
+        inputSize,
+        promptSize: SUMMARIZER_PROMPT.length,
+      },
+      "Calling LLM for final evaluation synthesis"
+    );
+
+    const summaryStartTime = Date.now();
+    const { object, usage } = await generateObject({
+      model: openai("gpt-4.1-mini-2025-04-14"),
       messages: [
         {
           role: "system",
@@ -73,8 +159,7 @@ export async function generateFinalEvaluation(
         {
           role: "user",
           content: JSON.stringify({
-            evaluation1,
-            evaluation2,
+            evaluations,
             checklist,
             problem: {
               title: problem.title,
@@ -83,55 +168,134 @@ export async function generateFinalEvaluation(
           }),
         },
       ],
-      schema: FinalEvaluationSchema,
+      schema: EvaluationSchema,
     });
 
-    const evaluation = object;
+    const summaryDuration = Date.now() - summaryStartTime;
+    const totalDuration = Date.now() - startTime;
 
-    logger.info("Final evaluation completed");
-    return evaluation;
+    logger.info(
+      {
+        duration: `${summaryDuration}ms`,
+        totalDuration: `${totalDuration}ms`,
+        usage: usage
+          ? {
+              inputTokens: usage.inputTokens,
+              outputTokens: usage.outputTokens,
+              totalTokens: usage.totalTokens,
+              tokensPerSecond: Math.round(
+                (usage.totalTokens || 0) / (summaryDuration / 1000)
+              ),
+            }
+          : undefined,
+        overallScore: object.overall_score,
+        summaryLength: object.summary.length,
+        technicalPercentage: object.categories.technical.percentage,
+        communicationPercentage: object.categories.communication.percentage,
+        technicalProsCount: object.categories.technical.pros.length,
+        technicalConsCount: object.categories.technical.cons.length,
+        communicationProsCount: object.categories.communication.pros.length,
+        communicationConsCount: object.categories.communication.cons.length,
+      },
+      "Final evaluation completed"
+    );
+
+    return object;
   } catch (error) {
-    logger.error(error, "Final evaluation failed");
+    const duration = Date.now() - startTime;
+    logger.error(
+      { error, duration: `${duration}ms` },
+      "Final evaluation failed"
+    );
     throw new Error("Failed to generate final evaluation");
   }
 }
 
-// Main orchestrator function - runs SAME evaluation twice for consistency
+// Main orchestrator function - runs evaluations in parallel for consistency
 export async function evaluateInterview(
   solutionId: string,
   conversation: Json,
   boardState: Json,
   checklist: EvaluationChecklist,
   problem: Problem
-): Promise<FinalEvaluation> {
-  logger.info({ solutionId }, "Starting interview evaluation");
+): Promise<Evaluation> {
+  const overallStartTime = Date.now();
+  const conversationLength = Array.isArray(conversation)
+    ? conversation.length
+    : 0;
+
+  logger.info(
+    {
+      solutionId,
+      problemTitle: problem.title,
+      conversationLength,
+    },
+    "Starting interview evaluation"
+  );
 
   try {
-    // Run the SAME comprehensive evaluation TWICE in parallel for consistency
-    logger.info({ solutionId }, "Running dual evaluations for consistency");
+    // Run the SAME evaluation THREE times in parallel for consistency
+    logger.info(
+      {
+        solutionId,
+        conversationLength,
+        boardStateSize: JSON.stringify(boardState).length,
+        checklistItems: Object.keys(checklist).filter(
+          (k) => checklist[k as keyof EvaluationChecklist] === true
+        ).length,
+      },
+      "Running three evaluations in parallel"
+    );
 
-    const [evaluation1, evaluation2] = await Promise.all([
+    const parallelStartTime = Date.now();
+    const evaluations = await Promise.all([
+      runComprehensiveEvaluation(conversation, boardState, checklist, problem),
       runComprehensiveEvaluation(conversation, boardState, checklist, problem),
       runComprehensiveEvaluation(conversation, boardState, checklist, problem),
     ]);
+    const parallelDuration = Date.now() - parallelStartTime;
 
     logger.info(
-      { solutionId },
-      "Both evaluations completed, generating summary"
+      {
+        solutionId,
+        parallelDuration: `${parallelDuration}ms`,
+        evaluationScores: evaluations.map((e) => e.overall_score),
+      },
+      "All parallel evaluations completed, starting synthesis"
     );
 
-    // Summarizer averages/merges the two evaluations
+    // Summarizer synthesizes the three evaluations
     const finalEvaluation = await generateFinalEvaluation(
-      evaluation1,
-      evaluation2,
+      evaluations,
       checklist,
       problem
     );
 
-    logger.info({ solutionId }, "Interview evaluation completed successfully");
+    const totalDuration = Date.now() - overallStartTime;
+
+    logger.info(
+      {
+        solutionId,
+        totalDuration: `${totalDuration}ms`,
+        overallScore: finalEvaluation.overall_score,
+        technicalPercentage: finalEvaluation.categories.technical.percentage,
+        communicationPercentage:
+          finalEvaluation.categories.communication.percentage,
+      },
+      "Interview evaluation completed successfully"
+    );
+
     return finalEvaluation;
   } catch (error) {
-    logger.error({ solutionId, error }, "Interview evaluation failed");
+    const totalDuration = Date.now() - overallStartTime;
+    logger.error(
+      {
+        solutionId,
+        error,
+        totalDuration: `${totalDuration}ms`,
+      },
+      "Interview evaluation failed"
+    );
     throw error;
   }
 }

@@ -1,14 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createServiceRoleSupabaseClient } from "@/lib/supabase/service";
 import { fetchSolutionById, updateSolution } from "@/lib/queries/solutions";
 import { fetchProblemById } from "@/lib/queries/problems";
 import { evaluateInterview } from "@/lib/evaluation/evaluators";
 import { logger } from "@/lib/logger";
-import { captureError } from "@/lib/observability";
+import {
+  captureError,
+  captureEvaluationSuccess,
+  captureEvaluationFailure,
+} from "@/lib/observability";
 import type { EvaluationChecklist } from "@/lib/types";
 import type { NextApiRequest } from "next";
-import { Json } from "@/lib/database.types";
-import { generateId, ModelMessage, UIMessage } from "ai";
+import type { Json } from "@/lib/database.types";
+import { generateId, type UIMessage } from "ai";
 
 export async function POST(
   req: NextRequest,
@@ -115,7 +120,9 @@ export async function POST(
 
 // Async evaluation function
 async function runEvaluation(solutionId: string) {
+  // Use service role client for background jobs - doesn't expire like JWT tokens
   const supabase = await createServerSupabaseClient();
+  const evaluationStartTime = Date.now();
 
   try {
     // Fetch solution with all data
@@ -177,9 +184,21 @@ async function runEvaluation(solutionId: string) {
       evaluated_at: new Date().toISOString(),
     });
 
-    logger.info({ solutionId }, "Evaluation completed and saved");
+    const evaluationDuration = Date.now() - evaluationStartTime;
+    captureEvaluationSuccess(evaluationDuration);
+
+    logger.info(
+      { solutionId, duration: evaluationDuration },
+      "Evaluation completed and saved"
+    );
   } catch (error) {
-    logger.error({ solutionId, error }, "Evaluation failed");
+    const evaluationDuration = Date.now() - evaluationStartTime;
+    captureEvaluationFailure();
+
+    logger.error(
+      { solutionId, error, duration: evaluationDuration },
+      "Evaluation failed"
+    );
 
     // Update status to failed
     await updateSolution(supabase, solutionId, {

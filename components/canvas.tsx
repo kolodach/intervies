@@ -17,10 +17,12 @@ export function Canvas({
   excalidrawRef,
   onChange,
   elements,
+  readonly,
 }: {
   excalidrawRef: React.RefObject<ExcalidrawImperativeAPI | null>;
   onChange: (elements: Readonly<OrderedExcalidrawElement[]>) => void;
   elements: Readonly<OrderedExcalidrawElement[]>;
+  readonly: boolean;
 }) {
   const currElementsRef = useRef<ExcalidrawElement[]>([]);
   const [ExcalidrawComponent, setExcalidrawComponent] =
@@ -56,6 +58,7 @@ export function Canvas({
     theme?: string;
     UIOptions?: unknown;
     children?: React.ReactNode;
+    viewModeEnabled?: boolean;
   }>;
 
   const WelcomeScreen = WelcomeScreenComponent as React.ComponentType<{
@@ -77,6 +80,7 @@ export function Canvas({
         initialData={{
           elements: elements,
         }}
+        viewModeEnabled={readonly}
         onChange={(elements: OrderedExcalidrawElement[]) => {
           onChange(elements);
           currElementsRef.current = elements as ExcalidrawElement[];

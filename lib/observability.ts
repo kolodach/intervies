@@ -15,3 +15,12 @@ export function captureWebhookHit(webhook: string) {
 export function captureError(error: Error) {
   Sentry.captureException(error);
 }
+
+export function captureEvaluationSuccess(durationMs: number) {
+  Sentry.metrics.count("evaluation_success", 1);
+  Sentry.metrics.gauge("evaluation_duration_ms", durationMs);
+}
+
+export function captureEvaluationFailure() {
+  Sentry.metrics.count("evaluation_failure", 1);
+}

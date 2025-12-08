@@ -8,3 +8,8 @@
 - Flashcards. The chat will ahve a the ability to create a flash card for you
   based on the conversation. This will alow you to review you knowledge cards
   and be prepared.
+
+- Followup email to the user to complete the interview to view the score.
+
+- metrics for interiview evaluation failure
+- metric for interview evaluation latency

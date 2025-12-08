@@ -66,13 +66,11 @@ import {
   ToolOutput,
 } from "./ai-elements/tool";
 import type { ToolUIPart } from "ai";
-import { Json } from "@/lib/database.types";
-import {
-  FinalEvaluation,
-  FinalEvaluationSchema,
-} from "@/lib/evaluation/schemas";
-import { capitalize } from "@/lib/utils";
+import type { Json } from "@/lib/database.types";
+import type { FinalEvaluation } from "@/lib/evaluation/schemas";
+import { capitalize, cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
+import { EvaluationCard } from "./evaluation-card";
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -110,12 +108,14 @@ export default function Chat({
   sendMessage,
   status,
   userId,
+  readonly,
 }: {
   solution: Solution;
   onRegenerate: (messageId: string) => void;
   onReset: () => void;
   onMessageSent: () => void;
   boardChanged: boolean;
+  readonly: boolean;
   messages: UIMessage[];
   sendMessage: (
     message?:
@@ -192,23 +192,7 @@ export default function Chat({
               if (containsEvaluation) {
                 const evaluation = (message.metadata as { evaluation: Json })
                   ?.evaluation as FinalEvaluation;
-                const scoreColor =
-                  evaluation.overall_score >= 80
-                    ? "text-green-500"
-                    : evaluation.overall_score >= 50
-                    ? "text-yellow-500"
-                    : evaluation.overall_score >= 30
-                    ? "text-orange-500"
-                    : "text-red-500";
 
-                const scoreIcon =
-                  evaluation.overall_score >= 80
-                    ? "🏆"
-                    : evaluation.overall_score >= 50
-                    ? "💪"
-                    : evaluation.overall_score >= 30
-                    ? "🤝"
-                    : "👋";
                 return (
                   <Message
                     from={message.role}
@@ -216,127 +200,7 @@ export default function Chat({
                     className="max-w-full border rounded-md p-4"
                   >
                     <MessageContent className="size-full">
-                      <div>
-                        <h3 className="text-lg font-bold">
-                          Overall Score:{" "}
-                          <span className={scoreColor}>
-                            {evaluation.overall_score} / 100
-                          </span>{" "}
-                          {scoreIcon}
-                        </h3>
-                        <p className="text-md font-bold mb-4">
-                          Level Assessment:{" "}
-                          {capitalize(evaluation.level_assessment)}
-                        </p>
-                        <MessageResponse>{evaluation.summary}</MessageResponse>
-
-                        <h3 className="text-lg font-bold my-2">
-                          Category Scores:
-                        </h3>
-
-                        <ul className="list-disc list-inside">
-                          <li>
-                            <span className="font-bold">
-                              {
-                                evaluation.category_scores.requirements
-                                  .percentage
-                              }
-                            </span>
-                            % for Requirements
-                          </li>
-                          for Requirements
-                          <li>
-                            <span className="font-bold">
-                              {evaluation.category_scores.design.percentage}
-                            </span>
-                            % for Design Design
-                          </li>
-                          <li>
-                            <span className="font-bold">
-                              {evaluation.category_scores.deep_dive.percentage}%
-                            </span>
-                            for Deep Dive
-                          </li>
-                          <li>
-                            <span className="font-bold">
-                              {
-                                evaluation.category_scores.communication
-                                  .percentage
-                              }
-                            </span>
-                            % for Communication
-                          </li>
-                        </ul>
-
-                        <details className="border rounded-md py-2 px-4 mt-2">
-                          <summary className="text-md font-bold">
-                            Top Strengths:
-                          </summary>
-                          {evaluation.top_strengths.map((strength) => (
-                            <div key={strength.strength} className="mt-2">
-                              <h4 className="text-md font-bold">
-                                {strength.strength}
-                              </h4>
-                              <p>{strength.evidence}</p>
-                            </div>
-                          ))}
-                        </details>
-
-                        <details className="border rounded-md py-2 px-4 mt-2">
-                          <summary className="text-md font-bold">
-                            Areas for Improvement:
-                          </summary>
-                          {evaluation.areas_for_improvement.map((area) => (
-                            <div key={area.area} className="mt-2">
-                              <h4 className="text-md font-bold">{area.area}</h4>
-                              <p>{area.why_important}</p>
-                            </div>
-                          ))}
-                        </details>
-
-                        <details className="border rounded-md py-2 px-4 mt-2">
-                          <summary className="text-md font-bold">
-                            Recommendations:
-                          </summary>
-                          {evaluation.recommendations.topics_to_revisit.map(
-                            (topic) => (
-                              <div key={topic.topic} className="mt-2">
-                                <h4 className="text-md font-bold">
-                                  {topic.topic}
-                                </h4>
-                                <p>{topic.why}</p>
-                                <ul className="list-disc list-inside">
-                                  {topic.resources.map((resource) => (
-                                    <li key={resource.title}>
-                                      {resource.title}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )
-                          )}
-                          {evaluation.recommendations.practice_strategies.map(
-                            (strategy) => (
-                              <div key={strategy}>
-                                <h4 className="text-md">{strategy}</h4>
-                              </div>
-                            )
-                          )}
-                        </details>
-                        <h3 className="text-lg font-bold my-2">
-                          Next Problems to Practice:
-                        </h3>
-                        {evaluation.recommendations.next_problems_to_practice.map(
-                          (problem) => (
-                            <div key={problem} className="inline-block">
-                              <Badge variant="outline">
-                                <Link />
-                                {problem}
-                              </Badge>
-                            </div>
-                          )
-                        )}
-                      </div>
+                      <EvaluationCard evaluation={evaluation} />
                     </MessageContent>
                   </Message>
                 );
@@ -431,6 +295,7 @@ export default function Chat({
           </PromptInputHeader> */}
             <PromptInputBody>
               <PromptInputTextarea
+                disabled={readonly || status === "streaming"}
                 className="text-sm p-2"
                 onChange={(e) => setText(e.target.value)}
                 ref={textareaRef}
@@ -468,7 +333,9 @@ export default function Chat({
                   </div>
                 )}
                 <PromptInputSubmit
-                  disabled={!text && !status}
+                  disabled={
+                    (!text && !status) || readonly || status === "streaming"
+                  }
                   status={status}
                 />
               </div>

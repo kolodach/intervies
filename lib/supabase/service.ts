@@ -1,4 +1,5 @@
 import type { Database } from "@/lib/database.types";
+import { logger } from "@sentry/nextjs";
 import { createClient } from "@supabase/supabase-js";
 
 /**
@@ -8,6 +9,9 @@ import { createClient } from "@supabase/supabase-js";
 export function createServiceRoleSupabaseClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  logger.info(
+    `Creating service role client: ${supabaseUrl} with service role key: ${supabaseServiceKey}`
+  );
 
   if (!supabaseUrl || !supabaseServiceKey) {
     throw new Error(
@@ -15,11 +19,5 @@ export function createServiceRoleSupabaseClient() {
     );
   }
 
-  return createClient<Database>(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  return createClient<Database>(supabaseUrl, supabaseServiceKey);
 }
-
