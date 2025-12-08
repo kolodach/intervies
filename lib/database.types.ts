@@ -84,7 +84,7 @@ export type Database = {
           prev_board_state?: Json
           problem_id: string
           state?: string
-          status: string
+          status?: string
           title: string
           updated_at?: string | null
           user_id: string

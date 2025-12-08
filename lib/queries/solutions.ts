@@ -6,6 +6,17 @@ export function fetchAllSolutionsQuery(client: TypedSupabaseClient) {
   return client.from("solutions").select("*").throwOnError();
 }
 
+export function fetchSolutionsByUserId(
+  client: TypedSupabaseClient,
+  userId: string
+) {
+  return client
+    .from("solutions")
+    .select("*")
+    .eq("user_id", userId)
+    .throwOnError();
+}
+
 export function fetchSolutionById(client: TypedSupabaseClient, id: string) {
   logger.info("Fetching solution by id", { id });
   return client
