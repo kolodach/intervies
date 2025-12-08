@@ -7,6 +7,8 @@ import { captureException } from "@sentry/nextjs";
 import { useEffect, useState, useMemo } from "react";
 import type { Problem, Solution } from "@/lib/types";
 import { ProblemsTable } from "@/components/problems-table";
+import { ContinueWidget } from "@/components/continue-widget";
+import { ProgressChartCard } from "@/components/progress-chart-card";
 import {
   createSolution,
   findSolutionByProblemId,
@@ -223,6 +225,19 @@ export default function Page() {
   return (
     <div className="w-full h-full flex flex-col items-center p-4">
       {error && <div className="text-red-500">{error.message}</div>}
+      <div className="w-full mb-3 max-w-[800px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <ContinueWidget
+            solutions={solutionsData ?? undefined}
+            problems={problemsData ?? undefined}
+            onStart={handleStart}
+          />
+          <ProgressChartCard
+            solutions={solutionsData ?? undefined}
+            problems={problemsData ?? undefined}
+          />
+        </div>
+      </div>
       <div className="w-full mb-4 max-w-[800px]">
         <ProblemsTable
           problems={problems}
