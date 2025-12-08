@@ -51,9 +51,6 @@ export default function Page() {
         problemsData.filter(
           (problem) =>
             problem.title.toLowerCase().includes(search.toLowerCase()) ||
-            problem.categories.some((category) =>
-              category.toLowerCase().includes(search.toLowerCase())
-            ) ||
             problem.tags.some((tag) =>
               tag.toLowerCase().includes(search.toLowerCase())
             ) ||
@@ -111,7 +108,6 @@ export default function Page() {
             <TableRow>
               <TableHead>Difficulty</TableHead>
               <TableHead>Title</TableHead>
-              <TableHead>Categories</TableHead>
               <TableHead>Tags</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>{""}</TableHead>
@@ -137,13 +133,6 @@ export default function Page() {
                   </span>
                 </TableCell>
                 <TableCell className="font-medium">{problem.title}</TableCell>
-                <TableCell>
-                  {problem.categories.map((category) => (
-                    <Badge key={category} variant={"outline"}>
-                      {category}
-                    </Badge>
-                  ))}
-                </TableCell>
                 <TableCell>
                   {problem.tags.map((tag) => (
                     <Badge key={tag} variant={"outline"}>
