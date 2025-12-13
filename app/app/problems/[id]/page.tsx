@@ -20,12 +20,14 @@ import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/observability";
 import { useEvaluationPolling } from "@/lib/hooks/use-evaluation-polling";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import { refresh } from "next/cache";
 
 export default function Page() {
   const { id } = useParams();
   const { user } = useUser();
   const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
+  const intervirewRequestedRef = useRef(false);
   const {
     data: solution,
     error,
@@ -71,6 +73,9 @@ export default function Page() {
     },
     messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onFinish: async () => {
+      await refetchSolution();
+    },
     onToolCall: async ({ toolCall }) => {
       if (toolCall.toolName === "conclude_interview") {
         logger.info({ solutionId: id }, "Concluding interview");
@@ -133,10 +138,12 @@ export default function Page() {
       !user ||
       !id ||
       !solution ||
-      (solution.conversation as Json[]).length > 0
+      (solution.conversation as Json[]).length > 0 ||
+      intervirewRequestedRef.current
     ) {
       return;
     }
+    intervirewRequestedRef.current = true;
     sendMessage(
       {
         text: "BEGIN_INTERVIEW",
@@ -238,8 +245,12 @@ export default function Page() {
     elementsRef.current = [];
     const { error: updateError } = await updateSolution(client, solution.id, {
       state: "GREETING",
+      status: "active",
       board_state: [] as unknown as Json[],
+      prev_board_state: [] as unknown as Json[],
       conversation: [] as unknown as Json[],
+      evaluated_at: null,
+      evaluation: null,
     });
     if (updateError) {
       toast.error("Error resetting solution");
@@ -259,7 +270,7 @@ export default function Page() {
   }
 
   return (
-    <div className="grid grid-cols-[500px_1fr] h-full">
+    <div className="grid grid-cols-[450px_1fr] h-full">
       <div className="h-full p-2 min-h-0">
         {/* Evaluation Status */}
         <Chat

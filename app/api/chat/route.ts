@@ -147,7 +147,7 @@ export async function POST(req: Request) {
   logger.info({ prompt }, "Interviewer prompt");
 
   const result = streamText({
-    model: openai("gpt-5.1"),
+    model: "anthropic/claude-sonnet-4.5",
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     system: prompt,

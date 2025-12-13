@@ -30,7 +30,7 @@ import {
 } from "@/components/ai-elements/prompt-input";
 import { fetchProblemBySolutionId } from "@/lib/queries/problems";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { Solution, SolutionState } from "@/lib/types";
+import { SolutionStates, type Solution, type SolutionState } from "@/lib/types";
 import type { UIMessage } from "@ai-sdk/react";
 import type {
   ChatRequestOptions,
@@ -45,7 +45,7 @@ import {
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { Circle, GlobeIcon, Link, Pen, RotateCcw } from "lucide-react";
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -146,6 +146,10 @@ export default function Chat({
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
   const client = useSupabaseBrowserClient();
 
+  const currentStepIndex = useMemo(() => {
+    return SolutionStates.findIndex((state) => state === solution.state);
+  }, [solution.state]);
+
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
     const hasAttachments = Boolean(message.files?.length);
@@ -237,7 +241,7 @@ export default function Chat({
                               key={key}
                             >
                               <MessageResponse>{part.text}</MessageResponse>
-                              <Tooltip>
+                              {/* <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     onClick={() => onRegenerate(message.id)}
@@ -251,7 +255,7 @@ export default function Chat({
                                 <TooltipContent>
                                   Regenerate response
                                 </TooltipContent>
-                              </Tooltip>
+                              </Tooltip> */}
                             </div>
                           );
                         case "step-start":
@@ -341,6 +345,24 @@ export default function Chat({
               </div>
             </PromptInputFooter>
           </PromptInput>
+          <div className="flex gap-1 px-2 mt-2">
+            {SolutionStates.map((state, index) => (
+              <Tooltip key={state}>
+                <TooltipTrigger asChild>
+                  <div
+                    key={state}
+                    className={cn(
+                      "flex-1 h-1 rounded-full",
+                      index <= currentStepIndex ? "bg-green-500" : "bg-gray-500"
+                    )}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {state.charAt(0).toUpperCase() + state.slice(1).toLowerCase()}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         </div>
       </div>
     </div>

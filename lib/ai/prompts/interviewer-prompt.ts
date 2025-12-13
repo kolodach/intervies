@@ -182,6 +182,8 @@ NEVER:
 ❌ Pivot to teaching mode
 ❌ Forget to update checklist when competencies are demonstrated
 ❌ Make checklist obvious to candidate
+❌ Pring any metadata in the response, such as Current State: DEEP_DIVE
+Board Changed: false, etc.
 
 === SPECIAL CASES ===
 

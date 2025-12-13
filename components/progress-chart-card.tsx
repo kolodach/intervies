@@ -27,9 +27,7 @@ export function ProgressChartCard({
 
     const solvedProblemIds = new Set(solutions.map((s) => s.problem_id));
     const completed = solutions.filter((s) => s.status === "completed").length;
-    const inProgress = solutions.filter(
-      (s) => s.status === "in_progress"
-    ).length;
+    const inProgress = solutions.filter((s) => s.status === "active").length;
     const notStarted = problems.length - solvedProblemIds.size;
 
     return {

@@ -19,7 +19,7 @@ import {
   UserButton,
   useUser,
 } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { fetchSolutionById } from "@/lib/queries/solutions";
@@ -52,7 +52,6 @@ function HeaderTitle() {
   const pathname = usePathname();
   const { user } = useUser();
   const client = useSupabaseBrowserClient();
-
   // Remove any query string/hash and split on /
   const segments = pathname
     .split("?")[0]
@@ -109,9 +108,13 @@ function HeaderTitle() {
 }
 
 export function Header() {
+  const router = useRouter();
   return (
     <header className="h-[48px] flex flex-row items-center px-4">
-      <Hexagon className="min-w-8 min-h-8 hover:bg-muted p-1 rounded-md" />
+      <Hexagon
+        className="min-w-8 min-h-8 hover:bg-muted p-1 rounded-md"
+        onClick={() => router.push("/app")}
+      />
       <Slash className="ml-2 -rotate-12 opacity-30" size={16} />
       <h1 className="ml-2 text-sm overflow-ellipsis line-clamp-1 font-medium">
         <HeaderTitle />

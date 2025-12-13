@@ -29,7 +29,7 @@ export function ContinueWidget({
       };
     }
 
-    const inProgress = solutions.filter((s) => s.status === "in_progress");
+    const inProgress = solutions.filter((s) => s.status === "active");
     const completed = solutions.filter((s) => s.status === "completed");
 
     // Find most recent in-progress solution

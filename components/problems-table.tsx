@@ -223,7 +223,7 @@ export function ProblemsTable({
                           <div className="flex items-center">
                             {status === "completed" ? (
                               <CircleCheck className="w-5 h-5 text-green-600" />
-                            ) : status === "in_progress" ? (
+                            ) : status === "active" ? (
                               <Circle className="w-5 h-5 text-orange-500" />
                             ) : (
                               <CircleDashed className="w-5 h-5 text-gray-500" />

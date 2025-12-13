@@ -87,7 +87,7 @@ export default function Page() {
       filtered = filtered.filter((problem) => {
         const status = problemStatusMap.get(problem.id) ?? "Not Started";
         const statusMap: Record<string, string> = {
-          Active: "in_progress",
+          Active: "active",
           Completed: "completed",
           "Not Started": "Not Started",
         };
@@ -130,7 +130,7 @@ export default function Page() {
           const statusB = problemStatusMap.get(b.id) ?? "Not Started";
           const statusOrder = {
             "Not Started": 1,
-            in_progress: 2,
+            active: 2,
             completed: 3,
           };
           comparison =
@@ -209,7 +209,7 @@ export default function Page() {
       supabase,
       {
         problem_id: problem.id,
-        status: "in_progress",
+        status: "active",
         title: problem.title,
         user_id: user.id,
       }
