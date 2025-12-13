@@ -47,6 +47,7 @@ import {
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
+import { toast } from "sonner";
 import {
   type ChangeEvent,
   type ChangeEventHandler,
@@ -698,7 +699,7 @@ export const PromptInput = ({
     // Convert blob URLs to data URLs asynchronously
     Promise.all(
       files.map(async ({ id, ...item }) => {
-        if (item.url && item.url.startsWith("blob:")) {
+        if (item.url?.startsWith("blob:")) {
           return {
             ...item,
             url: await convertBlobUrlToDataUrl(item.url),
@@ -1025,13 +1026,13 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
   onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
     | null;
   onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
     | null;
 }
 
@@ -1087,10 +1088,149 @@ export const PromptInputSpeechButton = ({
   ...props
 }: PromptInputSpeechButtonProps) => {
   const [isListening, setIsListening] = useState(false);
+  const baseValueRef = useRef<string>("");
+  const finalTranscriptRef = useRef<string>("");
+  const gotAnyResultRef = useRef(false);
+  const noResultTimeoutRef = useRef<number | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null
   );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recordedChunksRef = useRef<BlobPart[]>([]);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  const applyText = useCallback(
+    (value: string) => {
+      if (textareaRef?.current) {
+        const textarea = textareaRef.current;
+        textarea.value = value;
+        // Ensure React-controlled textareas receive the change
+        textarea.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+      onTranscriptionChange?.(value);
+    },
+    [onTranscriptionChange, textareaRef]
+  );
+
+  const appendToBase = useCallback(
+    (addition: string) => {
+      const base = baseValueRef.current;
+      const trimmed = addition.trim();
+      const next = trimmed
+        ? base
+          ? `${base.replace(/\s+$/, "")} ${trimmed}`
+          : trimmed
+        : base;
+      applyText(next);
+    },
+    [applyText]
+  );
+
+  const pickSupportedMimeType = useCallback(() => {
+    // Try common types across browsers.
+    const candidates = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/aac",
+    ];
+    for (const type of candidates) {
+      if (
+        typeof MediaRecorder !== "undefined" &&
+        MediaRecorder.isTypeSupported(type)
+      ) {
+        return type;
+      }
+    }
+    return "";
+  }, []);
+
+  const startRecording = useCallback(async () => {
+    recordedChunksRef.current = [];
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaStreamRef.current = stream;
+
+    const mimeType = pickSupportedMimeType();
+    const recorder = new MediaRecorder(
+      stream,
+      mimeType ? { mimeType } : undefined
+    );
+    mediaRecorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        recordedChunksRef.current.push(e.data);
+      }
+    };
+
+    recorder.start();
+  }, [pickSupportedMimeType]);
+
+  const stopRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    }
+    // Stop tracks ASAP to release mic indicator even if onstop comes later.
+    const stream = mediaStreamRef.current;
+    if (stream) {
+      for (const track of stream.getTracks()) {
+        track.stop();
+      }
+    }
+    mediaStreamRef.current = null;
+  }, []);
+
+  const transcribeRecordingIfNeeded = useCallback(async () => {
+    // If SpeechRecognition produced anything, prefer that (fast + free).
+    if (gotAnyResultRef.current || finalTranscriptRef.current.trim()) {
+      return;
+    }
+    const chunks = recordedChunksRef.current;
+    if (!chunks.length) {
+      return;
+    }
+
+    const blob = new Blob(chunks, {
+      type: chunks[0] instanceof Blob ? (chunks[0] as Blob).type : undefined,
+    });
+    if (!blob.size) {
+      return;
+    }
+
+    try {
+      setIsTranscribing(true);
+      toast.loading("Transcribing…", { id: "voice-transcribe" });
+      const file = new File([blob], "voice-input.webm", {
+        type: blob.type || "audio/webm",
+      });
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/transcribe", {
+        method: "POST",
+        body: form,
+      });
+      if (!res.ok) {
+        const details = await res.text().catch(() => "");
+        throw new Error(details || "Transcription failed");
+      }
+      const json = (await res.json()) as { text?: string };
+      if (json.text?.trim()) {
+        appendToBase(json.text);
+      } else {
+        toast.error("Couldn’t transcribe audio. Try again.");
+      }
+      toast.dismiss("voice-transcribe");
+    } catch (e) {
+      toast.dismiss("voice-transcribe");
+      toast.error("Transcription failed. Check server logs / OPENAI_API_KEY.");
+      console.error(e);
+    } finally {
+      setIsTranscribing(false);
+    }
+  }, [appendToBase]);
 
   useEffect(() => {
     if (
@@ -1106,37 +1246,86 @@ export const PromptInputSpeechButton = ({
       speechRecognition.lang = "en-US";
 
       speechRecognition.onstart = () => {
+        baseValueRef.current = textareaRef?.current?.value ?? "";
+        finalTranscriptRef.current = "";
+        gotAnyResultRef.current = false;
+        if (noResultTimeoutRef.current) {
+          window.clearTimeout(noResultTimeoutRef.current);
+          noResultTimeoutRef.current = null;
+        }
+        // If Chrome never fires onresult, this makes the issue obvious to the user.
+        toast.info("Listening… Speak now.");
+        noResultTimeoutRef.current = window.setTimeout(() => {
+          if (!gotAnyResultRef.current) {
+            toast.warning(
+              "Still listening, but no speech is being transcribed. Check Chrome microphone device + permissions."
+            );
+          }
+        }, 4000);
         setIsListening(true);
       };
 
       speechRecognition.onend = () => {
+        if (noResultTimeoutRef.current) {
+          window.clearTimeout(noResultTimeoutRef.current);
+          noResultTimeoutRef.current = null;
+        }
+        // Commit any finalized transcript (drop interim)
+        const base = baseValueRef.current;
+        const final = finalTranscriptRef.current.trim();
+        const committed = final
+          ? base
+            ? `${base.replace(/\s+$/, "")} ${final}`
+            : final
+          : base;
+        applyText(committed);
         setIsListening(false);
       };
 
       speechRecognition.onresult = (event) => {
-        let finalTranscript = "";
+        gotAnyResultRef.current = true;
+        let interimTranscript = "";
+        let nextFinal = finalTranscriptRef.current;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
-            finalTranscript += result[0]?.transcript ?? "";
+            nextFinal += result[0]?.transcript ?? "";
+          } else {
+            interimTranscript += result[0]?.transcript ?? "";
           }
         }
 
-        if (finalTranscript && textareaRef?.current) {
-          const textarea = textareaRef.current;
-          const currentValue = textarea.value;
-          const newValue =
-            currentValue + (currentValue ? " " : "") + finalTranscript;
+        finalTranscriptRef.current = nextFinal;
 
-          textarea.value = newValue;
-          textarea.dispatchEvent(new Event("input", { bubbles: true }));
-          onTranscriptionChange?.(newValue);
-        }
+        const base = baseValueRef.current;
+        const transcript = `${nextFinal} ${interimTranscript}`.trim();
+        const nextValue = transcript
+          ? base
+            ? `${base.replace(/\s+$/, "")} ${transcript}`
+            : transcript
+          : base;
+
+        applyText(nextValue);
       };
 
       speechRecognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
+        if (noResultTimeoutRef.current) {
+          window.clearTimeout(noResultTimeoutRef.current);
+          noResultTimeoutRef.current = null;
+        }
+        const message =
+          event.error === "not-allowed" || event.error === "service-not-allowed"
+            ? "Microphone permission denied. Please allow microphone access for this site."
+            : event.error === "no-speech"
+            ? "No speech detected. Try speaking closer to the microphone."
+            : event.error === "audio-capture"
+            ? "No microphone was found or it is unavailable."
+            : event.error === "network"
+            ? "Speech recognition network error. Please try again."
+            : `Speech recognition error: ${event.error}`;
+        toast.error(message);
         setIsListening(false);
       };
 
@@ -1145,23 +1334,65 @@ export const PromptInputSpeechButton = ({
     }
 
     return () => {
+      if (noResultTimeoutRef.current) {
+        window.clearTimeout(noResultTimeoutRef.current);
+        noResultTimeoutRef.current = null;
+      }
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      stopRecording();
     };
-  }, [textareaRef, onTranscriptionChange]);
+  }, [applyText, stopRecording, textareaRef]);
 
   const toggleListening = useCallback(() => {
-    if (!recognition) {
-      return;
-    }
-
     if (isListening) {
-      recognition.stop();
+      // Stop both paths; only one may be active.
+      try {
+        recognition?.stop();
+      } catch {}
+      stopRecording();
+      setIsListening(false);
+      // If SpeechRecognition yielded nothing, fall back to server transcription.
+      // Delay slightly to allow MediaRecorder to flush final chunks.
+      window.setTimeout(() => {
+        transcribeRecordingIfNeeded();
+      }, 250);
     } else {
-      recognition.start();
+      if (isTranscribing) {
+        return;
+      }
+      baseValueRef.current = textareaRef?.current?.value ?? "";
+      finalTranscriptRef.current = "";
+      gotAnyResultRef.current = false;
+
+      // Always record audio (works in Chrome/Firefox/Safari). If SpeechRecognition works,
+      // we will prefer it and discard the recording.
+      try {
+        // Start audio capture first (requires user gesture).
+        startRecording().catch((e) => {
+          console.error("Microphone capture failed:", e);
+          toast.error(
+            "Could not access microphone. Check browser + macOS microphone permissions."
+          );
+        });
+
+        // Start native speech recognition when available (Safari/Chrome).
+        recognition?.start();
+      } catch (e) {
+        console.error("Voice start failed:", e);
+      }
+      setIsListening(true);
     }
-  }, [recognition, isListening]);
+  }, [
+    isListening,
+    isTranscribing,
+    recognition,
+    startRecording,
+    stopRecording,
+    textareaRef,
+    transcribeRecordingIfNeeded,
+  ]);
 
   return (
     <PromptInputButton
@@ -1170,8 +1401,18 @@ export const PromptInputSpeechButton = ({
         isListening && "animate-pulse bg-accent text-accent-foreground",
         className
       )}
-      disabled={!recognition}
+      aria-label={isListening ? "Stop voice input" : "Start voice input"}
+      aria-pressed={isListening}
+      disabled={isTranscribing}
+      // Keep enabled so unsupported browsers can show a helpful message on click.
       onClick={toggleListening}
+      title={
+        isTranscribing
+          ? "Transcribing…"
+          : isListening
+          ? "Stop voice input"
+          : "Start voice input"
+      }
       {...props}
     >
       <MicIcon className="size-4" />
