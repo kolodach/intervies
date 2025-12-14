@@ -11,7 +11,13 @@ import {
 import { cn } from "@/lib/utils";
 import { MicIcon } from "lucide-react";
 import { toast } from "sonner";
-import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 /**
  * PromptInputSpeechButton (extracted)
@@ -237,7 +243,9 @@ export const PromptInputSpeechButton = ({
             }
           } catch (e) {
             console.error(e);
-            toast.error("Transcription failed. Check `/api/transcribe` logs/config.");
+            toast.error(
+              "Transcription failed. Check `/api/transcribe` logs/config."
+            );
           } finally {
             setBusy(false);
             setOpen(false);
@@ -248,5 +256,3 @@ export const PromptInputSpeechButton = ({
     </>
   );
 };
-
-
