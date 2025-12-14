@@ -37,7 +37,9 @@ import {
 import { cn } from "@/lib/utils";
 import type { ChatStatus, FileUIPart } from "ai";
 import {
+  CheckIcon,
   CornerDownLeftIcon,
+  CornerDownRightIcon,
   ImageIcon,
   Loader2Icon,
   MicIcon,
@@ -866,7 +868,10 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
-      className={cn("field-sizing-content max-h-48 min-h-16", className)}
+      className={cn(
+        "field-sizing-content max-h-48 min-h-16 dark:bg-card",
+        className
+      )}
       name="message"
       onCompositionEnd={() => setIsComposing(false)}
       onCompositionStart={() => setIsComposing(true)}
@@ -906,7 +911,7 @@ export const PromptInputFooter = ({
 }: PromptInputFooterProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("justify-between gap-1", className)}
+    className={cn("relative justify-between gap-1", className)}
     {...props}
   />
 );
@@ -1071,6 +1076,7 @@ declare global {
     webkitSpeechRecognition: {
       new (): SpeechRecognition;
     };
+    webkitAudioContext?: typeof AudioContext;
   }
 }
 
@@ -1090,8 +1096,6 @@ export const PromptInputSpeechButton = ({
   const [isListening, setIsListening] = useState(false);
   const baseValueRef = useRef<string>("");
   const finalTranscriptRef = useRef<string>("");
-  const gotAnyResultRef = useRef(false);
-  const noResultTimeoutRef = useRef<number | null>(null);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null
   );
@@ -1100,6 +1104,15 @@ export const PromptInputSpeechButton = ({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const recordedChunksRef = useRef<BlobPart[]>([]);
   const [isTranscribing, setIsTranscribing] = useState(false);
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const timerIntervalRef = useRef<number | null>(null);
+  const recordingStartedAtRef = useRef<number>(0);
+  const meterCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const meterRafRef = useRef<number | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const mediaSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const meterDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
   const applyText = useCallback(
     (value: string) => {
@@ -1128,6 +1141,130 @@ export const PromptInputSpeechButton = ({
     [applyText]
   );
 
+  const clearTimer = useCallback(() => {
+    if (timerIntervalRef.current) {
+      window.clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+  }, []);
+
+  const startTimer = useCallback(() => {
+    clearTimer();
+    recordingStartedAtRef.current = Date.now();
+    setElapsedMs(0);
+    timerIntervalRef.current = window.setInterval(() => {
+      setElapsedMs(Date.now() - recordingStartedAtRef.current);
+    }, 250);
+  }, [clearTimer]);
+
+  const stopMeter = useCallback(() => {
+    if (meterRafRef.current) {
+      window.cancelAnimationFrame(meterRafRef.current);
+      meterRafRef.current = null;
+    }
+    try {
+      mediaSourceRef.current?.disconnect();
+    } catch {}
+    mediaSourceRef.current = null;
+    analyserRef.current = null;
+    meterDataRef.current = null;
+    if (audioContextRef.current) {
+      // Close releases audio resources; ignore errors if already closed.
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    const canvas = meterCanvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  }, []);
+
+  const startMeter = useCallback(
+    (stream: MediaStream) => {
+      stopMeter();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        return;
+      }
+
+      const audioContext = new AudioCtx();
+      audioContextRef.current = audioContext;
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.85;
+      analyserRef.current = analyser;
+      const source = audioContext.createMediaStreamSource(stream);
+      mediaSourceRef.current = source;
+      source.connect(analyser);
+
+      const data = new Uint8Array(
+        analyser.frequencyBinCount
+      ) as Uint8Array<ArrayBuffer>;
+      meterDataRef.current = data;
+
+      const draw = () => {
+        const canvas = meterCanvasRef.current;
+        const analyser = analyserRef.current;
+        const data = meterDataRef.current;
+        if (!canvas || !analyser || !data) {
+          return;
+        }
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          return;
+        }
+
+        // Keep canvas resolution in sync with CSS size.
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const width = Math.max(1, Math.floor(rect.width * dpr));
+        const height = Math.max(1, Math.floor(rect.height * dpr));
+        if (canvas.width !== width || canvas.height !== height) {
+          canvas.width = width;
+          canvas.height = height;
+        }
+
+        analyser.getByteFrequencyData(data);
+
+        // Render a ChatGPT-like meter: N vertical bars with varying heights.
+        const bars = 28;
+        const gap = Math.max(1, Math.floor(width / (bars * 12)));
+        const barWidth = Math.max(
+          2,
+          Math.floor((width - gap * (bars - 1)) / bars)
+        );
+        const midY = height / 2;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+
+        for (let i = 0; i < bars; i++) {
+          // Sample frequency bins across the spectrum (skip first few low bins).
+          const idx = Math.min(
+            data.length - 1,
+            Math.floor((i / bars) * (data.length - 8)) + 4
+          );
+          const v = data[idx] ?? 0;
+          // Normalize and shape.
+          const amp = (v / 255) ** 0.75;
+          const barH = Math.max(2, amp * (height * 0.9));
+          const x = i * (barWidth + gap);
+          const y = midY - barH / 2;
+          ctx.fillRect(x, y, barWidth, barH);
+        }
+
+        meterRafRef.current = window.requestAnimationFrame(draw);
+      };
+
+      meterRafRef.current = window.requestAnimationFrame(draw);
+    },
+    [stopMeter]
+  );
+
   const pickSupportedMimeType = useCallback(() => {
     // Try common types across browsers.
     const candidates = [
@@ -1151,6 +1288,7 @@ export const PromptInputSpeechButton = ({
     recordedChunksRef.current = [];
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     mediaStreamRef.current = stream;
+    startMeter(stream);
 
     const mimeType = pickSupportedMimeType();
     const recorder = new MediaRecorder(
@@ -1166,11 +1304,14 @@ export const PromptInputSpeechButton = ({
     };
 
     recorder.start();
-  }, [pickSupportedMimeType]);
+  }, [pickSupportedMimeType, startMeter]);
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (recorder && recorder.state !== "inactive") {
+      try {
+        recorder.requestData?.();
+      } catch {}
       recorder.stop();
     }
     // Stop tracks ASAP to release mic indicator even if onstop comes later.
@@ -1181,13 +1322,16 @@ export const PromptInputSpeechButton = ({
       }
     }
     mediaStreamRef.current = null;
-  }, []);
+    stopMeter();
+  }, [stopMeter]);
 
   const transcribeRecordingIfNeeded = useCallback(async () => {
-    // If SpeechRecognition produced anything, prefer that (fast + free).
-    if (gotAnyResultRef.current || finalTranscriptRef.current.trim()) {
+    // Prefer native SpeechRecognition when it produced anything.
+    if (finalTranscriptRef.current.trim()) {
+      appendToBase(finalTranscriptRef.current);
       return;
     }
+    // If SpeechRecognition ran but yielded no text, fall back to server transcription.
     const chunks = recordedChunksRef.current;
     if (!chunks.length) {
       return;
@@ -1202,7 +1346,6 @@ export const PromptInputSpeechButton = ({
 
     try {
       setIsTranscribing(true);
-      toast.loading("Transcribing…", { id: "voice-transcribe" });
       const file = new File([blob], "voice-input.webm", {
         type: blob.type || "audio/webm",
       });
@@ -1222,15 +1365,44 @@ export const PromptInputSpeechButton = ({
       } else {
         toast.error("Couldn’t transcribe audio. Try again.");
       }
-      toast.dismiss("voice-transcribe");
     } catch (e) {
-      toast.dismiss("voice-transcribe");
-      toast.error("Transcription failed. Check server logs / OPENAI_API_KEY.");
+      toast.error("Transcription failed. Check `/api/transcribe` logs/config.");
       console.error(e);
     } finally {
       setIsTranscribing(false);
     }
   }, [appendToBase]);
+
+  const cancelVoice = useCallback(() => {
+    clearTimer();
+    setElapsedMs(0);
+    recordedChunksRef.current = [];
+    finalTranscriptRef.current = "";
+    try {
+      recognitionRef.current?.stop();
+    } catch {}
+    stopRecording();
+    setIsTranscribing(false);
+    setIsListening(false);
+  }, [clearTimer, stopRecording]);
+
+  const confirmVoice = useCallback(async () => {
+    if (isTranscribing) {
+      return;
+    }
+    clearTimer();
+
+    try {
+      recognitionRef.current?.stop();
+    } catch {}
+    stopRecording();
+
+    // Give MediaRecorder a brief moment to flush final chunks.
+    await new Promise((r) => setTimeout(r, 250));
+    await transcribeRecordingIfNeeded();
+
+    setIsListening(false);
+  }, [clearTimer, isTranscribing, stopRecording, transcribeRecordingIfNeeded]);
 
   useEffect(() => {
     if (
@@ -1246,75 +1418,28 @@ export const PromptInputSpeechButton = ({
       speechRecognition.lang = "en-US";
 
       speechRecognition.onstart = () => {
-        baseValueRef.current = textareaRef?.current?.value ?? "";
-        finalTranscriptRef.current = "";
-        gotAnyResultRef.current = false;
-        if (noResultTimeoutRef.current) {
-          window.clearTimeout(noResultTimeoutRef.current);
-          noResultTimeoutRef.current = null;
-        }
-        // If Chrome never fires onresult, this makes the issue obvious to the user.
-        toast.info("Listening… Speak now.");
-        noResultTimeoutRef.current = window.setTimeout(() => {
-          if (!gotAnyResultRef.current) {
-            toast.warning(
-              "Still listening, but no speech is being transcribed. Check Chrome microphone device + permissions."
-            );
-          }
-        }, 4000);
-        setIsListening(true);
+        // We intentionally don't mutate the textarea during recording mode.
       };
 
       speechRecognition.onend = () => {
-        if (noResultTimeoutRef.current) {
-          window.clearTimeout(noResultTimeoutRef.current);
-          noResultTimeoutRef.current = null;
-        }
-        // Commit any finalized transcript (drop interim)
-        const base = baseValueRef.current;
-        const final = finalTranscriptRef.current.trim();
-        const committed = final
-          ? base
-            ? `${base.replace(/\s+$/, "")} ${final}`
-            : final
-          : base;
-        applyText(committed);
-        setIsListening(false);
+        // Commit happens on explicit confirmation (✓), not on end.
       };
 
       speechRecognition.onresult = (event) => {
-        gotAnyResultRef.current = true;
-        let interimTranscript = "";
         let nextFinal = finalTranscriptRef.current;
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
             nextFinal += result[0]?.transcript ?? "";
-          } else {
-            interimTranscript += result[0]?.transcript ?? "";
           }
         }
 
         finalTranscriptRef.current = nextFinal;
-
-        const base = baseValueRef.current;
-        const transcript = `${nextFinal} ${interimTranscript}`.trim();
-        const nextValue = transcript
-          ? base
-            ? `${base.replace(/\s+$/, "")} ${transcript}`
-            : transcript
-          : base;
-
-        applyText(nextValue);
       };
 
       speechRecognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
-        if (noResultTimeoutRef.current) {
-          window.clearTimeout(noResultTimeoutRef.current);
-          noResultTimeoutRef.current = null;
-        }
         const message =
           event.error === "not-allowed" || event.error === "service-not-allowed"
             ? "Microphone permission denied. Please allow microphone access for this site."
@@ -1326,7 +1451,7 @@ export const PromptInputSpeechButton = ({
             ? "Speech recognition network error. Please try again."
             : `Speech recognition error: ${event.error}`;
         toast.error(message);
-        setIsListening(false);
+        // Keep recording UI alive; we can still fall back to server transcription.
       };
 
       recognitionRef.current = speechRecognition;
@@ -1334,89 +1459,134 @@ export const PromptInputSpeechButton = ({
     }
 
     return () => {
-      if (noResultTimeoutRef.current) {
-        window.clearTimeout(noResultTimeoutRef.current);
-        noResultTimeoutRef.current = null;
-      }
+      clearTimer();
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
       stopRecording();
+      stopMeter();
     };
-  }, [applyText, stopRecording, textareaRef]);
+  }, [clearTimer, stopRecording, stopMeter]);
 
-  const toggleListening = useCallback(() => {
-    if (isListening) {
-      // Stop both paths; only one may be active.
-      try {
-        recognition?.stop();
-      } catch {}
-      stopRecording();
-      setIsListening(false);
-      // If SpeechRecognition yielded nothing, fall back to server transcription.
-      // Delay slightly to allow MediaRecorder to flush final chunks.
-      window.setTimeout(() => {
-        transcribeRecordingIfNeeded();
-      }, 250);
-    } else {
-      if (isTranscribing) {
-        return;
-      }
-      baseValueRef.current = textareaRef?.current?.value ?? "";
-      finalTranscriptRef.current = "";
-      gotAnyResultRef.current = false;
+  const startVoice = useCallback(() => {
+    if (isListening || isTranscribing) {
+      return;
+    }
+    if (
+      !navigator.mediaDevices?.getUserMedia ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      toast.error("Voice recording isn’t supported in this browser.");
+      return;
+    }
 
-      // Always record audio (works in Chrome/Firefox/Safari). If SpeechRecognition works,
-      // we will prefer it and discard the recording.
-      try {
-        // Start audio capture first (requires user gesture).
-        startRecording().catch((e) => {
-          console.error("Microphone capture failed:", e);
-          toast.error(
-            "Could not access microphone. Check browser + macOS microphone permissions."
-          );
-        });
+    baseValueRef.current = textareaRef?.current?.value ?? "";
+    finalTranscriptRef.current = "";
+    recordedChunksRef.current = [];
 
-        // Start native speech recognition when available (Safari/Chrome).
-        recognition?.start();
-      } catch (e) {
-        console.error("Voice start failed:", e);
-      }
-      setIsListening(true);
+    startTimer();
+    setIsListening(true);
+
+    // Start audio capture first (requires user gesture).
+    startRecording().catch((e) => {
+      console.error("Microphone capture failed:", e);
+      toast.error(
+        "Could not access microphone. Check browser + OS microphone permissions."
+      );
+      cancelVoice();
+    });
+
+    // Start native speech recognition when available (Safari/Chrome). If it errors,
+    // we still have MediaRecorder to fall back on.
+    try {
+      recognition?.start();
+    } catch (e) {
+      console.error("SpeechRecognition start failed:", e);
     }
   }, [
+    cancelVoice,
     isListening,
     isTranscribing,
     recognition,
     startRecording,
-    stopRecording,
+    startTimer,
     textareaRef,
-    transcribeRecordingIfNeeded,
   ]);
 
+  const formatTime = useCallback((ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }, []);
+
   return (
-    <PromptInputButton
-      className={cn(
-        "relative transition-all duration-200",
-        isListening && "animate-pulse bg-accent text-accent-foreground",
-        className
+    <>
+      {/* Idle state: mic button */}
+      {!isListening && !isTranscribing && (
+        <PromptInputButton
+          className={cn("relative transition-all duration-200", className)}
+          aria-label="Start voice recording"
+          onClick={startVoice}
+          title="Start voice recording"
+          {...props}
+        >
+          <MicIcon className="size-4" />
+        </PromptInputButton>
       )}
-      aria-label={isListening ? "Stop voice input" : "Start voice input"}
-      aria-pressed={isListening}
-      disabled={isTranscribing}
-      // Keep enabled so unsupported browsers can show a helpful message on click.
-      onClick={toggleListening}
-      title={
-        isTranscribing
-          ? "Transcribing…"
-          : isListening
-          ? "Stop voice input"
-          : "Start voice input"
-      }
-      {...props}
-    >
-      <MicIcon className="size-4" />
-    </PromptInputButton>
+
+      {/* Recorder / transcribing overlay (covers the entire footer row). */}
+      {(isListening || isTranscribing) && (
+        <div className="absolute inset-0 z-20 flex items-center">
+          <div className="flex w-full items-center gap-2 bg-card px-2 py-1">
+            <PromptInputButton
+              disabled={isTranscribing}
+              aria-label="Cancel recording"
+              onClick={cancelVoice}
+              size="icon-sm"
+              title="Cancel"
+              variant="ghost"
+            >
+              <XIcon className="size-4" />
+            </PromptInputButton>
+
+            <div className="flex flex-1 items-center gap-3 px-1">
+              <div className="flex flex-1 items-center rounded-full bg-card px-2 py-1">
+                <canvas
+                  ref={meterCanvasRef}
+                  className={cn(
+                    "h-5 w-full",
+                    isListening ? "opacity-100" : "opacity-60"
+                  )}
+                />
+              </div>
+
+              <span className="tabular-nums text-xs text-muted-foreground">
+                {formatTime(elapsedMs)}
+              </span>
+
+              {isTranscribing && (
+                <Loader2Icon
+                  aria-label="Transcribing"
+                  className="size-4 animate-spin text-muted-foreground"
+                />
+              )}
+            </div>
+
+            <PromptInputButton
+              aria-label="Stop and transcribe"
+              disabled={isTranscribing}
+              onClick={confirmVoice}
+              size="icon-sm"
+              title={isTranscribing ? "Transcribing…" : "Stop and transcribe"}
+              variant="ghost"
+            >
+              <CheckIcon className="size-4" />
+            </PromptInputButton>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

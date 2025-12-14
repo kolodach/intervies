@@ -306,7 +306,7 @@ export default function Chat({
                 value={text}
               />
             </PromptInputBody>
-            <PromptInputFooter>
+            <PromptInputFooter className="dark:bg-card">
               <PromptInputTools>
                 <PromptInputActionMenu>
                   <PromptInputActionMenuTrigger />
