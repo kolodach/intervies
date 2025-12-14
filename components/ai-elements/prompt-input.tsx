@@ -1113,6 +1113,10 @@ export const PromptInputSpeechButton = ({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const meterDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
+  const meterHistoryRef = useRef<number[]>([]);
+  const meterSmoothedLevelRef = useRef(0);
+  const meterLastSampleAtRef = useRef<number>(0);
+  const meterPeakRef = useRef<number>(0.02);
 
   const applyText = useCallback(
     (value: string) => {
@@ -1190,20 +1194,68 @@ export const PromptInputSpeechButton = ({
         return;
       }
 
-      const audioContext = new AudioCtx();
+      // Reuse an AudioContext created during the user gesture (startVoice) when possible.
+      // This avoids Chrome autoplay-policy issues where a context created later stays suspended.
+      const audioContext =
+        audioContextRef.current && audioContextRef.current.state !== "closed"
+          ? audioContextRef.current
+          : new AudioCtx();
       audioContextRef.current = audioContext;
+      audioContext.resume().catch(() => {});
       const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.85;
+      // Time-domain analysis for "spikes over time" recorder UI (not an equalizer).
+      analyser.fftSize = 1024;
+      analyser.smoothingTimeConstant = 0.9;
       analyserRef.current = analyser;
       const source = audioContext.createMediaStreamSource(stream);
       mediaSourceRef.current = source;
       source.connect(analyser);
 
-      const data = new Uint8Array(
-        analyser.frequencyBinCount
-      ) as Uint8Array<ArrayBuffer>;
+      // getByteTimeDomainData expects a buffer sized to analyser.fftSize.
+      const data = new Uint8Array(analyser.fftSize) as Uint8Array<ArrayBuffer>;
       meterDataRef.current = data;
+      meterHistoryRef.current = [];
+      meterSmoothedLevelRef.current = 0;
+      meterLastSampleAtRef.current = performance.now();
+      meterPeakRef.current = 0.02;
+
+      const drawRoundRect = (
+        ctx: CanvasRenderingContext2D,
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        r: number
+      ) => {
+        const radius = Math.min(r, w / 2, h / 2);
+        // `roundRect` is supported in modern browsers; fallback for older ones.
+        const rr = (
+          ctx as CanvasRenderingContext2D & {
+            roundRect?: (
+              x: number,
+              y: number,
+              w: number,
+              h: number,
+              radii: number
+            ) => void;
+          }
+        ).roundRect;
+        if (typeof rr === "function") {
+          rr.call(ctx, x, y, w, h, radius);
+          return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.lineTo(x + w - radius, y);
+        ctx.arcTo(x + w, y, x + w, y + radius, radius);
+        ctx.lineTo(x + w, y + h - radius);
+        ctx.arcTo(x + w, y + h, x + w - radius, y + h, radius);
+        ctx.lineTo(x + radius, y + h);
+        ctx.arcTo(x, y + h, x, y + h - radius, radius);
+        ctx.lineTo(x, y + radius);
+        ctx.arcTo(x, y, x + radius, y, radius);
+        ctx.closePath();
+      };
 
       const draw = () => {
         const canvas = meterCanvasRef.current;
@@ -1228,33 +1280,71 @@ export const PromptInputSpeechButton = ({
           canvas.height = height;
         }
 
-        analyser.getByteFrequencyData(data);
+        // Compute per-frame RMS from time-domain samples.
+        analyser.getByteTimeDomainData(data);
+        let sumSq = 0;
+        for (let i = 0; i < data.length; i++) {
+          const v = (data[i] - 128) / 128;
+          sumSq += v * v;
+        }
+        const rms = Math.sqrt(sumSq / data.length);
+        const prev = meterSmoothedLevelRef.current;
+        const smoothed = prev * 0.85 + rms * 0.15;
+        meterSmoothedLevelRef.current = smoothed;
 
-        // Render a ChatGPT-like meter: N vertical bars with varying heights.
-        const bars = 28;
-        const gap = Math.max(1, Math.floor(width / (bars * 12)));
-        const barWidth = Math.max(
-          2,
-          Math.floor((width - gap * (bars - 1)) / bars)
-        );
+        // Auto-gain: Chrome often reports much lower amplitude than Safari/Firefox.
+        // Track a slowly-decaying peak and normalize by it so spikes are visible.
+        const peakPrev = meterPeakRef.current;
+        const peak = Math.max(smoothed, peakPrev * 0.995);
+        meterPeakRef.current = peak;
+        const normalized = Math.min(1, smoothed / Math.max(peak, 0.01));
+
+        // Draw "spikes over time": sample at a fixed interval so the waveform
+        // persists instead of scrolling off in ~1s (was effectively sampling at ~60fps).
+        const gap = 2 * dpr;
+        const barWidth = 2 * dpr;
+        const bars = Math.max(24, Math.floor(width / (barWidth + gap)));
+
+        // Target how much recording history is visible across the bar.
+        const maxSecondsVisible = 3;
+        const sampleEveryMs = (maxSecondsVisible * 1000) / bars;
+
+        const now = performance.now();
+        const last = meterLastSampleAtRef.current;
+        const elapsed = now - last;
+        if (elapsed >= sampleEveryMs) {
+          const steps = Math.min(10, Math.floor(elapsed / sampleEveryMs));
+          const history = meterHistoryRef.current;
+          for (let s = 0; s < steps; s++) {
+            history.push(normalized);
+          }
+          if (history.length > bars) {
+            history.splice(0, history.length - bars);
+          }
+          meterLastSampleAtRef.current = last + steps * sampleEveryMs;
+        }
+
         const midY = height / 2;
 
         ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        ctx.fillStyle = "rgba(255,255,255,0.65)";
 
+        // Draw left→right, newest on the right (like recorder timelines).
+        const history = meterHistoryRef.current;
+        const startIndex = Math.max(0, bars - history.length);
         for (let i = 0; i < bars; i++) {
-          // Sample frequency bins across the spectrum (skip first few low bins).
-          const idx = Math.min(
-            data.length - 1,
-            Math.floor((i / bars) * (data.length - 8)) + 4
-          );
-          const v = data[idx] ?? 0;
-          // Normalize and shape.
-          const amp = (v / 255) ** 0.75;
-          const barH = Math.max(2, amp * (height * 0.9));
+          const hIdx = i - startIndex;
+          const level = hIdx >= 0 ? history[hIdx] : 0;
+          // Shape/clamp for a pleasant visual response.
+          const shaped = Math.min(1, (level * 1.35) ** 0.7);
+          const barH = Math.max(2 * dpr, shaped * (height * 0.85));
+
           const x = i * (barWidth + gap);
           const y = midY - barH / 2;
-          ctx.fillRect(x, y, barWidth, barH);
+          const radius = barWidth / 2; // rounded caps
+          ctx.beginPath();
+          drawRoundRect(ctx, x, y, barWidth, barH, radius);
+          ctx.fill();
         }
 
         meterRafRef.current = window.requestAnimationFrame(draw);
@@ -1486,6 +1576,19 @@ export const PromptInputSpeechButton = ({
 
     startTimer();
     setIsListening(true);
+
+    // Create/resume AudioContext inside the click handler (user gesture) for Chrome.
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) {
+        const ctx =
+          audioContextRef.current && audioContextRef.current.state !== "closed"
+            ? audioContextRef.current
+            : new AudioCtx();
+        audioContextRef.current = ctx;
+        ctx.resume().catch(() => {});
+      }
+    } catch {}
 
     // Start audio capture first (requires user gesture).
     startRecording().catch((e) => {
