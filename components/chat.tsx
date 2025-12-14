@@ -44,7 +44,14 @@ import {
   TooltipTrigger,
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
-import { Circle, GlobeIcon, Link, Pen, RotateCcw } from "lucide-react";
+import {
+  Circle,
+  CircleCheck,
+  GlobeIcon,
+  Link,
+  Pen,
+  RotateCcw,
+} from "lucide-react";
 import { Fragment, useMemo, useRef, useState } from "react";
 import {
   AlertDialog,
@@ -291,6 +298,22 @@ export default function Chat({
           <ConversationScrollButton />
         </Conversation>
         <div className="relative">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center gap-1 px-3 pb-2 bg-card border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
+                {SolutionStates.map((state, index) => (
+                  <div
+                    key={state}
+                    className={cn(
+                      "flex-1 h-1 rounded-full",
+                      index <= currentStepIndex ? "bg-green-500/80" : "bg-muted"
+                    )}
+                  />
+                ))}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>Interview progress</TooltipContent>
+          </Tooltip>
           <PromptInput onSubmit={handleSubmit} globalDrop multiple>
             {/* <PromptInputHeader>
             <PromptInputAttachments>
@@ -308,12 +331,12 @@ export default function Chat({
             </PromptInputBody>
             <PromptInputFooter className="dark:bg-card">
               <PromptInputTools>
-                <PromptInputActionMenu>
+                {/* <PromptInputActionMenu>
                   <PromptInputActionMenuTrigger />
                   <PromptInputActionMenuContent>
                     <PromptInputActionAddAttachments />
                   </PromptInputActionMenuContent>
-                </PromptInputActionMenu>
+                </PromptInputActionMenu> */}
                 <PromptInputSpeechButton
                   onTranscriptionChange={setText}
                   textareaRef={textareaRef}
@@ -345,24 +368,6 @@ export default function Chat({
               </div>
             </PromptInputFooter>
           </PromptInput>
-          <div className="flex gap-1 px-2 mt-2">
-            {SolutionStates.map((state, index) => (
-              <Tooltip key={state}>
-                <TooltipTrigger asChild>
-                  <div
-                    key={state}
-                    className={cn(
-                      "flex-1 h-1 rounded-full",
-                      index <= currentStepIndex ? "bg-green-500" : "bg-gray-500"
-                    )}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {state.charAt(0).toUpperCase() + state.slice(1).toLowerCase()}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
         </div>
       </div>
     </div>

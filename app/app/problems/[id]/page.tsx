@@ -271,7 +271,7 @@ export default function Page() {
 
   return (
     <div className="grid grid-cols-[450px_1fr] h-full">
-      <div className="h-full p-2 min-h-0">
+      <div className="h-full px-2 pb-2 min-h-0">
         {/* Evaluation Status */}
         <Chat
           readonly={isCanvasReadOnly}

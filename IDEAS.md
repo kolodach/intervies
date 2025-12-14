@@ -13,3 +13,4 @@
 
 - metrics for interiview evaluation failure
 - metric for interview evaluation latency
+- metric for voice input usage
