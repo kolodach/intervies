@@ -23,11 +23,11 @@ import {
   PromptInputFooter,
   PromptInputHeader,
   type PromptInputMessage,
-  PromptInputSpeechButton,
   PromptInputSubmit,
   PromptInputTextarea,
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
+import { PromptInputSpeechButton } from "@/components/ai-elements/prompt-input-speech-button";
 import { fetchProblemBySolutionId } from "@/lib/queries/problems";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { SolutionStates, type Solution, type SolutionState } from "@/lib/types";
@@ -300,7 +300,7 @@ export default function Chat({
         <div className="relative">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 px-3 pb-2 bg-card border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
+              <div className="flex items-center gap-1 px-3 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
                 {SolutionStates.map((state, index) => (
                   <div
                     key={state}
