@@ -126,12 +126,61 @@ export type Database = {
         }
         Relationships: []
       }
+      user_plans: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          payment_method_brand: string | null
+          payment_method_last4: string | null
+          price_id: string | null
+          status: string
+          stripe_customer_id: string | null
+          subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_method_brand?: string | null
+          payment_method_last4?: string | null
+          price_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          payment_method_brand?: string | null
+          payment_method_last4?: string | null
+          price_id?: string | null
+          status?: string
+          stripe_customer_id?: string | null
+          subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       find_user_by_clerk_id: { Args: { clerk_id: string }; Returns: string }
+      get_or_create_user_plan: { Args: { p_user_id: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

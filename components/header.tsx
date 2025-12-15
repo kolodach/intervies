@@ -2,6 +2,7 @@ import {
   Circle,
   CircleCheck,
   CircleDashed,
+  Crown,
   HeartPlus,
   Hexagon,
   Mail,
@@ -134,6 +135,15 @@ export function Header() {
       <Button className="h-8 mr-2 text-xs py-1" variant="default">
         <Plus className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">New Problem</span>
+      </Button>
+      <Button
+        className="h-8 mr-2 text-xs py-1"
+        variant="outline"
+        size="sm"
+        onClick={() => router.push("/app/subscription")}
+      >
+        <Crown className="w-4 h-4 md:w-2 md:h-2" />
+        <span className="hidden md:inline ml-1">Subscription</span>
       </Button>
       <SignedOut>
         <SignInButton />

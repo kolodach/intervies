@@ -24,3 +24,20 @@ export function captureEvaluationSuccess(durationMs: number) {
 export function captureEvaluationFailure() {
   Sentry.metrics.count("evaluation_failure", 1);
 }
+
+// Subscription business metrics
+export function captureSubscriptionCreated() {
+  Sentry.metrics.count("subscription_created", 1);
+}
+
+export function captureSubscriptionRenewed() {
+  Sentry.metrics.count("subscription_renewed", 1);
+}
+
+export function captureSubscriptionCanceled() {
+  Sentry.metrics.count("subscription_canceled", 1);
+}
+
+export function capturePaymentFailed() {
+  Sentry.metrics.count("payment_failed", 1);
+}
