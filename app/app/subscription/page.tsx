@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
@@ -92,7 +92,7 @@ function getStatusBadge(status: string, cancelAtPeriodEnd: boolean) {
   }
 }
 
-export default function SubscriptionPage() {
+function SubscriptionPageContent() {
   const { user, isLoaded } = useUser();
   const searchParams = useSearchParams();
   const [plan, setPlan] = useState<UserPlan | null>(null);
@@ -128,6 +128,7 @@ export default function SubscriptionPage() {
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (isLoaded) {
       fetchPlan();
@@ -369,5 +370,19 @@ export default function SubscriptionPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function SubscriptionPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <SubscriptionPageContent />
+    </Suspense>
   );
 }
