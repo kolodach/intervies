@@ -71,40 +71,57 @@ export default function Page() {
       throw error;
     },
     messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
-    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
     onFinish: async () => {
       await refetchSolution();
     },
-    onToolCall: async ({ toolCall }) => {
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onToolCall: ({ toolCall }) => {
+      // Check if it's a dynamic tool first for proper type narrowing
+      if (toolCall.dynamic) {
+        return;
+      }
+
       if (toolCall.toolName === "conclude_interview") {
         logger.info({ solutionId: id }, "Concluding interview");
 
         try {
           // Trigger backend evaluation
-          const response = await fetch(`/api/v1/solutions/${id}/conclude`, {
+          const response = fetch(`/api/v1/solutions/${id}/conclude`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+          }).then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to conclude interview");
+            }
+
+            toast.info("Interview concluded. Generating evaluation...");
+
+            startPolling();
+            refetchSolution();
           });
 
-          if (!response.ok) {
-            throw new Error("Failed to conclude interview");
-          }
-
-          toast.info("Interview concluded. Generating evaluation...");
-
-          // Start polling for evaluation results
-          startPolling();
-          await refetchSolution();
-
           addToolOutput({
-            tool: "tool-conclude_interview",
+            tool: "conclude_interview",
             toolCallId: toolCall.toolCallId,
             output: "Interview concluded. Evaluation started.",
           });
+
+          // No await - avoids potential deadlocks (per Vercel AI SDK docs)
         } catch (error) {
           logger.error({ error }, "Failed to conclude interview");
           captureError(error as Error);
           toast.error("Failed to start evaluation");
+
+          // No await - avoids potential deadlocks (per Vercel AI SDK docs)
+          addToolOutput({
+            state: "output-error",
+            tool: "conclude_interview",
+            toolCallId: toolCall.toolCallId,
+            errorText:
+              error instanceof Error
+                ? error.message
+                : "Failed to conclude interview",
+          });
         }
       }
     },
