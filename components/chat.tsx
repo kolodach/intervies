@@ -65,19 +65,14 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "./ai-elements/tool";
 import type { ToolUIPart } from "ai";
 import type { Json } from "@/lib/database.types";
 import type { FinalEvaluation } from "@/lib/evaluation/schemas";
 import { capitalize, cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { EvaluationCard } from "./evaluation-card";
+import { ToolCallStatus } from "./ai-elements/tool-call-status";
+import { getToolCallLabels } from "./ai-elements/tool-call-labels";
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -224,20 +219,18 @@ export default function Chat({
                       const key = `${message.id}-${i}`;
                       const isTool = part.type.startsWith("tool-");
                       if (isTool) {
+                        const toolPart = part as ToolUIPart;
+                        const { presentTense, pastTense, icon } =
+                          getToolCallLabels(toolPart.type);
                         return (
-                          <Tool defaultOpen={false} key={key}>
-                            <ToolHeader
-                              type={part.type as ToolUIPart["type"]}
-                              state={(part as ToolUIPart).state}
-                            />
-                            <ToolContent>
-                              <ToolInput input={(part as ToolUIPart).input} />
-                              <ToolOutput
-                                output={(part as ToolUIPart).output}
-                                errorText={(part as ToolUIPart).errorText}
-                              />
-                            </ToolContent>
-                          </Tool>
+                          <ToolCallStatus
+                            key={key}
+                            presentTense={presentTense}
+                            pastTense={pastTense}
+                            state={toolPart.state}
+                            errorText={toolPart.errorText}
+                            icon={icon}
+                          />
                         );
                       }
                       switch (part.type) {
@@ -300,12 +293,12 @@ export default function Chat({
         <div className="relative">
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1 px-3 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
+              <div className="flex items-center gap-[4px] px-2 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
                 {SolutionStates.map((state, index) => (
                   <div
                     key={state}
                     className={cn(
-                      "flex-1 h-1 rounded-full",
+                      "flex-1 h-[3px] rounded-full",
                       index <= currentStepIndex ? "bg-green-500/80" : "bg-muted"
                     )}
                   />
@@ -338,6 +331,7 @@ export default function Chat({
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu> */}
                 <PromptInputSpeechButton
+                  disabled={readonly || status === "streaming"}
                   onTranscriptionChange={setText}
                   textareaRef={textareaRef}
                 />
@@ -351,14 +345,6 @@ export default function Chat({
                 </PromptInputButton> */}
               </PromptInputTools>
               <div className="flex items-center gap-2">
-                {boardChanged && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      Board changed
-                    </span>
-                    <div className="size-2 ml-auto bg-green-500 rounded-full " />
-                  </div>
-                )}
                 <PromptInputSubmit
                   disabled={
                     (!text && !status) || readonly || status === "streaming"
