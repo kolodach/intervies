@@ -5,10 +5,18 @@ import {
   generateId,
 } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { SolutionStates, type SolutionState } from "@/lib/types";
+import {
+  SolutionStates,
+  type SolutionState,
+  type EvaluationChecklist,
+} from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { clerkClient } from "@clerk/nextjs/server";
-import { captureError } from "@/lib/observability";
+import {
+  captureError,
+  captureEvaluationSuccess,
+  captureEvaluationFailure,
+} from "@/lib/observability";
 import { z } from "zod";
 import { stepCountIs } from "ai";
 import {
@@ -18,8 +26,10 @@ import {
 import { fetchProblemById } from "@/lib/queries/problems";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { fetchSolutionById, updateSolution } from "@/lib/queries/solutions";
-import type { Json } from "@/lib/database.types";
+import type { Json, Database } from "@/lib/database.types";
 import { createTwoFilesPatch } from "diff";
+import { evaluateInterview } from "@/lib/evaluation/evaluators";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
   const oldStr = JSON.stringify(prevBoardState, null, 2);
@@ -192,10 +202,63 @@ export async function POST(req: Request) {
       conclude_interview: {
         description: `Conclude the interview and trigger evaluation.
 Call this ONLY in CONCLUSION state after providing closing remarks to the candidate.
-The interview will become read-only and evaluation will begin immediately.
-This is a client-side tool - the frontend will handle the actual API call.`,
+The interview will become read-only and evaluation will begin immediately.`,
         inputSchema: z.object({}),
-        // No execute function - client-side tool
+        execute: async () => {
+          logger.info({ solutionId }, "Concluding interview");
+
+          // Fetch the solution
+          const { data: solution, error: solutionError } =
+            await fetchSolutionById(supabase, solutionId);
+
+          if (solutionError || !solution) {
+            logger.error({ solutionId, solutionError }, "Solution not found");
+            throw new Error("Solution not found");
+          }
+
+          // Check if already concluded
+          if (
+            solution.status === "completed" ||
+            solution.status === "evaluating"
+          ) {
+            logger.warn(
+              { solutionId, status: solution.status },
+              "Already concluded"
+            );
+            throw new Error("Interview already concluded");
+          }
+
+          // Update status to evaluating
+          const { error: updateError } = await updateSolution(
+            supabase,
+            solutionId,
+            {
+              status: "evaluating",
+              concluded_at: new Date().toISOString(),
+            }
+          );
+
+          if (updateError) {
+            logger.error(
+              { solutionId, updateError },
+              "Failed to update solution status"
+            );
+            throw updateError;
+          }
+
+          logger.info({ solutionId }, "Status updated to evaluating");
+
+          // Trigger evaluation asynchronously (don't await)
+          runEvaluation(solutionId, supabase).catch((error) => {
+            logger.error({ solutionId, error }, "Evaluation job failed");
+            captureError(error);
+          });
+
+          return {
+            success: true,
+            message: "Interview concluded. Evaluation in progress.",
+          };
+        },
       },
       update_checklist: {
         description: `Update evaluation checklist when candidate demonstrates competencies or red flags.
@@ -456,4 +519,96 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
       logger.debug({ solution }, "Solution updated");
     },
   });
+}
+
+// Async evaluation function
+async function runEvaluation(
+  solutionId: string,
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>
+) {
+  const evaluationStartTime = Date.now();
+
+  try {
+    // Fetch solution with all data
+    const { data: solution, error: solutionError } = await fetchSolutionById(
+      supabase,
+      solutionId
+    );
+
+    if (solutionError || !solution) {
+      throw new Error("Solution not found");
+    }
+
+    // Fetch problem
+    const { data: problem, error: problemError } = await fetchProblemById(
+      supabase,
+      solution.problem_id
+    );
+
+    if (problemError || !problem) {
+      throw new Error("Problem not found");
+    }
+
+    // Extract data
+    const conversation = solution.conversation;
+    const boardState = solution.board_state;
+    const checklist = solution.evaluation_checklist as EvaluationChecklist;
+
+    // Run evaluation
+    const evaluation = await evaluateInterview(
+      solutionId,
+      conversation,
+      boardState,
+      checklist,
+      problem
+    );
+
+    const evaluationMessage = {
+      id: generateId(),
+      role: "assistant",
+      parts: [
+        {
+          type: "text",
+          text: "EVALUATION_RESULT",
+        },
+      ],
+      metadata: {
+        evaluation: evaluation as Json,
+      },
+    } as UIMessage;
+
+    // Save evaluation
+    await updateSolution(supabase, solutionId, {
+      status: "completed",
+      evaluation: evaluation,
+      conversation: [
+        ...(conversation as Json[]),
+        evaluationMessage as unknown as Json,
+      ],
+      evaluated_at: new Date().toISOString(),
+    });
+
+    const evaluationDuration = Date.now() - evaluationStartTime;
+    captureEvaluationSuccess(evaluationDuration);
+
+    logger.info(
+      { solutionId, duration: evaluationDuration },
+      "Evaluation completed and saved"
+    );
+  } catch (error) {
+    const evaluationDuration = Date.now() - evaluationStartTime;
+    captureEvaluationFailure();
+
+    logger.error(
+      { solutionId, error, duration: evaluationDuration },
+      "Evaluation failed"
+    );
+
+    // Update status to failed
+    await updateSolution(supabase, solutionId, {
+      status: "evaluation_failed",
+    });
+
+    throw error;
+  }
 }

@@ -55,14 +55,7 @@ export default function Page() {
     !isSolutionActive;
 
   // Only initialize useChat after solution is loaded
-  const {
-    messages,
-    sendMessage,
-    status,
-    setMessages,
-    regenerate,
-    addToolOutput,
-  } = useChat({
+  const { messages, sendMessage, status, setMessages, regenerate } = useChat({
     id: id as string,
     onError(error) {
       toast.error("Error fetching messages");
@@ -75,56 +68,6 @@ export default function Page() {
       await refetchSolution();
     },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
-    onToolCall: ({ toolCall }) => {
-      // Check if it's a dynamic tool first for proper type narrowing
-      if (toolCall.dynamic) {
-        return;
-      }
-
-      if (toolCall.toolName === "conclude_interview") {
-        logger.info({ solutionId: id }, "Concluding interview");
-
-        try {
-          // Trigger backend evaluation
-          const response = fetch(`/api/v1/solutions/${id}/conclude`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-          }).then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to conclude interview");
-            }
-
-            toast.info("Interview concluded. Generating evaluation...");
-
-            startPolling();
-            refetchSolution();
-          });
-
-          addToolOutput({
-            tool: "conclude_interview",
-            toolCallId: toolCall.toolCallId,
-            output: "Interview concluded. Evaluation started.",
-          });
-
-          // No await - avoids potential deadlocks (per Vercel AI SDK docs)
-        } catch (error) {
-          logger.error({ error }, "Failed to conclude interview");
-          captureError(error as Error);
-          toast.error("Failed to start evaluation");
-
-          // No await - avoids potential deadlocks (per Vercel AI SDK docs)
-          addToolOutput({
-            state: "output-error",
-            tool: "conclude_interview",
-            toolCallId: toolCall.toolCallId,
-            errorText:
-              error instanceof Error
-                ? error.message
-                : "Failed to conclude interview",
-          });
-        }
-      }
-    },
   });
 
   // Sync messages from solution when it loads
