@@ -1,3 +1,5 @@
+"use server";
+
 import {
   streamText,
   type UIMessage,
@@ -205,59 +207,7 @@ Call this ONLY in CONCLUSION state after providing closing remarks to the candid
 The interview will become read-only and evaluation will begin immediately.`,
         inputSchema: z.object({}),
         execute: async () => {
-          logger.info({ solutionId }, "Concluding interview");
-
-          // Fetch the solution
-          const { data: solution, error: solutionError } =
-            await fetchSolutionById(supabase, solutionId);
-
-          if (solutionError || !solution) {
-            logger.error({ solutionId, solutionError }, "Solution not found");
-            throw new Error("Solution not found");
-          }
-
-          // Check if already concluded
-          if (
-            solution.status === "completed" ||
-            solution.status === "evaluating"
-          ) {
-            logger.warn(
-              { solutionId, status: solution.status },
-              "Already concluded"
-            );
-            throw new Error("Interview already concluded");
-          }
-
-          // Update status to evaluating
-          const { error: updateError } = await updateSolution(
-            supabase,
-            solutionId,
-            {
-              status: "evaluating",
-              concluded_at: new Date().toISOString(),
-            }
-          );
-
-          if (updateError) {
-            logger.error(
-              { solutionId, updateError },
-              "Failed to update solution status"
-            );
-            throw updateError;
-          }
-
-          logger.info({ solutionId }, "Status updated to evaluating");
-
-          // Trigger evaluation asynchronously (don't await)
-          runEvaluation(solutionId, supabase).catch((error) => {
-            logger.error({ solutionId, error }, "Evaluation job failed");
-            captureError(error);
-          });
-
-          return {
-            success: true,
-            message: "Interview concluded. Evaluation in progress.",
-          };
+          return concludeInterview(solutionId);
         },
       },
       update_checklist: {
@@ -521,8 +471,58 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
   });
 }
 
+export async function concludeInterview(solutionId: string) {
+  const supabase = await createServerSupabaseClient();
+
+  logger.info({ solutionId }, "Concluding interview");
+
+  // Fetch the solution
+  const { data: solution, error: solutionError } = await fetchSolutionById(
+    supabase,
+    solutionId
+  );
+
+  if (solutionError || !solution) {
+    logger.error({ solutionId, solutionError }, "Solution not found");
+    throw new Error("Solution not found");
+  }
+
+  // Check if already concluded
+  if (solution.status === "completed" || solution.status === "evaluating") {
+    logger.warn({ solutionId, status: solution.status }, "Already concluded");
+    throw new Error("Interview already concluded");
+  }
+
+  // Update status to evaluating
+  const { error: updateError } = await updateSolution(supabase, solutionId, {
+    status: "evaluating",
+    concluded_at: new Date().toISOString(),
+  });
+
+  if (updateError) {
+    logger.error(
+      { solutionId, updateError },
+      "Failed to update solution status"
+    );
+    throw updateError;
+  }
+
+  logger.info({ solutionId }, "Status updated to evaluating");
+
+  // Trigger evaluation asynchronously (don't await)
+  runEvaluation(solutionId, supabase).catch((error) => {
+    logger.error({ solutionId, error }, "Evaluation job failed");
+    captureError(error);
+  });
+
+  return {
+    success: true,
+    message: "Interview concluded. Evaluation in progress.",
+  };
+}
+
 // Async evaluation function
-async function runEvaluation(
+export async function runEvaluation(
   solutionId: string,
   supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>
 ) {

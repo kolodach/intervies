@@ -20,6 +20,7 @@ import { captureError } from "@/lib/observability";
 import { useEvaluationPolling } from "@/lib/hooks/use-evaluation-polling";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { DevTools } from "@/components/dev-tools";
+import { useMutation } from "@tanstack/react-query";
 
 export default function Page() {
   const { id } = useParams();
@@ -35,6 +36,23 @@ export default function Page() {
   } = useQuery(fetchSolutionById(supabase, id as string), {
     enabled: !!user,
   });
+
+  const { mutate: concludeInterview, isPending: isConcludingInterview } =
+    useMutation({
+      mutationFn: async () => {
+        await fetch(`/api/v1/solutions/${id as string}/conclude`, {
+          method: "POST",
+        });
+      },
+      onSuccess: () => {
+        refetchSolution();
+      },
+      onError: (error) => {
+        toast.error("Error concluding interview");
+        captureError(error);
+        logger.error(error, "Error concluding interview");
+      },
+    });
 
   // Evaluation polling
   const {
@@ -233,6 +251,8 @@ export default function Page() {
       <div className="h-full px-2 pb-2 min-h-0">
         {/* Evaluation Status */}
         <Chat
+          isConcludingInterview={isConcludingInterview || isEvaluating}
+          onConcludeInterview={concludeInterview}
           readonly={isCanvasReadOnly}
           solution={solution}
           onRegenerate={handleRegenerate}

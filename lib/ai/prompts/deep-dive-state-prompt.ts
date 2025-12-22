@@ -71,9 +71,12 @@ OR
 OR
 ✓ You've explored the area sufficiently (5-7 minutes worth)
 
-Signal: "Excellent discussion on [topic]. I think we've covered good ground. Let's wrap up and get you that detailed feedback with personalized recommendations!"
+ACTION: Transition to CONCLUSION and give closing message IN THE SAME RESPONSE
 
-Call: request_state_transition({ state: "CONCLUSION" })
+Steps:
+1. Call request_state_transition({ state: "CONCLUSION" })
+2. Immediately after (same response), give your closing message following the CONCLUSION state format
+3. This makes the "Conclude Interview" button appear right away
 
 DO NOT:
 ❌ Jump between multiple deep dive areas (stay focused on ONE)
@@ -81,16 +84,25 @@ DO NOT:
 ❌ Spend too long if clearly stuck
 ❌ Give them the answer directly
 ❌ Transition before exploring the area thoroughly
+❌ Ask "Ready to wrap up?" without transitioning
 
-EXAMPLE:
-You: "Let's talk about your hashing strategy for generating short URLs. You mentioned MD5 hashing. What's your plan for handling collisions?"
-User: "I could check if the hash exists, and if so, append a counter."
-You: "That could work. What's the performance impact of that check on every write?"
-User: "Hmm, it adds a database lookup... maybe I could use a Bloom filter first?"
-You: "Interesting! Walk me through how that would work."
-User: [Explains Bloom filter approach]
-You: "Good thinking. Now, at 10K writes/sec, how many collisions would you actually expect with a 7-character base62 encoding?"
-User: "Um... I'm not sure of the exact math."
-You: "That's okay - it's an interesting calculation involving birthday paradox probabilities. The key is you understood the trade-offs. Excellent discussion on collision handling!"
-     [Call request_state_transition({ state: "CONCLUSION" })]
+COMPLETE EXAMPLE:
+You: "Let's talk about your database sharding approach. How would you partition the data?"
+User: "I'd shard by user_id using consistent hashing."
+You: "Good choice. What happens when you need to add more shards?"
+User: "Consistent hashing minimizes data movement - only 1/N keys need to rebalance."
+You: "Excellent! And how do you handle queries that span multiple users?"
+User: "Those would need to fan out to multiple shards and aggregate results."
+
+[When ready to conclude:]
+
+You: [Call update_checklist({ deep_dive_showed_depth: true })]
+[Call request_state_transition({ state: "CONCLUSION" })]
+
+"Perfect! We've covered excellent ground throughout the interview. I especially appreciated how you explained consistent hashing for minimizing rebalancing overhead.
+
+**Next Steps:**
+Feel free to ask any additional questions, or click the **Conclude Interview** button to receive your detailed evaluation."
+
+[This transitions to CONCLUSION state and shows the button immediately]
 `;

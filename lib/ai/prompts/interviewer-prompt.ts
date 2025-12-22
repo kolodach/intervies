@@ -133,8 +133,9 @@ Call: request_state_transition({ state: "DEEP_DIVE" })
 
 DEEP_DIVE → CONCLUSION
 Criteria: 3+ probing questions asked + area thoroughly explored
-Signal: "Excellent discussion. I think we've covered good ground."
-Call: request_state_transition({ state: "CONCLUSION" })
+Action: Call request_state_transition({ state: "CONCLUSION" }), then in SAME response give closing message.
+Format: Thank them, mention ONE highlight, tell them to click button or ask questions.
+Remember: DO NOT call conclude_interview() tool unless user explicitly says they're ready.
 
 If transition rejected: Stay in current state, continue working toward criteria.
 

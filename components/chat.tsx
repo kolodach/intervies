@@ -45,10 +45,12 @@ import {
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
+  CheckCircle,
   Circle,
   CircleCheck,
   GlobeIcon,
   Link,
+  Loader2,
   Pen,
   RotateCcw,
 } from "lucide-react";
@@ -102,6 +104,8 @@ export function ResetDialog({ onReset }: { onReset: () => void }) {
 
 export default function Chat({
   solution,
+  onConcludeInterview,
+  isConcludingInterview,
   onRegenerate,
   onReset,
   onMessageSent,
@@ -116,6 +120,8 @@ export default function Chat({
   onRegenerate: (messageId: string) => void;
   onReset: () => void;
   onMessageSent: () => void;
+  isConcludingInterview: boolean;
+  onConcludeInterview: () => void;
   boardChanged: boolean;
   readonly: boolean;
   messages: UIMessage[];
@@ -147,10 +153,17 @@ export default function Chat({
 
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
   const client = useSupabaseBrowserClient();
+  const canConcludeInterview = useMemo(() => {
+    return solution.state === "CONCLUSION" && solution.status === "active";
+  }, [solution]);
 
   const currentStepIndex = useMemo(() => {
     return SolutionStates.findIndex((state) => state === solution.state);
   }, [solution.state]);
+
+  const handleConcludeInterview = () => {
+    onConcludeInterview();
+  };
 
   const handleSubmit = (message: PromptInputMessage) => {
     const hasText = Boolean(message.text);
@@ -291,22 +304,44 @@ export default function Chat({
           <ConversationScrollButton />
         </Conversation>
         <div className="relative">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-[4px] px-2 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
-                {SolutionStates.map((state, index) => (
-                  <div
-                    key={state}
-                    className={cn(
-                      "flex-1 h-[3px] rounded-full",
-                      index <= currentStepIndex ? "bg-green-500/80" : "bg-muted"
-                    )}
-                  />
-                ))}
+          <div className="px-2 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
+            {isConcludingInterview && (
+              <div className="mb-4 flex items-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                <p className="text-sm text-muted-foreground">
+                  Interview evaluation is in progress...
+                </p>
               </div>
-            </TooltipTrigger>
-            <TooltipContent>Interview progress</TooltipContent>
-          </Tooltip>
+            )}
+            {canConcludeInterview && !isConcludingInterview && (
+              <div className="mb-4">
+                <p className="text-sm text-muted-foreground">
+                  You've complted all steps of the interview. Ask any additional
+                  questions or click the button to receive your detailed
+                  evaluation.
+                </p>
+                <Button
+                  variant="default"
+                  className="w-full mt-2"
+                  onClick={handleConcludeInterview}
+                >
+                  <CheckCircle />
+                  <span>Conclude Interview</span>
+                </Button>
+              </div>
+            )}
+            <div className="flex items-center gap-[4px]">
+              {SolutionStates.map((state, index) => (
+                <div
+                  key={state}
+                  className={cn(
+                    "flex-1 h-[3px] rounded-full",
+                    index <= currentStepIndex ? "bg-green-500/80" : "bg-muted"
+                  )}
+                />
+              ))}
+            </div>
+          </div>
           <PromptInput onSubmit={handleSubmit} globalDrop multiple>
             {/* <PromptInputHeader>
             <PromptInputAttachments>
