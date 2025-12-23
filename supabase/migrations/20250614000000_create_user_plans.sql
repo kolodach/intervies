@@ -78,7 +78,16 @@ FOR INSERT
 TO service_role
 WITH CHECK (true);
 
--- Create updated_at trigger (reuse existing function if it exists)
+-- Function to update the updated_at column
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create updated_at trigger
 CREATE TRIGGER update_user_plans_updated_at
   BEFORE UPDATE ON user_plans
   FOR EACH ROW

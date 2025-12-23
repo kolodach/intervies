@@ -58,7 +58,7 @@ export async function runComprehensiveEvaluation(
 
     const evaluationStartTime = Date.now();
     const { object, usage } = await generateObject({
-      model: openai("gpt-4.1-mini-2025-04-14"),
+      model: "openai/gpt-4.1-mini",
       messages: [
         {
           role: "system",
@@ -150,7 +150,7 @@ export async function generateFinalEvaluation(
 
     const summaryStartTime = Date.now();
     const { object, usage } = await generateObject({
-      model: openai("gpt-4.1-mini-2025-04-14"),
+      model: "openai/gpt-4.1-mini",
       messages: [
         {
           role: "system",
