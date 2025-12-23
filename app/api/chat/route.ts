@@ -32,6 +32,7 @@ import type { Json, Database } from "@/lib/database.types";
 import { createTwoFilesPatch } from "diff";
 import { evaluateInterview } from "@/lib/evaluation/evaluators";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { trackAIUsage } from "@/lib/ai/usage-tracker";
 
 function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
   const oldStr = JSON.stringify(prevBoardState, null, 2);
@@ -167,6 +168,18 @@ export async function POST(req: Request) {
       captureError(error as Error);
       logger.error(error, "Error streaming chat response");
       throw error;
+    },
+    onFinish({ totalUsage }) {
+      // Track AI usage (fire-and-forget)
+      trackAIUsage({
+        model: "anthropic/claude-sonnet-4.5",
+        userId,
+        usage: totalUsage,
+        entityType: "solution",
+        entityId: solutionId,
+      }).catch((error) => {
+        logger.error({ error, solutionId }, "Failed to track AI usage");
+      });
     },
     activeTools: getActiveTools(currentState) as [],
     tools: {

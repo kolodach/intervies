@@ -9,12 +9,15 @@ import { logger } from "@/lib/logger";
 import type { EvaluationChecklist, Problem } from "@/lib/types";
 import { generateObject } from "ai";
 import type { Json } from "../database.types";
+import { trackAIUsage } from "@/lib/ai/usage-tracker";
 
 export async function runComprehensiveEvaluation(
   conversation: Json,
   boardState: Json,
   checklist: EvaluationChecklist,
-  problem: Problem
+  problem: Problem,
+  solutionId: string,
+  userId: string
 ): Promise<Evaluation> {
   const startTime = Date.now();
   const conversationLength = Array.isArray(conversation)
@@ -81,6 +84,19 @@ export async function runComprehensiveEvaluation(
       schema: EvaluationSchema,
     });
 
+    // Track AI usage for evaluation
+    if (usage) {
+      trackAIUsage({
+        model: "openai/gpt-4.1-mini",
+        userId,
+        usage,
+        entityType: "solution",
+        entityId: solutionId,
+      }).catch((error) => {
+        logger.error({ error, solutionId }, "Failed to track evaluation usage");
+      });
+    }
+
     const evaluationDuration = Date.now() - evaluationStartTime;
     const totalDuration = Date.now() - startTime;
 
@@ -116,7 +132,9 @@ export async function runComprehensiveEvaluation(
 export async function generateFinalEvaluation(
   evaluations: Evaluation[],
   checklist: EvaluationChecklist,
-  problem: Problem
+  problem: Problem,
+  solutionId: string,
+  userId: string
 ): Promise<Evaluation> {
   const startTime = Date.now();
 
@@ -171,6 +189,19 @@ export async function generateFinalEvaluation(
       schema: EvaluationSchema,
     });
 
+    // Track AI usage for final evaluation synthesis
+    if (usage) {
+      trackAIUsage({
+        model: "openai/gpt-4.1-mini",
+        userId,
+        usage,
+        entityType: "solution",
+        entityId: solutionId,
+      }).catch((error) => {
+        logger.error({ error, solutionId }, "Failed to track synthesis usage");
+      });
+    }
+
     const summaryDuration = Date.now() - summaryStartTime;
     const totalDuration = Date.now() - startTime;
 
@@ -217,7 +248,8 @@ export async function evaluateInterview(
   conversation: Json,
   boardState: Json,
   checklist: EvaluationChecklist,
-  problem: Problem
+  problem: Problem,
+  userId: string
 ): Promise<Evaluation> {
   const overallStartTime = Date.now();
   const conversationLength = Array.isArray(conversation)
@@ -249,9 +281,30 @@ export async function evaluateInterview(
 
     const parallelStartTime = Date.now();
     const evaluations = await Promise.all([
-      runComprehensiveEvaluation(conversation, boardState, checklist, problem),
-      runComprehensiveEvaluation(conversation, boardState, checklist, problem),
-      runComprehensiveEvaluation(conversation, boardState, checklist, problem),
+      runComprehensiveEvaluation(
+        conversation,
+        boardState,
+        checklist,
+        problem,
+        solutionId,
+        userId
+      ),
+      runComprehensiveEvaluation(
+        conversation,
+        boardState,
+        checklist,
+        problem,
+        solutionId,
+        userId
+      ),
+      runComprehensiveEvaluation(
+        conversation,
+        boardState,
+        checklist,
+        problem,
+        solutionId,
+        userId
+      ),
     ]);
     const parallelDuration = Date.now() - parallelStartTime;
 
@@ -268,7 +321,9 @@ export async function evaluateInterview(
     const finalEvaluation = await generateFinalEvaluation(
       evaluations,
       checklist,
-      problem
+      problem,
+      solutionId,
+      userId
     );
 
     const totalDuration = Date.now() - overallStartTime;

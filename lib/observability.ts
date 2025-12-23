@@ -41,3 +41,8 @@ export function captureSubscriptionCanceled() {
 export function capturePaymentFailed() {
   Sentry.metrics.count("payment_failed", 1);
 }
+
+// AI Usage metrics
+export function captureAICost(costUsd: number) {
+  Sentry.metrics.gauge("ai_cost_usd", costUsd);
+}

@@ -9,6 +9,86 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      ai_pricing: {
+        Row: {
+          cached_input_price_per_token: number
+          created_at: string | null
+          id: string
+          input_price_per_token: number
+          model: string
+          output_price_per_token: number
+          state: string
+          updated_at: string | null
+        }
+        Insert: {
+          cached_input_price_per_token?: number
+          created_at?: string | null
+          id?: string
+          input_price_per_token: number
+          model: string
+          output_price_per_token: number
+          state?: string
+          updated_at?: string | null
+        }
+        Update: {
+          cached_input_price_per_token?: number
+          created_at?: string | null
+          id?: string
+          input_price_per_token?: number
+          model?: string
+          output_price_per_token?: number
+          state?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      ai_usage_events: {
+        Row: {
+          cached_input_tokens: number
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["entity_type_enum"]
+          id: string
+          input_tokens: number
+          output_tokens: number
+          price_id: string
+          timestamp: string
+          total_cost_usd: number
+          user_id: string
+        }
+        Insert: {
+          cached_input_tokens?: number
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["entity_type_enum"]
+          id?: string
+          input_tokens?: number
+          output_tokens?: number
+          price_id: string
+          timestamp?: string
+          total_cost_usd: number
+          user_id: string
+        }
+        Update: {
+          cached_input_tokens?: number
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["entity_type_enum"]
+          id?: string
+          input_tokens?: number
+          output_tokens?: number
+          price_id?: string
+          timestamp?: string
+          total_cost_usd?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_events_price_id_fkey"
+            columns: ["price_id"]
+            isOneToOne: false
+            referencedRelation: "ai_pricing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       problems: {
         Row: {
           categories: string[]
@@ -180,10 +260,9 @@ export type Database = {
     }
     Functions: {
       find_user_by_clerk_id: { Args: { clerk_id: string }; Returns: string }
-      get_or_create_user_plan: { Args: { p_user_id: string }; Returns: string }
     }
     Enums: {
-      [_ in never]: never
+      entity_type_enum: "solution" | "evaluation"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -310,7 +389,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      entity_type_enum: ["solution", "evaluation"],
+    },
   },
 } as const
 

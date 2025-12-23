@@ -156,7 +156,8 @@ async function runEvaluation(solutionId: string) {
       conversation,
       boardState,
       checklist,
-      problem
+      problem,
+      solution.user_id
     );
 
     const evaluationMessage = {
