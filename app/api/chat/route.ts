@@ -159,8 +159,13 @@ export async function POST(req: Request) {
 
   logger.info({ prompt }, "Interviewer prompt");
 
+  const model = process.env.PREP_SESSION_MODEL;
+  if (!model) {
+    throw new Error("PREP_SESSION_MODEL is not set");
+  }
+
   const result = streamText({
-    model: "anthropic/claude-sonnet-4.5",
+    model,
     messages: convertToModelMessages(messages),
     stopWhen: stepCountIs(5),
     system: prompt,
@@ -172,7 +177,7 @@ export async function POST(req: Request) {
     onFinish({ totalUsage }) {
       // Track AI usage (fire-and-forget)
       trackAIUsage({
-        model: "anthropic/claude-sonnet-4.5",
+        model,
         userId,
         usage: totalUsage,
         entityType: "solution",
@@ -573,7 +578,8 @@ export async function runEvaluation(
       conversation,
       boardState,
       checklist,
-      problem
+      problem,
+      solution.user_id
     );
 
     const evaluationMessage = {

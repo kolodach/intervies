@@ -50,9 +50,14 @@ export async function runComprehensiveEvaluation(
       },
     }).length;
 
+    const model = process.env.PREP_EVAL_MODEL;
+    if (!model) {
+      throw new Error("PREP_EVAL_MODEL is not set");
+    }
+
     logger.info(
       {
-        model: "gpt-4.1-mini-2025-04-14",
+        model,
         inputSize,
         promptSize: COMPREHENSIVE_EVALUATOR_PROMPT.length,
       },
@@ -61,7 +66,7 @@ export async function runComprehensiveEvaluation(
 
     const evaluationStartTime = Date.now();
     const { object, usage } = await generateObject({
-      model: "openai/gpt-4.1-mini",
+      model,
       messages: [
         {
           role: "system",
@@ -87,7 +92,7 @@ export async function runComprehensiveEvaluation(
     // Track AI usage for evaluation
     if (usage) {
       trackAIUsage({
-        model: "openai/gpt-4.1-mini",
+        model,
         userId,
         usage,
         entityType: "solution",
@@ -147,6 +152,11 @@ export async function generateFinalEvaluation(
     "Starting final evaluation synthesis"
   );
 
+  const model = process.env.PREP_EVAL_MODEL;
+  if (!model) {
+    throw new Error("PREP_EVAL_MODEL is not set");
+  }
+
   try {
     const inputSize = JSON.stringify({
       evaluations,
@@ -159,7 +169,7 @@ export async function generateFinalEvaluation(
 
     logger.info(
       {
-        model: "gpt-4.1-mini-2025-04-14",
+        model,
         inputSize,
         promptSize: SUMMARIZER_PROMPT.length,
       },
@@ -168,7 +178,7 @@ export async function generateFinalEvaluation(
 
     const summaryStartTime = Date.now();
     const { object, usage } = await generateObject({
-      model: "openai/gpt-4.1-mini",
+      model,
       messages: [
         {
           role: "system",
@@ -192,7 +202,7 @@ export async function generateFinalEvaluation(
     // Track AI usage for final evaluation synthesis
     if (usage) {
       trackAIUsage({
-        model: "openai/gpt-4.1-mini",
+        model,
         userId,
         usage,
         entityType: "solution",
@@ -281,14 +291,6 @@ export async function evaluateInterview(
 
     const parallelStartTime = Date.now();
     const evaluations = await Promise.all([
-      runComprehensiveEvaluation(
-        conversation,
-        boardState,
-        checklist,
-        problem,
-        solutionId,
-        userId
-      ),
       runComprehensiveEvaluation(
         conversation,
         boardState,
