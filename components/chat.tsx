@@ -319,31 +319,13 @@ export default function Chat({
             {isInterviewCompleted && (
               <div className="mb-4">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-medium">Interview Completed</h3>
+                  <h3 className="text-sm font-medium">Interview Completed</h3>
                   <CheckCircle className="size-4 text-green-500" />
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   The interview is complete and your evaluation is ready.
                   <b> Both chat and board are now read-only.</b>
                 </p>
-              </div>
-            )}
-            {canConcludeInterview && !isConcludingInterview && (
-              <div className="mb-4">
-                <h3 className="text-lg font-medium">Interview Completed</h3>
-                <p className="text-sm text-muted-foreground">
-                  You've complted all steps of the interview. Ask any additional
-                  questions or click the button to receive your detailed
-                  evaluation.
-                </p>
-                <Button
-                  variant="default"
-                  className="w-full mt-2"
-                  onClick={handleConcludeInterview}
-                >
-                  <CheckCircle />
-                  <span>Conclude Interview</span>
-                </Button>
               </div>
             )}
             <div className="flex items-center gap-[4px]">

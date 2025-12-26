@@ -24,6 +24,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { fetchSolutionById } from "@/lib/queries/solutions";
+import { Logo } from "./logo";
 
 function formatBreadcrumb(segment: string) {
   if (!segment) return "";
@@ -78,7 +79,7 @@ function HeaderTitle() {
     const isCompleted = data?.status === "completed";
 
     return (
-      <span className="ml-2 text-sm font-medium overflow-ellipsis line-clamp-1 flex items-center gap-2">
+      <span className="text-sm font-medium overflow-ellipsis line-clamp-1 flex items-center gap-2">
         {isLoading ? (
           "Loading..."
         ) : (
@@ -97,7 +98,7 @@ function HeaderTitle() {
 
   if (segments.length === 0) {
     // /app or /
-    return <span className="ml-2 text-sm font-medium">Home</span>;
+    return <span className="text-sm font-medium">Home</span>;
   }
 
   // Otherwise, show breadcrumbs
@@ -112,15 +113,12 @@ export function Header() {
   const router = useRouter();
   return (
     <header className="h-[48px] flex flex-row items-center px-4">
-      <Hexagon
-        className="min-w-8 min-h-8 hover:bg-muted p-1 rounded-md"
-        onClick={() => router.push("/app")}
-      />
+      <Logo variant="icon" theme="dark" className="h-4" />
       <Slash className="ml-2 -rotate-12 opacity-30" size={16} />
       <h1 className="ml-2 text-sm overflow-ellipsis line-clamp-1 font-medium">
         <HeaderTitle />
       </h1>
-      <Button
+      {/* <Button
         className="ml-auto h-8 mr-2 text-xs py-1"
         variant="outline"
         size="sm"
@@ -131,12 +129,12 @@ export function Header() {
       <Button className="h-8 mr-2 text-xs py-1" variant="outline" size="sm">
         <Mail className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">Give Feedback</span>
-      </Button>
-      <Button className="h-8 mr-2 text-xs py-1" variant="default">
+      </Button> */}
+      <Button className="h-8 mr-2 text-xs py-1 ml-auto" variant="default">
         <Plus className="w-4 h-4 md:w-2 md:h-2" />
-        <span className="hidden md:inline ml-1">New Problem</span>
+        <span className="hidden md:inline ml-1">New Interview</span>
       </Button>
-      <Button
+      {/* <Button
         className="h-8 mr-2 text-xs py-1"
         variant="outline"
         size="sm"
@@ -144,7 +142,7 @@ export function Header() {
       >
         <Crown className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">Subscription</span>
-      </Button>
+      </Button> */}
       <SignedOut>
         <SignInButton />
         <SignUpButton>

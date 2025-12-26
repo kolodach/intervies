@@ -38,7 +38,7 @@ export function EvaluationCard({ evaluation }: EvaluationCardProps) {
     <div>
       {/* Overall Score Header */}
       <div className={cn("p-2 rounded-sm mb-4", scoreBackground)}>
-        <h3 className="text-lg font-bold">
+        <h3 className="text-md font-bold">
           Overall Score:{" "}
           <span className="font-black">{evaluation.overall_score} / 100</span>{" "}
           {scoreIcon}
