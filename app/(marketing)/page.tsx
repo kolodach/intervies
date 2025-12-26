@@ -21,7 +21,7 @@ export default function Home() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link
-              href="/sign-up"
+              href="/app"
               className="px-8 py-3 bg-primary text-primary-foreground rounded-md text-lg font-medium hover:bg-primary/90"
             >
               Try 2 Free Interviews
@@ -307,7 +307,7 @@ export default function Home() {
           </p>
           <div className="pt-4">
             <Link
-              href="/sign-up"
+              href="/app"
               className="inline-block px-8 py-3 bg-primary text-primary-foreground rounded-md text-lg font-medium hover:bg-primary/90"
             >
               Try 2 Free Interviews

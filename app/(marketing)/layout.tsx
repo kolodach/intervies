@@ -57,11 +57,11 @@ export default function Layout({
             <Link href="#pricing" className="text-sm hover:underline">
               Pricing
             </Link>
-            <Link href="/sign-in" className="text-sm hover:underline">
+            <Link href="/app" className="text-sm hover:underline">
               Sign In
             </Link>
             <Link
-              href="/sign-up"
+              href="/app"
               className="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm font-medium hover:bg-primary/90"
             >
               Get Started
