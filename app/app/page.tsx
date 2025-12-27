@@ -9,6 +9,7 @@ import type { Problem, Solution } from "@/lib/types";
 import { ProblemsTable } from "@/components/problems-table";
 import { ContinueWidget } from "@/components/continue-widget";
 import { ProgressChartCard } from "@/components/progress-chart-card";
+import { PaywallModal } from "@/components/paywall-modal";
 import {
   createSolution,
   findSolutionByProblemId,
@@ -22,6 +23,7 @@ import {
   useQueriesForTableLoader,
   useQuery,
 } from "@supabase-cache-helpers/postgrest-react-query";
+import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
 
 export default function Page() {
   const { user } = useUser();
@@ -36,7 +38,9 @@ export default function Page() {
   const [difficultyFilters, setDifficultyFilters] = useState<Set<string>>(
     new Set()
   );
+  const [showPaywall, setShowPaywall] = useState(false);
   const supabase = useSupabaseBrowserClient();
+  const { canStartInterview, refetch: refetchUsage } = useUsageLimits();
   const { data: problemsData, error } = useQuery(
     fetchAllProblemsQuery(supabase),
     {
@@ -201,8 +205,14 @@ export default function Page() {
       toast.error("Error finding solution");
       return;
     }
+    // If user already has a solution for this problem, navigate to it
     if (solution) {
       router.push(`/app/problems/${solution.id}`);
+      return;
+    }
+    // Check if user can start a new interview (paywall check)
+    if (!canStartInterview) {
+      setShowPaywall(true);
       return;
     }
     const { data: newSolution, error: newSolutionError } = await createSolution(
@@ -219,11 +229,14 @@ export default function Page() {
       toast.error("Error creating solution");
       return;
     }
+    // Refetch usage limits after starting a new interview
+    refetchUsage();
     router.push(`/app/problems/${newSolution.id}`);
   };
 
   return (
     <div className="w-full h-full flex flex-col items-center p-4">
+      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
       {error && <div className="text-red-500">{error.message}</div>}
       {/* Mobile: Cards stacked in two rows */}
       {/* Medium: Cards at top in one row */}

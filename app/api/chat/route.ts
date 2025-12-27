@@ -33,6 +33,8 @@ import { createTwoFilesPatch } from "diff";
 import { evaluateInterview } from "@/lib/evaluation/evaluators";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { trackAIUsage } from "@/lib/ai/usage-tracker";
+import { checkCanSendMessage } from "@/lib/usage-check";
+import { captureBlockedChatAttempt } from "@/lib/observability";
 
 function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
   const oldStr = JSON.stringify(prevBoardState, null, 2);
@@ -77,6 +79,27 @@ export async function POST(req: Request) {
     },
     "Received chat request"
   );
+
+  // Server-side usage validation - prevents bypassing frontend checks
+  try {
+    const usageCheck = await checkCanSendMessage(userId);
+    if (!usageCheck.allowed) {
+      logger.warn(
+        { userId, reason: usageCheck.reason },
+        "Chat request blocked due to usage limits"
+      );
+      captureBlockedChatAttempt(usageCheck.reason ?? "UNKNOWN");
+      return new Response(JSON.stringify({ error: usageCheck.reason }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  } catch (usageError) {
+    logger.error({ userId, usageError }, "Error checking usage limits");
+    captureError(usageError as Error);
+    // Don't block on usage check errors - fail open but log
+  }
+
   const supabase = await createServerSupabaseClient();
   const clerk = await clerkClient();
 

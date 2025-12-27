@@ -75,6 +75,8 @@ import { Badge } from "./ui/badge";
 import { EvaluationCard } from "./evaluation-card";
 import { ToolCallStatus } from "./ai-elements/tool-call-status";
 import { getToolCallLabels } from "./ai-elements/tool-call-labels";
+import { UsageLimitBanner } from "./usage-limit-banner";
+import { FreeLimitExceededBanner } from "./free-limit-exceeded-banner";
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -115,6 +117,9 @@ export default function Chat({
   status,
   userId,
   readonly,
+  usageLimitReached = false,
+  freeLimitExceeded = false,
+  currentPeriodEnd = null,
 }: {
   solution: Solution;
   onRegenerate: (messageId: string) => void;
@@ -147,6 +152,9 @@ export default function Chat({
   ) => Promise<void>;
   status: ChatStatus | undefined;
   userId?: string;
+  usageLimitReached?: boolean;
+  freeLimitExceeded?: boolean;
+  currentPeriodEnd?: string | null;
 }) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -198,6 +206,10 @@ export default function Chat({
   return (
     <div className="mx-auto relative size-full h-full">
       <div className="flex flex-col h-full">
+        {freeLimitExceeded && <FreeLimitExceededBanner />}
+        {usageLimitReached && !freeLimitExceeded && (
+          <UsageLimitBanner currentPeriodEnd={currentPeriodEnd} />
+        )}
         <Conversation>
           <ConversationContent>
             {/* Top and bottom gradient overlays */}
@@ -348,7 +360,12 @@ export default function Chat({
           </PromptInputHeader> */}
             <PromptInputBody>
               <PromptInputTextarea
-                disabled={readonly || status === "streaming"}
+                disabled={
+                  readonly ||
+                  status === "streaming" ||
+                  usageLimitReached ||
+                  freeLimitExceeded
+                }
                 className="text-sm p-2"
                 onChange={(e) => setText(e.target.value)}
                 ref={textareaRef}
@@ -364,7 +381,12 @@ export default function Chat({
                   </PromptInputActionMenuContent>
                 </PromptInputActionMenu> */}
                 <PromptInputSpeechButton
-                  disabled={readonly || status === "streaming"}
+                  disabled={
+                    readonly ||
+                    status === "streaming" ||
+                    usageLimitReached ||
+                    freeLimitExceeded
+                  }
                   onTranscriptionChange={setText}
                   textareaRef={textareaRef}
                 />
@@ -380,7 +402,11 @@ export default function Chat({
               <div className="flex items-center gap-2">
                 <PromptInputSubmit
                   disabled={
-                    (!text && !status) || readonly || status === "streaming"
+                    (!text && !status) ||
+                    readonly ||
+                    status === "streaming" ||
+                    usageLimitReached ||
+                    freeLimitExceeded
                   }
                   status={status}
                 />

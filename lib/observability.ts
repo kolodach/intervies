@@ -46,3 +46,17 @@ export function capturePaymentFailed() {
 export function captureAICost(costUsd: number) {
   Sentry.metrics.gauge("ai_cost_usd", costUsd);
 }
+
+// Paywall and usage limit metrics
+export function capturePaywallShown() {
+  Sentry.metrics.count("paywall_shown", 1);
+}
+
+export function captureUsageLimitReached() {
+  Sentry.metrics.count("usage_limit_reached", 1);
+}
+
+export function captureBlockedChatAttempt(reason: string) {
+  Sentry.metrics.count("blocked_chat_attempt", 1);
+  Sentry.metrics.count(`blocked_chat_attempt_${reason.toLowerCase()}`, 1);
+}

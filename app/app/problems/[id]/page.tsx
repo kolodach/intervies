@@ -21,6 +21,7 @@ import { useEvaluationPolling } from "@/lib/hooks/use-evaluation-polling";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { DevTools } from "@/components/dev-tools";
 import { useMutation } from "@tanstack/react-query";
+import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
 
 export default function Page() {
   const { id } = useParams();
@@ -28,6 +29,8 @@ export default function Page() {
   const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
   const intervirewRequestedRef = useRef(false);
+  const { usageLimitReached, freeLimitExceeded, currentPeriodEnd } =
+    useUsageLimits();
   const {
     data: solution,
     error,
@@ -263,6 +266,9 @@ export default function Page() {
           sendMessage={sendMessage}
           status={status}
           userId={user?.id}
+          usageLimitReached={usageLimitReached}
+          freeLimitExceeded={freeLimitExceeded}
+          currentPeriodEnd={currentPeriodEnd}
         />
       </div>
       <div className="h-full relative pb-2 pr-2">
