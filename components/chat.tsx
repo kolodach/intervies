@@ -106,6 +106,8 @@ export function ResetDialog({ onReset }: { onReset: () => void }) {
 
 export default function Chat({
   solution,
+  interviewState,
+  interviewStatus,
   onConcludeInterview,
   isConcludingInterview,
   onRegenerate,
@@ -122,6 +124,8 @@ export default function Chat({
   currentPeriodEnd = null,
 }: {
   solution: Solution;
+  interviewState: SolutionState;
+  interviewStatus: Solution["status"];
   onRegenerate: (messageId: string) => void;
   onReset: () => void;
   onMessageSent: () => void;
@@ -161,16 +165,14 @@ export default function Chat({
 
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
   const client = useSupabaseBrowserClient();
-  const isInterviewCompleted = useMemo(() => {
-    return solution.status === "completed";
-  }, [solution.status]);
-  const canConcludeInterview = useMemo(() => {
-    return solution.state === "CONCLUSION" && solution.status === "active";
-  }, [solution]);
 
-  const currentStepIndex = useMemo(() => {
-    return SolutionStates.findIndex((state) => state === solution.state);
-  }, [solution.state]);
+  // Use the passed state/status props (which come from the lightweight query for freshness)
+  const isInterviewCompleted = interviewStatus === "completed";
+  const canConcludeInterview =
+    interviewState === "CONCLUSION" && interviewStatus === "active";
+  const currentStepIndex = SolutionStates.findIndex(
+    (state) => state === interviewState
+  );
 
   const handleConcludeInterview = () => {
     onConcludeInterview();
@@ -194,7 +196,7 @@ export default function Chat({
           userId: userId,
           problemId: solution.problem_id,
           solutionId: solution.id,
-          currentState: solution.state as SolutionState,
+          currentState: interviewState,
           boardChanged: boardChanged,
         },
       }

@@ -27,6 +27,19 @@ export function fetchSolutionById(client: TypedSupabaseClient, id: string) {
     .single();
 }
 
+/**
+ * Lightweight query for solution state only (excludes conversation to avoid re-renders)
+ * Use this when you need to refresh state/status without triggering message sync
+ */
+export function fetchSolutionState(client: TypedSupabaseClient, id: string) {
+  return client
+    .from("solutions")
+    .select("id, status, state, problem_id, user_id, evaluated_at, evaluation")
+    .eq("id", id)
+    .throwOnError()
+    .single();
+}
+
 export function findSolutionByProblemId(
   client: TypedSupabaseClient,
   problemId: string,

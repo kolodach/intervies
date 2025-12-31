@@ -2,7 +2,11 @@
 
 import { Canvas } from "@/components/canvas";
 import Chat from "@/components/chat";
-import { fetchSolutionById, updateSolution } from "@/lib/queries/solutions";
+import {
+  fetchSolutionById,
+  fetchSolutionState,
+  updateSolution,
+} from "@/lib/queries/solutions";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { useUser } from "@clerk/nextjs";
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
@@ -14,7 +18,7 @@ import { useDebouncer } from "@tanstack/react-pacer";
 import { toast } from "sonner";
 import type { Json } from "@/lib/database.types";
 import { type UIMessage, useChat } from "@ai-sdk/react";
-import type { SolutionState } from "@/lib/types";
+import type { Solution, SolutionState } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { captureError } from "@/lib/observability";
 import { useEvaluationPolling } from "@/lib/hooks/use-evaluation-polling";
@@ -29,8 +33,11 @@ export default function Page() {
   const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
   const intervirewRequestedRef = useRef(false);
+  const initialMessagesLoadedRef = useRef(false);
   const { usageLimitReached, freeLimitExceeded, currentPeriodEnd } =
     useUsageLimits();
+
+  // Full solution query - used only for initial data and board state
   const {
     data: solution,
     error,
@@ -40,6 +47,32 @@ export default function Page() {
     enabled: !!user,
   });
 
+  // Lightweight state-only query - used to refresh state without affecting messages
+  const { data: solutionState, refetch: refetchSolutionState } = useQuery(
+    fetchSolutionState(supabase, id as string),
+    {
+      enabled: !!user && !!solution, // Only after initial solution loads
+    }
+  );
+
+  // Derived state: prefer the lightweight solutionState for up-to-date values
+  const currentStatus = solutionState?.status ?? solution?.status;
+  const currentState = solutionState?.state ?? solution?.state;
+
+  // Flag to force message sync on next solution refetch
+  const forceMessageSyncRef = useRef(false);
+
+  // Helper to refetch state only (used during streaming to avoid message re-renders)
+  const refetchStateOnly = async () => {
+    await refetchSolutionState();
+  };
+
+  // Helper to refetch everything INCLUDING messages (for conclude/evaluation/devtools)
+  const refetchWithMessages = async () => {
+    forceMessageSyncRef.current = true;
+    await Promise.all([refetchSolution(), refetchSolutionState()]);
+  };
+
   const { mutate: concludeInterview, isPending: isConcludingInterview } =
     useMutation({
       mutationFn: async () => {
@@ -48,7 +81,7 @@ export default function Page() {
         });
       },
       onSuccess: () => {
-        refetchSolution();
+        refetchWithMessages();
       },
       onError: (error) => {
         toast.error("Error concluding interview");
@@ -67,7 +100,7 @@ export default function Page() {
     startPolling,
   } = useEvaluationPolling(id as string);
 
-  const isSolutionActive = solution?.status === "active";
+  const isSolutionActive = currentStatus === "active";
   const isCanvasReadOnly =
     isEvaluating ||
     isEvaluationCompleted ||
@@ -84,33 +117,41 @@ export default function Page() {
       logger.error(error, "Error fetching messages");
       throw error;
     },
-    messages: solution ? (solution.conversation as unknown as UIMessage[]) : [],
     onFinish: async () => {
-      await refetchSolution();
+      // Only refresh state, not the full solution with messages
+      await refetchSolutionState();
     },
     sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
   });
 
-  // Sync messages from solution when it loads
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Need to sync only when solution changes
+  // Sync messages from solution on initial load OR when forced (conclude/evaluation/devtools)
   useEffect(() => {
-    if (solution?.conversation) {
+    if (!solution?.conversation) return;
+
+    const shouldSync =
+      // Initial load: messages are empty and not yet loaded
+      (!initialMessagesLoadedRef.current && messages.length === 0) ||
+      // Forced sync: after conclude, evaluation, or devtools action
+      forceMessageSyncRef.current;
+
+    if (shouldSync) {
       const conversationMessages =
         solution.conversation as unknown as UIMessage[];
-      // Only update if messages are different
-      if (JSON.stringify(messages) !== JSON.stringify(conversationMessages)) {
+      if (conversationMessages.length > 0) {
         setMessages(conversationMessages);
+        initialMessagesLoadedRef.current = true;
+        forceMessageSyncRef.current = false;
       }
     }
-  }, [solution]);
+  }, [solution?.conversation, messages.length, setMessages]);
 
   // Automatically start polling when the solution is in "evaluating" state
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
-    if (solution?.status === "evaluating") {
+    if (currentStatus === "evaluating") {
       startPolling();
     }
-  }, [solution]);
+  }, [currentStatus]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
@@ -133,12 +174,12 @@ export default function Page() {
           userId: user.id,
           problemId: solution.problem_id,
           solutionId: solution.id,
-          currentState: solution.state as SolutionState,
+          currentState: currentState as SolutionState,
           boardChanged: boardChanged,
         },
       }
     );
-  }, [id, user, solution]);
+  }, [id, user, solution, currentState]);
 
   const [boardChanged, setBoardChanged] = useState(false);
 
@@ -148,7 +189,7 @@ export default function Page() {
     if (isEvaluationCompleted && evaluation) {
       toast.success("Evaluation complete! Check the results below.");
       logger.info({ evaluation }, "Evaluation completed");
-      refetchSolution();
+      refetchWithMessages();
     }
     if (isFailed || evaluationError) {
       toast.error(evaluationError || "Evaluation failed");
@@ -211,7 +252,7 @@ export default function Page() {
         userId: user?.id,
         problemId: solution.problem_id,
         solutionId: solution.id,
-        currentState: solution.state as SolutionState,
+        currentState: currentState as SolutionState,
         boardChanged: boardChanged,
       },
     });
@@ -258,6 +299,8 @@ export default function Page() {
           onConcludeInterview={concludeInterview}
           readonly={isCanvasReadOnly}
           solution={solution}
+          interviewState={currentState as SolutionState}
+          interviewStatus={currentStatus as Solution["status"]}
           onRegenerate={handleRegenerate}
           onReset={handleReset}
           onMessageSent={onMessageSent}
@@ -282,7 +325,7 @@ export default function Page() {
       <DevTools
         messages={messages}
         solution={solution}
-        refetchSolution={refetchSolution}
+        refetchSolution={refetchWithMessages}
       />
     </div>
   );
