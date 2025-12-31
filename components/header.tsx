@@ -113,7 +113,13 @@ export function Header() {
   const router = useRouter();
   return (
     <header className="h-[48px] flex flex-row items-center px-4">
-      <Logo variant="icon" theme="dark" className="h-4" />
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+      <div
+        className="flex items-center gap-2"
+        onClick={() => router.push("/app")}
+      >
+        <Logo variant="icon" theme="dark" className="h-4" />
+      </div>
       <Slash className="ml-2 -rotate-12 opacity-30" size={16} />
       <h1 className="ml-2 text-sm overflow-ellipsis line-clamp-1 font-medium">
         <HeaderTitle />

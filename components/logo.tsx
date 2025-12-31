@@ -5,7 +5,9 @@ export function Logo({
   className,
   theme = "dark",
   variant = "default",
+  onClick,
 }: {
+  onClick?: () => void;
   className?: string;
   theme?: "light" | "dark";
   variant?: "default" | "icon";
