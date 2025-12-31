@@ -5,6 +5,7 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { useStickToBottomContext } from "use-stick-to-bottom";
 import {
   Message,
   MessageContent,
@@ -54,7 +55,7 @@ import {
   Pen,
   RotateCcw,
 } from "lucide-react";
-import { Fragment, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -77,6 +78,20 @@ import { ToolCallStatus } from "./ai-elements/tool-call-status";
 import { getToolCallLabels } from "./ai-elements/tool-call-labels";
 import { UsageLimitBanner } from "./usage-limit-banner";
 import { FreeLimitExceededBanner } from "./free-limit-exceeded-banner";
+
+// Scroll to bottom when triggered (must be inside Conversation context)
+function ScrollToBottomEffect({ trigger }: { trigger: boolean }) {
+  const { scrollToBottom } = useStickToBottomContext();
+
+  useEffect(() => {
+    if (trigger) {
+      // Small delay to ensure new content is rendered
+      setTimeout(() => scrollToBottom(), 100);
+    }
+  }, [trigger, scrollToBottom]);
+
+  return null;
+}
 
 export function ResetDialog({ onReset }: { onReset: () => void }) {
   return (
@@ -110,6 +125,7 @@ export default function Chat({
   interviewStatus,
   onConcludeInterview,
   isConcludingInterview,
+  isEvaluationCompleted = false,
   onRegenerate,
   onReset,
   onMessageSent,
@@ -131,6 +147,7 @@ export default function Chat({
   onMessageSent: () => void;
   isConcludingInterview: boolean;
   onConcludeInterview: () => void;
+  isEvaluationCompleted?: boolean;
   boardChanged: boolean;
   readonly: boolean;
   messages: UIMessage[];
@@ -213,6 +230,7 @@ export default function Chat({
           <UsageLimitBanner currentPeriodEnd={currentPeriodEnd} />
         )}
         <Conversation>
+          <ScrollToBottomEffect trigger={isEvaluationCompleted} />
           <ConversationContent>
             {/* Top and bottom gradient overlays */}
             <div className="absolute top-0 left-0 right-0 h-[16px] pointer-events-none z-10 bg-gradient-to-b from-background to-transparent" />

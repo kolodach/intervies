@@ -296,6 +296,7 @@ export default function Page() {
         {/* Evaluation Status */}
         <Chat
           isConcludingInterview={isConcludingInterview || isEvaluating}
+          isEvaluationCompleted={isEvaluationCompleted}
           onConcludeInterview={concludeInterview}
           readonly={isCanvasReadOnly}
           solution={solution}
