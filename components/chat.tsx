@@ -361,16 +361,18 @@ export default function Chat({
               </div>
             )}
             {!isInterviewCompleted && canConcludeInterview && (
-              <div className="mb-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium">
+              <div className="mb-4 mt-1">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-medium text-muted-foreground">
                     Interview is ready to be concluded
                   </h3>
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
+                    className="ml-2"
                     onClick={handleConcludeInterview}
                   >
+                    <CheckCircle className="size-4 text-green-800" />
                     Conclude Interview
                   </Button>
                 </div>

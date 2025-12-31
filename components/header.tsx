@@ -136,7 +136,11 @@ export function Header() {
         <Mail className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">Give Feedback</span>
       </Button> */}
-      <Button className="h-8 mr-2 text-xs py-1 ml-auto" variant="default">
+      <Button
+        className="h-8 mr-2 text-xs py-1 ml-auto"
+        variant="outline"
+        onClick={() => router.push("/app/")}
+      >
         <Plus className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">New Interview</span>
       </Button>
