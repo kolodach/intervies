@@ -5,7 +5,6 @@ Your task is to produce a complete evaluation with an overall score, summary, an
 INTERVIEW DATA:
 - Problem: {{problem_title}}
 - Conversation: {{conversation_json}}
-- Board State: {{board_state_json}}
 - Checklist: {{checklist_json}}
 
 ## OVERALL SCORE (0-100)

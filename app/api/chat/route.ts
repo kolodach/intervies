@@ -5,6 +5,7 @@ import {
   type UIMessage,
   convertToModelMessages,
   generateId,
+  type ModelMessage,
 } from "ai";
 import { openai } from "@ai-sdk/openai";
 import {
@@ -22,8 +23,10 @@ import {
 import { z } from "zod";
 import { stepCountIs } from "ai";
 import {
-  buildInterviewerPrompt,
+  buildStaticBasePrompt,
+  buildDynamicContext,
   getActiveTools,
+  getStateSpecificInstructions,
 } from "@/lib/ai/interviewer-prompt-builder";
 import { fetchProblemById } from "@/lib/queries/problems";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -53,6 +56,20 @@ function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
   logger.debug({ patch, oldStr, newStr }, "Board diff");
 
   return patch;
+}
+
+/**
+ * Filters out tool call outputs from messages to reduce token usage.
+ * Keeps the messages but removes parts with type starting with "tool-".
+ * Messages with no remaining parts are filtered out entirely.
+ */
+function filterToolOutputs(messages: UIMessage[]): UIMessage[] {
+  return messages
+    .map((message) => ({
+      ...message,
+      parts: message.parts.filter((part) => !part.type.startsWith("tool-")),
+    }))
+    .filter((message) => message.parts.length > 0);
 }
 
 export async function POST(req: Request) {
@@ -170,28 +187,70 @@ export async function POST(req: Request) {
     out_of_scope: [],
   };
 
-  const prompt = buildInterviewerPrompt(
-    currentState,
-    boardChanged,
+  // Build prompts optimized for Anthropic's ephemeral token caching
+  // Message 1: Static base prompt (cached) - persona, rules, tools, problem, user, requirements
+  const staticBasePrompt = buildStaticBasePrompt(
     user.fullName ?? "",
     JSON.stringify(problem, null, 2),
-    boardDiff,
-    evaluationChecklist,
     requirements
   );
 
-  logger.info({ prompt }, "Interviewer prompt");
+  // Message 2: State-specific instructions (cached) - changes per state but static within a state
+  const stateInstructions = getStateSpecificInstructions(currentState);
+
+  // Message 3: Dynamic context (not cached) - board diff, checklist status, current state
+  const dynamicContext = buildDynamicContext(
+    currentState,
+    boardDiff,
+    evaluationChecklist
+  );
+
+  logger.info(
+    { staticBasePrompt, stateInstructions, dynamicContext },
+    "Interviewer prompts (split for caching)"
+  );
 
   const model = process.env.PREP_SESSION_MODEL;
   if (!model) {
     throw new Error("PREP_SESSION_MODEL is not set");
   }
 
+  logger.info({ boardDiff }, "Board diff");
+
+  // Filter out tool call outputs from messages to reduce token usage
+  const filteredMessages = filterToolOutputs(messages);
+
+  // 3 system messages optimized for Anthropic's ephemeral token caching:
+  // 1. Static base (cached) - same for all states within an interview
+  // 2. State instructions (cached) - same within a state
+  // 3. Dynamic context (not cached) - changes every request
+  const modelMessages = [
+    {
+      role: "system",
+      content: staticBasePrompt,
+      providerOptions: {
+        anthropic: { cacheControl: { type: "ephemeral" } },
+      },
+    },
+    {
+      role: "system",
+      content: stateInstructions,
+      providerOptions: {
+        anthropic: { cacheControl: { type: "ephemeral" } },
+      },
+    },
+    {
+      role: "system",
+      content: dynamicContext,
+    },
+    ...convertToModelMessages(filteredMessages),
+  ] as ModelMessage[];
+
   const result = streamText({
     model,
-    messages: convertToModelMessages(messages),
+    messages: modelMessages,
     stopWhen: stepCountIs(5),
-    system: prompt,
+    // system: prompt,
     onError({ error }) {
       captureError(error as Error);
       logger.error(error, "Error streaming chat response");

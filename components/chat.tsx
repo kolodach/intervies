@@ -340,6 +340,22 @@ export default function Chat({
                 </p>
               </div>
             )}
+            {!isInterviewCompleted && canConcludeInterview && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">
+                    Interview is ready to be concluded
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleConcludeInterview}
+                  >
+                    Conclude Interview
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-[4px]">
               {SolutionStates.map((state, index) => (
                 <div

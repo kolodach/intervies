@@ -2,10 +2,62 @@ import { CONCLUSION_STATE_PROMPT } from "@/lib/ai/prompts/conclusion-state-promp
 import { DEEP_DIVE_STATE_PROMPT } from "@/lib/ai/prompts/deep-dive-state-prompt";
 import { DESIGN_STATE_PROMPT } from "@/lib/ai/prompts/design-state-prompt";
 import { GREETING_STATE_PROMPT } from "@/lib/ai/prompts/greeting-state-prompt";
-import { INTERVIEWER_PROMPT } from "@/lib/ai/prompts/interviewer-prompt";
+import { INTERVIEWER_BASE_PROMPT } from "@/lib/ai/prompts/interviewer-prompt";
 import { REQUIREMENT_STATE_PROMPT } from "@/lib/ai/prompts/requirements-state-prompt";
 import type { SolutionState, ProblemRequirements } from "@/lib/types";
 
+/**
+ * Builds the static base prompt (cached).
+ * Contains: persona, rules, tools, problem info, user info, requirements.
+ * Does NOT contain: current state, state instructions, board diff, checklist status.
+ */
+export const buildStaticBasePrompt = (
+  userInfo: string,
+  problemInfo: string,
+  requirements: ProblemRequirements
+): string => {
+  const requirementsSection = formatRequirements(requirements);
+
+  return INTERVIEWER_BASE_PROMPT.replace("{{user_info}}", userInfo)
+    .replace("{{problem_info}}", problemInfo)
+    .replace("{{requirements}}", requirementsSection);
+};
+
+/**
+ * Builds the dynamic context message (not cached).
+ * Contains: current state, board diff, checklist status.
+ */
+export const buildDynamicContext = (
+  currentState: SolutionState,
+  boardDiff: string,
+  evaluationChecklist: Record<string, boolean>
+): string => {
+  const checklistStatus = formatChecklistStatus(evaluationChecklist);
+
+  const sections = [
+    "=== CURRENT INTERVIEW STATE ===",
+    `STATE: ${currentState}`,
+    "",
+    "=== EVALUATION STATUS ===",
+    checklistStatus,
+    "- ✓ = demonstrated, ○ = opportunity to explore",
+    "- Use missing items to guide probing questions",
+    "- Don't force checkboxes - prioritize quality conversation",
+  ];
+
+  if (boardDiff?.trim()) {
+    sections.push("");
+    sections.push("=== BOARD DIFF ===");
+    sections.push(boardDiff);
+  }
+
+  return sections.join("\n");
+};
+
+/**
+ * @deprecated Use buildStaticBasePrompt, getStateSpecificInstructions, and buildDynamicContext instead.
+ * This function is kept for backwards compatibility but combines all prompts into one.
+ */
 export const buildInterviewerPrompt = (
   currentState: SolutionState,
   boardChanged: boolean,
@@ -15,21 +67,18 @@ export const buildInterviewerPrompt = (
   evaluationChecklist: Record<string, boolean>,
   requirements: ProblemRequirements
 ) => {
-  const stateSpecificInstructions = getStateSpecificInstructions(currentState);
-  const checklistStatus = formatChecklistStatus(evaluationChecklist);
-  const requirementsSection = formatRequirements(requirements);
+  const staticBase = buildStaticBasePrompt(userInfo, problemInfo, requirements);
+  const stateInstructions = getStateSpecificInstructions(currentState);
+  const dynamicContext = buildDynamicContext(
+    currentState,
+    boardDiff,
+    evaluationChecklist
+  );
 
-  return INTERVIEWER_PROMPT.replace("{{user_info}}", userInfo)
-    .replace("{{problem_info}}", problemInfo)
-    .replace("{{current_state}}", currentState)
-    .replace("{{board_changed}}", boardChanged.toString())
-    .replace("{{state_specific_instructions}}", stateSpecificInstructions)
-    .replace("{{board_diff}}", boardDiff)
-    .replace("{{checklist_status}}", checklistStatus)
-    .replace("{{requirements}}", requirementsSection);
+  return `${staticBase}\n\n${stateInstructions}\n\n${dynamicContext}`;
 };
 
-const getStateSpecificInstructions = (currentState: SolutionState) => {
+export const getStateSpecificInstructions = (currentState: SolutionState) => {
   switch (currentState) {
     case "GREETING":
       return GREETING_STATE_PROMPT;

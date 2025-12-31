@@ -11,19 +11,62 @@ import { generateObject } from "ai";
 import type { Json } from "../database.types";
 import { trackAIUsage } from "@/lib/ai/usage-tracker";
 
+/**
+ * Filters out tool call parts from conversation messages to reduce token usage.
+ * Tool calls are internal mechanics and not needed for evaluation.
+ */
+function filterToolCallsFromConversation(conversation: Json): Json {
+  if (!Array.isArray(conversation)) {
+    return conversation;
+  }
+
+  return conversation
+    .map((message) => {
+      if (
+        typeof message === "object" &&
+        message !== null &&
+        "parts" in message &&
+        Array.isArray((message as Record<string, unknown>).parts)
+      ) {
+        const parts = (message as Record<string, unknown>).parts as Json[];
+        const filteredParts = parts.filter((part) => {
+          if (typeof part === "object" && part !== null && "type" in part) {
+            const partType = (part as Record<string, unknown>).type;
+            return (
+              typeof partType !== "string" || !partType.startsWith("tool-")
+            );
+          }
+          return true;
+        });
+        // Skip messages with no remaining parts
+        if (filteredParts.length === 0) {
+          return null;
+        }
+        return {
+          ...(message as Record<string, unknown>),
+          parts: filteredParts,
+        };
+      }
+      return message;
+    })
+    .filter((message) => message !== null);
+}
+
 export async function runComprehensiveEvaluation(
   conversation: Json,
-  boardState: Json,
   checklist: EvaluationChecklist,
   problem: Problem,
   solutionId: string,
   userId: string
 ): Promise<Evaluation> {
   const startTime = Date.now();
-  const conversationLength = Array.isArray(conversation)
-    ? conversation.length
+
+  // Filter out tool calls from conversation to reduce token usage
+  const filteredConversation = filterToolCallsFromConversation(conversation);
+
+  const conversationLength = Array.isArray(filteredConversation)
+    ? filteredConversation.length
     : 0;
-  const boardStateSize = JSON.stringify(boardState).length;
   const checklistItems = Object.keys(checklist).filter(
     (k) => checklist[k as keyof EvaluationChecklist] === true
   ).length;
@@ -32,7 +75,6 @@ export async function runComprehensiveEvaluation(
     {
       problemTitle: problem.title,
       conversationLength,
-      boardStateSize,
       checklistItems,
     },
     "Starting evaluation"
@@ -40,8 +82,7 @@ export async function runComprehensiveEvaluation(
 
   try {
     const inputSize = JSON.stringify({
-      conversation,
-      boardState,
+      conversation: filteredConversation,
       checklist,
       problem: {
         title: problem.title,
@@ -71,12 +112,14 @@ export async function runComprehensiveEvaluation(
         {
           role: "system",
           content: COMPREHENSIVE_EVALUATOR_PROMPT,
+          providerOptions: {
+            anthropic: { cacheControl: { type: "ephemeral" } },
+          },
         },
         {
           role: "user",
           content: JSON.stringify({
-            conversation,
-            boardState,
+            conversation: filteredConversation,
             checklist,
             problem: {
               title: problem.title,
@@ -183,6 +226,9 @@ export async function generateFinalEvaluation(
         {
           role: "system",
           content: SUMMARIZER_PROMPT,
+          providerOptions: {
+            anthropic: { cacheControl: { type: "ephemeral" } },
+          },
         },
         {
           role: "user",
@@ -256,7 +302,7 @@ export async function generateFinalEvaluation(
 export async function evaluateInterview(
   solutionId: string,
   conversation: Json,
-  boardState: Json,
+  boardState: Json, // Kept for backwards compatibility but not used
   checklist: EvaluationChecklist,
   problem: Problem,
   userId: string
@@ -276,24 +322,22 @@ export async function evaluateInterview(
   );
 
   try {
-    // Run the SAME evaluation THREE times in parallel for consistency
+    // Run the SAME evaluation TWO times in parallel for consistency
     logger.info(
       {
         solutionId,
         conversationLength,
-        boardStateSize: JSON.stringify(boardState).length,
         checklistItems: Object.keys(checklist).filter(
           (k) => checklist[k as keyof EvaluationChecklist] === true
         ).length,
       },
-      "Running three evaluations in parallel"
+      "Running two evaluations in parallel"
     );
 
     const parallelStartTime = Date.now();
     const evaluations = await Promise.all([
       runComprehensiveEvaluation(
         conversation,
-        boardState,
         checklist,
         problem,
         solutionId,
@@ -301,7 +345,6 @@ export async function evaluateInterview(
       ),
       runComprehensiveEvaluation(
         conversation,
-        boardState,
         checklist,
         problem,
         solutionId,
