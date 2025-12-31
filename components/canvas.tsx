@@ -12,6 +12,7 @@ import { Hexagon } from "lucide-react";
 
 // Import CSS at build time (safe for SSR)
 import "@excalidraw/excalidraw/index.css";
+import { Logo } from "./logo";
 
 export function Canvas({
   excalidrawRef,
@@ -108,7 +109,11 @@ export function Canvas({
           <WelcomeScreen.Center>
             <WelcomeScreen.Center.Heading>
               <div className="flex items-center justify-center pb-4">
-                <Hexagon className="w-10 h-10" />
+                <Logo
+                  variant="default"
+                  theme="dark"
+                  className="h-10 opacity-40"
+                />
               </div>
               <h1 className="text-2xl font-bold mb-8">How to succeed?</h1>
               <ul className="text-left">
@@ -118,11 +123,6 @@ export function Canvas({
                 <li>4. Refine your design through follow-up questions</li>
               </ul>
             </WelcomeScreen.Center.Heading>
-            <WelcomeScreen.Center.Menu>
-              <WelcomeScreen.Center.MenuItemLink href="https://github.com/excalidraw/excalidraw">
-                Excalidraw GitHub
-              </WelcomeScreen.Center.MenuItemLink>
-            </WelcomeScreen.Center.Menu>
           </WelcomeScreen.Center>
         </WelcomeScreen>
       </Excalidraw>
