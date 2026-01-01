@@ -1,12 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
+import LightRays from "@/components/light-rays";
 
 export default function Home() {
   return (
-    <>
+    <div className="relative">
+      <div className="absolute top-0 left-0 w-full h-full z-50">
+        <div style={{ width: "100%", height: "600px", position: "relative" }}>
+          <LightRays
+            raysSpeed={1.6}
+            lightSpread={0.8}
+            fadeDistance={1.4}
+            className="custom-rays"
+          />
+        </div>
+      </div>
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <div className="max-w-4xl mx-auto text-center space-y-6">
+      <section className="container mx-auto px-4 py-16 md:py-24 relative">
+        <div className="max-w-4xl mx-auto text-center space-y-6 mt-40">
           {/* Main Headline - H1 for SEO */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
             Practice System Design Until You're Ready
@@ -315,6 +326,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { NavbarScrollEffect } from "@/components/navbar-scroll-effect";
 
 export const metadata: Metadata = {
   title: "prep[0] - Practice System Design Until You're Ready",
@@ -39,10 +40,18 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      <NavbarScrollEffect />
       {/* Navigation */}
-      <nav className="">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <nav
+        className="sticky top-0 z-50"
+        style={{
+          backgroundColor:
+            "color-mix(in oklch, var(--background) calc(var(--navbar-bg-opacity, 0) * 100%), transparent)",
+          backdropFilter: "blur(var(--navbar-blur, 0px))",
+        }}
+      >
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <span className="font-mono text-xl font-bold">prep[0]</span>
@@ -70,7 +79,7 @@ export default function Layout({
         </div>
       </nav>
 
-      {children}
+      <div className="relative z-9 -mt-[70px]">{children}</div>
 
       {/* Footer */}
       <footer className="border-t py-12">
