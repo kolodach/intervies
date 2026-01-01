@@ -5,18 +5,20 @@ import LightRays from "@/components/light-rays";
 export default function Home() {
   return (
     <div className="relative">
-      <div className="absolute top-0 left-0 w-full h-full z-50">
+      <div className="absolute top-0 left-0 w-full h-full z-9">
         <div style={{ width: "100%", height: "600px", position: "relative" }}>
           <LightRays
-            raysSpeed={1.6}
-            lightSpread={0.8}
-            fadeDistance={1.4}
+            raysSpeed={0.3}
+            lightSpread={1}
+            fadeDistance={2}
+            noiseAmount={1}
+            mouseInfluence={0.0}
             className="custom-rays"
           />
         </div>
       </div>
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24 relative">
+      <section className="container mx-auto px-4 py-16 md:py-24 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-6 mt-40">
           {/* Main Headline - H1 for SEO */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
@@ -26,7 +28,7 @@ export default function Home() {
           {/* Subheadline */}
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Practice 35+ real interview problems. Get specific feedback on what
-            you missed. $25/month unlimited.
+            you missed. $19.99/month unlimited.
           </p>
 
           {/* CTA Buttons */}
@@ -43,7 +45,18 @@ export default function Home() {
           </div>
 
           {/* Hero Screenshot */}
-          <div className="pt-12">
+          <div className="pt-12 mt-20 relative">
+            {/* Background Image */}
+            <div className="absolute inset-0 -inset-x-24 -inset-y-12 overflow-hidden">
+              <Image
+                src="/images/hero-background.webp"
+                alt=""
+                fill
+                className="object-cover rounded-xl"
+                priority
+              />
+              <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
+            </div>
             {/* TODO: Add main product screenshot showing feedback card
                 Recommended: ~1200px wide, showing full interface
                 Show: Feedback evaluation with score + detailed breakdown
@@ -54,7 +67,7 @@ export default function Home() {
                 src="/screenshots/hero-screenshot.png"
                 alt="prep[0] system design interview feedback interface showing detailed evaluation"
                 fill
-                className="object-cover"
+                className="object-cover rounded-md"
                 priority
               />
             </div>
@@ -262,7 +275,7 @@ export default function Home() {
               <div className="space-y-4">
                 <div>
                   <p className="text-3xl font-bold">
-                    $25
+                    $19.99
                     <span className="text-lg font-normal text-muted-foreground">
                       /month
                     </span>
@@ -301,7 +314,7 @@ export default function Home() {
             <p className="text-center text-sm text-muted-foreground">
               <strong>Compare:</strong> Human mock interviews $99-149 per
               session • Video courses $50-200 with no personalized feedback •
-              prep[0] $25/month unlimited
+              prep[0] $19.99/month unlimited
             </p>
           </div>
         </div>
