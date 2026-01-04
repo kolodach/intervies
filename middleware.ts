@@ -8,17 +8,16 @@ const isPublicApiRoute = createRouteMatcher([
   "/api/webhooks/(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  // Skip auth for public API routes (webhooks)
-  if (isPublicApiRoute(req)) {
-    return;
+export default clerkMiddleware(
+  async (auth, request) => {
+    if (!isPublicApiRoute(request)) {
+      await auth.protect();
+    }
+  },
+  {
+    contentSecurityPolicy: {},
   }
-
-  // Protect app routes
-  if (isProtectedRoute(req)) {
-    await auth.protect();
-  }
-});
+);
 
 export const config = {
   matcher: [
