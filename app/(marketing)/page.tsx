@@ -5,31 +5,36 @@ import LightRays from "@/components/light-rays";
 export default function Home() {
   return (
     <div className="relative">
-      <div className="absolute top-0 left-0 w-full h-full z-9">
-        <div style={{ width: "100%", height: "600px", position: "relative" }}>
-          <LightRays
-            raysSpeed={0.3}
-            lightSpread={1}
-            fadeDistance={2}
-            noiseAmount={1}
-            mouseInfluence={0.0}
-            className="custom-rays"
-          />
-        </div>
+      <div className="absolute top-0 left-0 w-full h-[900px] z-9">
+        <Image
+          src="/images/hero-background.webp"
+          alt=""
+          fill
+          className="object-cover rounded-xl"
+          priority
+        />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
       </div>
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-16 md:py-24 relative z-10">
-        <div className="max-w-4xl mx-auto text-center space-y-6 mt-40">
+        <div className="max-w-4xl mx-auto text-center space-y-6 mt-20">
           {/* Main Headline - H1 for SEO */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
             Practice System Design Until You're Ready
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl font-bold max-w-2xl mx-auto">
             Practice 35+ real interview problems. Get specific feedback on what
             you missed. $19.99/month unlimited.
           </p>
+
+          {/* Social Proof */}
+          <div className="flex flex-col items-center justify-center pt-2">
+            <span className="text-base font-semibold text-primary">
+              Over 2,000K hours interviews completed
+            </span>
+          </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
@@ -46,17 +51,6 @@ export default function Home() {
 
           {/* Hero Screenshot */}
           <div className="pt-12 mt-20 relative">
-            {/* Background Image */}
-            <div className="absolute inset-0 -inset-x-24 -inset-y-12 overflow-hidden">
-              <Image
-                src="/images/hero-background.webp"
-                alt=""
-                fill
-                className="object-cover rounded-xl"
-                priority
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-background via-background/50 to-transparent" />
-            </div>
             {/* TODO: Add main product screenshot showing feedback card
                 Recommended: ~1200px wide, showing full interface
                 Show: Feedback evaluation with score + detailed breakdown
