@@ -1,30 +1,29 @@
+"use client";
+
 import {
   Circle,
   CircleCheck,
-  CircleDashed,
-  Crown,
-  HeartPlus,
-  Hexagon,
-  Mail,
-  MessageSquarePlus,
+  LogOut,
   Plus,
+  Settings,
   Slash,
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignUpButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { fetchSolutionById } from "@/lib/queries/solutions";
 import { Logo } from "./logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function formatBreadcrumb(segment: string) {
   if (!segment) return "";
@@ -52,7 +51,7 @@ function Breadcrumbs({ pathSegments }: { pathSegments: string[] }) {
 
 function HeaderTitle() {
   const pathname = usePathname();
-  const { user } = useUser();
+  const { data: session } = useSession();
   const client = useSupabaseBrowserClient();
   // Remove any query string/hash and split on /
   const segments = pathname
@@ -71,7 +70,7 @@ function HeaderTitle() {
   const solutionId = segments[1];
   // Query for the solution by id using supabase-cache-helpers
   const { data, isLoading } = useQuery(fetchSolutionById(client, solutionId), {
-    enabled: !!solutionId && !!client && !!user,
+    enabled: !!solutionId && !!client && !!session?.user,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -109,13 +108,71 @@ function HeaderTitle() {
   );
 }
 
+function UserMenu() {
+  const { data: session } = useSession();
+  const router = useRouter();
+
+  if (!session?.user) return null;
+
+  const user = session.user;
+  const initials = user.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : user.email?.[0]?.toUpperCase() ?? "U";
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={user.image ?? undefined} alt={user.name ?? ""} />
+            <AvatarFallback>{initials}</AvatarFallback>
+          </Avatar>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-56" align="end" forceMount>
+        <div className="flex items-center justify-start gap-2 p-2">
+          <div className="flex flex-col space-y-1 leading-none">
+            {user.name && <p className="font-medium">{user.name}</p>}
+            {user.email && (
+              <p className="w-[200px] truncate text-sm text-muted-foreground">
+                {user.email}
+              </p>
+            )}
+          </div>
+        </div>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => router.push("/app/settings")}>
+          <Settings className="mr-2 h-4 w-4" />
+          <span>Settings</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => router.push("/app/subscription")}>
+          <User className="mr-2 h-4 w-4" />
+          <span>Subscription</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Sign out</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export function Header() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
   return (
     <header className="h-[48px] flex flex-row items-center px-4">
       {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
       <div
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 cursor-pointer"
         onClick={() => router.push("/app")}
       >
         <Logo variant="icon" theme="dark" className="h-4" />
@@ -124,18 +181,6 @@ export function Header() {
       <h1 className="ml-2 text-sm overflow-ellipsis line-clamp-1 font-medium">
         <HeaderTitle />
       </h1>
-      {/* <Button
-        className="ml-auto h-8 mr-2 text-xs py-1"
-        variant="outline"
-        size="sm"
-      >
-        <HeartPlus className="w-4 h-4 md:w-2 md:h-2" />
-        <span className="hidden md:inline ml-1">Contribute Problem</span>
-      </Button>
-      <Button className="h-8 mr-2 text-xs py-1" variant="outline" size="sm">
-        <Mail className="w-4 h-4 md:w-2 md:h-2" />
-        <span className="hidden md:inline ml-1">Give Feedback</span>
-      </Button> */}
       <Button
         className="h-8 mr-2 text-xs py-1 ml-auto"
         variant="outline"
@@ -144,26 +189,18 @@ export function Header() {
         <Plus className="w-4 h-4 md:w-2 md:h-2" />
         <span className="hidden md:inline ml-1">New Interview</span>
       </Button>
-      {/* <Button
-        className="h-8 mr-2 text-xs py-1"
-        variant="outline"
-        size="sm"
-        onClick={() => router.push("/app/subscription")}
-      >
-        <Crown className="w-4 h-4 md:w-2 md:h-2" />
-        <span className="hidden md:inline ml-1">Subscription</span>
-      </Button> */}
-      <SignedOut>
-        <SignInButton />
-        <SignUpButton>
-          <Button size={"sm"} className="ml-4">
+      {status === "loading" ? null : session ? (
+        <UserMenu />
+      ) : (
+        <>
+          <Button variant="ghost" size="sm" onClick={() => signIn("google")}>
+            Sign In
+          </Button>
+          <Button size="sm" className="ml-2" onClick={() => signIn("google")}>
             Sign Up
           </Button>
-        </SignUpButton>
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
+        </>
+      )}
     </header>
   );
 }

@@ -1,5 +1,5 @@
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
 import type { Tables } from "@/lib/database.types";
 
@@ -10,10 +10,15 @@ type UserPlan = Tables<"user_plans">;
  * Returns the subscription status and plan data.
  */
 export function useIsPro() {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const supabase = useSupabaseBrowserClient();
 
-  const { data: plan, isLoading, error } = useQuery(
+  const {
+    data: plan,
+    isLoading,
+    error,
+  } = useQuery(
     supabase
       .from("user_plans")
       .select("*")
@@ -33,4 +38,3 @@ export function useIsPro() {
     error,
   };
 }
-

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { usageResponseSchema, type UsageResponse } from "@/lib/schemas/usage";
 
 async function fetchUsageLimits(): Promise<UsageResponse> {
@@ -30,7 +30,8 @@ export interface UseUsageLimitsReturn extends UsageResponse {
  * - Pro users: limited to $15/month AI usage
  */
 export function useUsageLimits(): UseUsageLimitsReturn {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["usage-limits", user?.id],

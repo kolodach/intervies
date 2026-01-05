@@ -1,18 +1,20 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { syncStripeDataToDatabase } from "@/lib/stripe";
 import { getUserPlan } from "@/lib/user-utils";
 import { captureError } from "@/lib/observability";
 
 export async function GET() {
-  const { userId: clerkUserId } = await auth();
+  const session = await auth();
 
-  if (!clerkUserId) {
-    redirect("/sign-in");
+  if (!session?.user?.id) {
+    redirect("/api/auth/signin");
   }
 
   // Get user's plan
-  const { plan: userPlan, error: planError } = await getUserPlan(clerkUserId);
+  const { plan: userPlan, error: planError } = await getUserPlan(
+    session.user.id
+  );
 
   if (planError || !userPlan?.stripe_customer_id) {
     console.error("[STRIPE SUCCESS] No Stripe customer found:", planError);

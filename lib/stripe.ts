@@ -19,7 +19,7 @@ export type StripeSubscriptionStatus = Stripe.Subscription.Status | "none";
 // User plan data structure (matches database schema)
 export interface UserPlan {
   id: string;
-  user_id: string; // Clerk user ID
+  user_id: string; // User ID from next-auth
   stripe_customer_id: string | null;
   subscription_id: string | null;
   status: StripeSubscriptionStatus;
@@ -176,7 +176,7 @@ export async function syncStripeDataToDatabase(
  * Uses authenticated server client.
  */
 export async function getOrCreateStripeCustomer(
-  clerkUserId: string,
+  userId: string,
   email: string
 ): Promise<string> {
   const { createServerSupabaseClient } = await import("@/lib/supabase/server");
@@ -186,7 +186,7 @@ export async function getOrCreateStripeCustomer(
   const { data: existingPlan, error: findError } = await supabase
     .from("user_plans")
     .select("stripe_customer_id")
-    .eq("user_id", clerkUserId)
+    .eq("user_id", userId)
     .maybeSingle();
 
   if (findError) {
@@ -202,7 +202,7 @@ export async function getOrCreateStripeCustomer(
   const customer = await stripe.customers.create({
     email,
     metadata: {
-      userId: clerkUserId, // Store clerk user ID in metadata
+      userId, // Store next-auth user ID in metadata
     },
   });
 
@@ -212,7 +212,7 @@ export async function getOrCreateStripeCustomer(
     .update({
       stripe_customer_id: customer.id,
     })
-    .eq("user_id", clerkUserId);
+    .eq("user_id", userId);
 
   if (updateError) {
     throw updateError;

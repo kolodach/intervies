@@ -1,18 +1,20 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getUserPlan } from "@/lib/user-utils";
 import { captureError } from "@/lib/observability";
 
 export async function GET() {
   try {
-    const { userId: clerkUserId } = await auth();
+    const session = await auth();
 
-    if (!clerkUserId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get user's plan
-    const { plan: userPlan, error: planError } = await getUserPlan(clerkUserId);
+    const { plan: userPlan, error: planError } = await getUserPlan(
+      session.user.id
+    );
 
     if (planError) {
       throw planError;

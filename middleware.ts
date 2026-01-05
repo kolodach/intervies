@@ -1,23 +1,38 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
-const isProtectedRoute = createRouteMatcher(["/app(.*)"]);
+// Routes that require authentication
+const protectedRoutes = ["/app"];
 
-// Routes that should bypass Clerk entirely (webhooks, public APIs)
-const isPublicApiRoute = createRouteMatcher([
+// Routes that should bypass auth entirely (webhooks, public APIs, auth routes)
+const publicRoutes = [
+  "/api/auth", // next-auth routes
   "/api/stripe/webhooks",
-  "/api/webhooks/(.*)",
-]);
+  "/api/webhooks",
+];
 
-export default clerkMiddleware(
-  async (auth, request) => {
-    if (!isPublicApiRoute(request)) {
-      await auth.protect();
-    }
-  },
-  {
-    contentSecurityPolicy: {},
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  // Skip auth for public routes (auth routes, webhooks, etc.)
+  if (publicRoutes.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next();
   }
-);
+
+  // Check if route requires authentication
+  const isProtected = protectedRoutes.some((route) =>
+    pathname.startsWith(route)
+  );
+
+  if (isProtected && !req.auth) {
+    // Redirect to sign in
+    const signInUrl = new URL("/api/auth/signin", req.url);
+    signInUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [

@@ -3,8 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import { ReactQueryClientProvider } from "@/components/react-query-provider";
-import { ClerkProvider } from "@clerk/nextjs";
-import { dark, shadcn } from "@clerk/themes";
+import { SessionProvider } from "next-auth/react";
 import { Analytics } from "@vercel/analytics/next";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
@@ -35,11 +34,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Analytics />
-        <ClerkProvider
-          appearance={{
-            theme: [dark, shadcn],
-          }}
-        >
+        <SessionProvider>
           <ReactQueryClientProvider>
             <ThemeProvider
               attribute="class"
@@ -53,7 +48,7 @@ export default function RootLayout({
               <Toaster />
             </ThemeProvider>
           </ReactQueryClientProvider>
-        </ClerkProvider>
+        </SessionProvider>
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { captureError } from "@/lib/observability";
@@ -11,19 +11,20 @@ import {
 
 export async function GET() {
   try {
-    const { userId: clerkUserId } = await auth();
+    const session = await auth();
 
-    if (!clerkUserId) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = session.user.id;
     const supabase = await createServerSupabaseClient();
 
     // Fetch user plan
     const { data: userPlan, error: planError } = await supabase
       .from("user_plans")
       .select("*")
-      .eq("user_id", clerkUserId)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (planError) {
@@ -38,7 +39,7 @@ export async function GET() {
     const { count: interviewCount, error: countError } = await supabase
       .from("solutions")
       .select("*", { count: "exact", head: true })
-      .eq("user_id", clerkUserId);
+      .eq("user_id", userId);
 
     if (countError) {
       throw countError;
@@ -53,7 +54,7 @@ export async function GET() {
       const { data: usageData, error: usageError } = await supabase
         .from("ai_usage_events")
         .select("total_cost_usd")
-        .eq("user_id", clerkUserId)
+        .eq("user_id", userId)
         .gte("timestamp", currentPeriodStart);
 
       if (usageError) {

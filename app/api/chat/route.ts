@@ -14,7 +14,7 @@ import {
   type EvaluationChecklist,
 } from "@/lib/types";
 import { logger } from "@/lib/logger";
-import { clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import {
   captureError,
   captureEvaluationSuccess,
@@ -97,6 +97,15 @@ export async function POST(req: Request) {
     "Received chat request"
   );
 
+  // Get session for user info
+  const session = await auth();
+  if (!session?.user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
   // Server-side usage validation - prevents bypassing frontend checks
   try {
     const usageCheck = await checkCanSendMessage(userId);
@@ -118,15 +127,9 @@ export async function POST(req: Request) {
   }
 
   const supabase = await createServerSupabaseClient();
-  const clerk = await clerkClient();
 
-  const user = await clerk.users.getUser(userId);
-  if (!user) {
-    const error = new Error(`Failed to fetch user info: ${userId}`);
-    captureError(error);
-    logger.error(error, `Failed to fetch user info: ${userId}`);
-    throw error;
-  }
+  // Use session user info instead of Clerk
+  const userName = session.user.name ?? "";
 
   const { data: problem, error: problemError } = await fetchProblemById(
     supabase,
@@ -190,7 +193,7 @@ export async function POST(req: Request) {
   // Build prompts optimized for Anthropic's ephemeral token caching
   // Message 1: Static base prompt (cached) - persona, rules, tools, problem, user, requirements
   const staticBasePrompt = buildStaticBasePrompt(
-    user.fullName ?? "",
+    userName,
     JSON.stringify(problem, null, 2),
     requirements
   );

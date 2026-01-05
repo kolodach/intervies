@@ -1,5 +1,5 @@
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import {
   useQuery,
   type UseQueryReturn,
@@ -10,7 +10,7 @@ import type { TypedSupabaseClient } from "../types";
 
 /**
  * Custom hook for running a PostgREST query only when the user is authenticated.
- * Required to make Clerk and Supabase work together.
+ * Required to make next-auth and Supabase work together.
  * @param query - The query to run.
  * @param config - The configuration for the query.
  * @returns The query result.
@@ -22,11 +22,11 @@ export function useAuthenticatedQuery<Result>(
     "queryKey" | "queryFn"
   >
 ): UseQueryReturn<Result> {
-  const { user } = useUser();
+  const { data: session } = useSession();
   const client = useSupabaseBrowserClient();
 
   return useQuery<Result>(query(client), {
-    enabled: !!user,
+    enabled: !!session?.user,
     ...config,
   });
 }

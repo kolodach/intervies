@@ -1,25 +1,26 @@
+"use client";
+
 import type { Database } from "@/lib/database.types";
-import { useSession } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { createClient } from "@supabase/supabase-js";
+import { useMemo } from "react";
 
 export function useSupabaseBrowserClient() {
-  const { session } = useSession();
+  const { data: session } = useSession();
 
-  // Create a custom Supabase client that injects the Clerk session token into the request headers
-  function createClerkSupabaseClient() {
+  const client = useMemo(() => {
     return createClient<Database>(
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        async accessToken() {
-          return session?.getToken() ?? null;
+        global: {
+          headers: {
+            Authorization: `Bearer ${session?.supabaseAccessToken ?? ""}`,
+          },
         },
       }
     );
-  }
+  }, [session?.supabaseAccessToken]);
 
-  // Create a `client` object for accessing Supabase data using the Clerk token
-  return createClerkSupabaseClient();
+  return client;
 }

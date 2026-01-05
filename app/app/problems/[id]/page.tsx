@@ -8,7 +8,7 @@ import {
   updateSolution,
 } from "@/lib/queries/solutions";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import type { OrderedExcalidrawElement } from "@excalidraw/excalidraw/element/types";
 import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
 import { useQuery } from "@supabase-cache-helpers/postgrest-react-query";
@@ -29,7 +29,8 @@ import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
 
 export default function Page() {
   const { id } = useParams();
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const client = useSupabaseBrowserClient();
   const supabase = useSupabaseBrowserClient();
   const intervirewRequestedRef = useRef(false);

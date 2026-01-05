@@ -1,4 +1,4 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { getOrCreateStripeCustomer, createCheckoutSession } from "@/lib/stripe";
 import { getOrCreateUserPlan } from "@/lib/user-utils";
@@ -6,23 +6,17 @@ import { captureError } from "@/lib/observability";
 
 export async function POST() {
   try {
-    const { userId: clerkUserId } = await auth();
-    const user = await currentUser();
+    const session = await auth();
 
-    if (!clerkUserId || !user) {
+    if (!session?.user?.id || !session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const email = user.emailAddresses[0]?.emailAddress;
-    if (!email) {
-      return NextResponse.json(
-        { error: "User email not found" },
-        { status: 400 }
-      );
-    }
+    const userId = session.user.id;
+    const email = session.user.email;
 
     // Ensure user has a plan record (creates if needed)
-    const { error: planError } = await getOrCreateUserPlan(clerkUserId);
+    const { error: planError } = await getOrCreateUserPlan(userId);
     if (planError) {
       console.error(
         "[STRIPE CHECKOUT] Failed to get/create user plan:",
@@ -35,10 +29,7 @@ export async function POST() {
     }
 
     // Get or create Stripe customer (always before checkout)
-    const stripeCustomerId = await getOrCreateStripeCustomer(
-      clerkUserId,
-      email
-    );
+    const stripeCustomerId = await getOrCreateStripeCustomer(userId, email);
 
     // Get the price ID from environment
     const priceId = process.env.STRIPE_PRICE_ID;
@@ -51,14 +42,14 @@ export async function POST() {
 
     // Create checkout session
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const session = await createCheckoutSession(
+    const checkoutSession = await createCheckoutSession(
       stripeCustomerId,
       priceId,
       `${baseUrl}/api/stripe/success`,
       `${baseUrl}/app/subscription?canceled=true`
     );
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("[STRIPE CHECKOUT] Error:", error);
     captureError(error as Error);

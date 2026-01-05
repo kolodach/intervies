@@ -15,7 +15,7 @@ import {
   findSolutionByProblemId,
   fetchSolutionsByUserId,
 } from "@/lib/queries/solutions";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -26,7 +26,8 @@ import {
 import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
 
 export default function Page() {
-  const { user } = useUser();
+  const { data: session } = useSession();
+  const user = session?.user;
   const router = useRouter();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [search, setSearch] = useState("");
