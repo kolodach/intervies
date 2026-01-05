@@ -1,4 +1,9 @@
-import type { Adapter, AdapterUser, AdapterAccount, AdapterSession } from "next-auth/adapters";
+import type {
+  Adapter,
+  AdapterUser,
+  AdapterAccount,
+  AdapterSession,
+} from "next-auth/adapters";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export function CustomSupabaseAdapter(config: {
@@ -134,7 +139,7 @@ export function CustomSupabaseAdapter(config: {
         .single();
 
       if (error || !data) return null;
-      
+
       const { users, ...session } = data as any;
       return {
         session: {
@@ -201,4 +206,3 @@ export function CustomSupabaseAdapter(config: {
     },
   };
 }
-
