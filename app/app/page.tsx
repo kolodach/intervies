@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { useAuthenticatedQuery } from "@/lib/hooks/query-hooks";
 import { fetchAllProblemsQuery } from "@/lib/queries/problems";
 import { capitalize } from "@/lib/utils";

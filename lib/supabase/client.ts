@@ -9,17 +9,20 @@ export function useSupabaseBrowserClient() {
   const { data: session } = useSession();
 
   const client = useMemo(() => {
-    return createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        global: {
-          headers: {
-            Authorization: `Bearer ${session?.supabaseAccessToken ?? ""}`,
-          },
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+    if (!url || !key) {
+      throw new Error("Missing Supabase environment variables");
+    }
+
+    return createClient<Database>(url, key, {
+      global: {
+        headers: {
+          Authorization: `Bearer ${session?.supabaseAccessToken ?? ""}`,
         },
-      }
-    );
+      },
+    });
   }, [session?.supabaseAccessToken]);
 
   return client;
