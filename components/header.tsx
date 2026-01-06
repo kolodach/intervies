@@ -6,6 +6,7 @@ import {
   LogOut,
   Plus,
   Settings,
+  ShieldCheck,
   Slash,
   User,
 } from "lucide-react";
@@ -154,6 +155,15 @@ function UserMenu() {
           <User className="mr-2 h-4 w-4" />
           <span>Subscription</span>
         </DropdownMenuItem>
+        {user.isAdmin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => router.push("/admin")}>
+              <ShieldCheck className="mr-2 h-4 w-4" />
+              <span>Admin Panel</span>
+            </DropdownMenuItem>
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/" })}>
           <LogOut className="mr-2 h-4 w-4" />

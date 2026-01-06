@@ -2,7 +2,11 @@ import type { TypedSupabaseClient } from "@/lib/types";
 import { captureError } from "../observability";
 
 export function fetchAllProblemsQuery(client: TypedSupabaseClient) {
-  return client.from("problems").select("*").throwOnError();
+  return client
+    .from("problems")
+    .select("*")
+    .eq("is_active", true)
+    .throwOnError();
 }
 
 export function fetchProblemById(client: TypedSupabaseClient, id: string) {
@@ -10,6 +14,7 @@ export function fetchProblemById(client: TypedSupabaseClient, id: string) {
     .from("problems")
     .select("*")
     .eq("id", id)
+    .eq("is_active", true)
     .throwOnError()
     .single();
 }
@@ -37,6 +42,7 @@ export async function fetchProblemBySolutionId(
     .from("problems")
     .select("*")
     .eq("id", solution.problem_id)
+    .eq("is_active", true)
     .throwOnError()
     .single();
 }
