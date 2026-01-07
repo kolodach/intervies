@@ -6,33 +6,7 @@ import {
   deleteProblemAdmin,
 } from "@/lib/queries/admin-problems";
 import { NextResponse } from "next/server";
-import { z } from "zod";
-
-// Schema for problem validation (partial for updates)
-const evaluationCriterionSchema = z.object({
-  dimension: z.string(),
-  description: z.string(),
-  weight: z.number(),
-});
-
-const requirementsSchema = z.object({
-  functional: z.array(z.string()),
-  non_functional: z.array(z.string()),
-  constraints: z.array(z.string()),
-  out_of_scope: z.array(z.string()),
-});
-
-const updateProblemSchema = z.object({
-  title: z.string().min(1).optional(),
-  description: z.string().min(1).optional(),
-  difficulty: z.enum(["easy", "medium", "hard"]).optional(),
-  categories: z.array(z.string()).min(1).optional(),
-  tags: z.array(z.string()).min(1).optional(),
-  sample_requirements: z.array(z.string()).min(1).optional(),
-  is_active: z.boolean().optional(),
-  requirements: requirementsSchema.optional(),
-  evaluation_criteria: z.array(evaluationCriterionSchema).min(1).optional(),
-});
+import { updateProblemSchema } from "@/lib/schemas/problem";
 
 // GET /api/admin/problems/[id] - Get a single problem
 export async function GET(
