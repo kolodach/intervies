@@ -58,20 +58,6 @@ function getBoardDiff(boardState: Json[], prevBoardState: Json[]) {
   return patch;
 }
 
-/**
- * Filters out tool call outputs from messages to reduce token usage.
- * Keeps the messages but removes parts with type starting with "tool-".
- * Messages with no remaining parts are filtered out entirely.
- */
-function filterToolOutputs(messages: UIMessage[]): UIMessage[] {
-  return messages
-    .map((message) => ({
-      ...message,
-      parts: message.parts.filter((part) => !part.type.startsWith("tool-")),
-    }))
-    .filter((message) => message.parts.length > 0);
-}
-
 export async function POST(req: Request) {
   const {
     messages,
@@ -220,9 +206,6 @@ export async function POST(req: Request) {
 
   logger.info({ boardDiff }, "Board diff");
 
-  // Filter out tool call outputs from messages to reduce token usage
-  const filteredMessages = filterToolOutputs(messages);
-
   // 3 system messages optimized for Anthropic's ephemeral token caching:
   // 1. Static base (cached) - same for all states within an interview
   // 2. State instructions (cached) - same within a state
@@ -246,7 +229,7 @@ export async function POST(req: Request) {
       role: "system",
       content: dynamicContext,
     },
-    ...convertToModelMessages(filteredMessages),
+    ...convertToModelMessages(messages),
   ] as ModelMessage[];
 
   const result = streamText({
