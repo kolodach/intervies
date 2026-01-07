@@ -176,8 +176,8 @@ export default function AdminInterviewViewPage() {
     );
   }
 
-  const boardElements = (interview.board_state as OrderedExcalidrawElement[]) || [];
-  const messages = (interview.conversation as { id: string; role: string; parts: { type: string; text?: string }[] }[]) || [];
+  const boardElements = (interview.board_state as unknown as OrderedExcalidrawElement[]) || [];
+  const messages = (interview.conversation as unknown as { id: string; role: string; parts: { type: string; text?: string }[]; metadata?: Record<string, unknown> }[]) || [];
 
   return (
     <div className="h-screen flex flex-col">
