@@ -285,8 +285,9 @@ function SettingsPageContent() {
                 </AlertTitle>
                 <AlertDescription className="text-red-700 dark:text-red-300">
                   <p className="mb-2">
-                    A problem occurred while processing your subscription. Please
-                    try again or reach out to our support team for assistance.
+                    A problem occurred while processing your subscription.
+                    Please try again or reach out to our support team for
+                    assistance.
                   </p>
                   <a
                     href="mailto:support@example.com"
@@ -321,15 +322,16 @@ function SettingsPageContent() {
                       </span>
                     </div>
 
-                    {plan?.payment_method_brand && plan?.payment_method_last4 && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <CreditCard className="w-4 h-4" />
-                        <span className="capitalize">
-                          {plan.payment_method_brand} ****
-                          {plan.payment_method_last4}
-                        </span>
-                      </div>
-                    )}
+                    {plan?.payment_method_brand &&
+                      plan?.payment_method_last4 && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CreditCard className="w-4 h-4" />
+                          <span className="capitalize">
+                            {plan.payment_method_brand} ****
+                            {plan.payment_method_last4}
+                          </span>
+                        </div>
+                      )}
                   </div>
 
                   {/* Canceling Warning */}
@@ -347,8 +349,8 @@ function SettingsPageContent() {
                   {isPastDue && (
                     <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-md p-3">
                       <p className="text-sm text-red-800 dark:text-red-200">
-                        Your payment failed. Please update your payment method to
-                        continue your subscription.
+                        Your payment failed. Please update your payment method
+                        to continue your subscription.
                       </p>
                     </div>
                   )}
