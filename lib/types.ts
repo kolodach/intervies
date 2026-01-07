@@ -23,7 +23,6 @@ export type Solution = Database["public"]["Tables"]["solutions"]["Row"];
 export type ProblemRequirements = {
   functional: string[];
   non_functional: string[];
-  constraints?: string[];
   out_of_scope?: string[];
 };
 

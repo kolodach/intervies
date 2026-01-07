@@ -76,8 +76,7 @@ export default function ProblemsPage() {
           p.title.toLowerCase().includes(query) ||
           p.description.toLowerCase().includes(query) ||
           p.difficulty.toLowerCase().includes(query) ||
-          (p.categories || []).some((c) => c.toLowerCase().includes(query)) ||
-          (p.tags || []).some((t) => t.toLowerCase().includes(query))
+          (p.industries || []).some((i) => i.toLowerCase().includes(query))
       );
     }
 
@@ -237,7 +236,7 @@ export default function ProblemsPage() {
               <TableHead>Status</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Difficulty</TableHead>
-              <TableHead>Categories</TableHead>
+              <TableHead>Industries</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -305,15 +304,21 @@ export default function ProblemsPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      {(problem.categories || []).slice(0, 2).map((cat, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          {cat}
-                        </Badge>
-                      ))}
-                      {(problem.categories?.length || 0) > 2 && (
-                        <Badge variant="outline" className="text-xs">
-                          +{(problem.categories?.length || 0) - 2}
-                        </Badge>
+                      {(problem.industries || []).length === 0 ? (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      ) : (
+                        <>
+                          {(problem.industries || []).slice(0, 2).map((ind, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {ind}
+                            </Badge>
+                          ))}
+                          {(problem.industries?.length || 0) > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{(problem.industries?.length || 0) - 2}
+                            </Badge>
+                          )}
+                        </>
                       )}
                     </div>
                   </TableCell>

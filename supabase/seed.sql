@@ -1,13 +1,11 @@
 -- Insert sample problems
-INSERT INTO problems (title, description, difficulty, categories, tags, sample_requirements, evaluation_criteria, requirements)
+INSERT INTO problems (title, description, difficulty, industries, evaluation_criteria, requirements)
 VALUES
   (
     'Design a URL Shortener',
     'Design a URL shortening service like bit.ly that takes long URLs and converts them to short URLs.',
     'easy',
-    ARRAY['web services', 'storage'],
-    ARRAY['url', 'shortener', 'hashing', 'database'],
-    ARRAY['Shorten long URLs', 'Redirect short URLs to original URLs', 'Track click analytics', 'Custom short URLs'],
+    ARRAY[]::text[],
     '[{"dimension": "API Design", "description": "Clear REST API design", "weight": 0.25}, {"dimension": "Data Storage", "description": "Efficient storage strategy", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle high traffic", "weight": 0.25}, {"dimension": "Collision Handling", "description": "Handle hash collisions", "weight": 0.25}]'::jsonb,
     '{
       "functional": [
@@ -30,9 +28,7 @@ VALUES
         "p95 latency under 200ms for URL creation",
         "Multi-region deployment required",
         "Once created, short URL must never be lost (durability guarantee)",
-        "Analytics data can be eventually consistent"
-      ],
-      "constraints": [
+        "Analytics data can be eventually consistent",
         "Short codes must use URL-safe characters only (alphanumeric, no special chars)",
         "Short codes should be 6-8 characters in length",
         "No adult content or spam URLs allowed"
@@ -50,9 +46,7 @@ VALUES
     'Design Instagram',
     'Design a photo-sharing social media platform like Instagram.',
     'medium',
-    ARRAY['social media', 'storage', 'real-time'],
-    ARRAY['photos', 'feed', 'followers', 'cdn'],
-    ARRAY['Upload and store photos', 'Follow/unfollow users', 'News feed generation', 'Like and comment on photos', 'Search users and hashtags'],
+    ARRAY[]::text[],
     '[{"dimension": "Architecture", "description": "Overall system design", "weight": 0.3}, {"dimension": "Storage", "description": "Photo and metadata storage", "weight": 0.25}, {"dimension": "Feed Generation", "description": "News feed algorithm", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of users", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -75,9 +69,7 @@ VALUES
         "99.9% uptime for core features (feed, upload, view)",
         "Global CDN for photo delivery with <200ms latency worldwide",
         "Photos must be durable (never lost after upload confirmation)",
-        "Feed can be eventually consistent (few seconds delay acceptable)"
-      ],
-      "constraints": [
+        "Feed can be eventually consistent (few seconds delay acceptable)",
         "Photos must be resized to multiple resolutions (thumbnail, medium, full)",
         "Maximum 30 hashtags per photo",
         "Inappropriate content must be flagged (manual review acceptable)"
@@ -95,9 +87,7 @@ VALUES
     'Design Netflix',
     'Design a video streaming service like Netflix.',
     'hard',
-    ARRAY['streaming', 'storage', 'cdn'],
-    ARRAY['video', 'streaming', 'encoding', 'cdn', 'recommendations'],
-    ARRAY['Stream videos with minimal buffering', 'Upload and encode videos', 'Recommendation system', 'Support multiple devices', 'Handle millions of concurrent users'],
+    ARRAY[]::text[],
     '[{"dimension": "Video Delivery", "description": "CDN and streaming strategy", "weight": 0.3}, {"dimension": "Encoding", "description": "Video encoding and quality", "weight": 0.2}, {"dimension": "Recommendations", "description": "Content recommendation system", "weight": 0.2}, {"dimension": "Scalability", "description": "Global scale architecture", "weight": 0.3}]'::jsonb,
     '{
       "functional": [
@@ -121,9 +111,7 @@ VALUES
         "Global CDN with 95% of users served from edge location within 50ms",
         "Recommendation updates can be batch processed (1-hour delay acceptable)",
         "Store exabytes of video content",
-        "Encoding pipeline should process uploaded video within 24 hours"
-      ],
-      "constraints": [
+        "Encoding pipeline should process uploaded video within 24 hours",
         "Videos must be encoded in multiple bitrates for adaptive streaming",
         "DRM (Digital Rights Management) required for content protection",
         "Cost optimization crucial due to CDN and storage expenses",
@@ -142,9 +130,7 @@ VALUES
     'Design a Chat Application',
     'Design a real-time chat application like Slack or Discord.',
     'medium',
-    ARRAY['real-time', 'messaging', 'websockets'],
-    ARRAY['chat', 'websockets', 'real-time', 'messaging', 'presence'],
-    ARRAY['Send and receive messages in real-time', 'Create channels and direct messages', 'User presence indicators', 'Message history', 'File attachments'],
+    ARRAY[]::text[],
     '[{"dimension": "Real-time Communication", "description": "WebSocket and message delivery", "weight": 0.3}, {"dimension": "Message Storage", "description": "Efficient message history storage", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of concurrent connections", "weight": 0.25}, {"dimension": "Presence System", "description": "User online/offline status", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -167,9 +153,7 @@ VALUES
         "99.9% uptime for messaging service",
         "Store 5 years of message history",
         "Search results returned within 200ms",
-        "Support file uploads up to 10MB"
-      ],
-      "constraints": [
+        "Support file uploads up to 10MB",
         "Messages must be delivered in order within a channel",
         "Message history must be retained for at least 1 year",
         "Maximum 1000 members per channel",
@@ -188,9 +172,7 @@ VALUES
     'Design a Distributed Cache',
     'Design a distributed caching system like Redis or Memcached.',
     'hard',
-    ARRAY['caching', 'distributed systems', 'performance'],
-    ARRAY['cache', 'distributed', 'eviction', 'consistency', 'sharding'],
-    ARRAY['Store key-value pairs in memory', 'Implement eviction policies', 'Support distributed caching', 'Handle cache invalidation', 'High availability'],
+    ARRAY[]::text[],
     '[{"dimension": "Architecture", "description": "Distributed system design", "weight": 0.3}, {"dimension": "Eviction Policies", "description": "LRU, LFU, TTL handling", "weight": 0.25}, {"dimension": "Consistency", "description": "Cache coherence across nodes", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -211,9 +193,7 @@ VALUES
         "99.99% availability",
         "Automatic failover within 1 second",
         "Linear scalability up to 100 nodes",
-        "Consistent hashing for key distribution"
-      ],
-      "constraints": [
+        "Consistent hashing for key distribution",
         "Keys limited to 250 characters",
         "Values limited to 512MB",
         "Maximum 1 million keys per node",
@@ -232,9 +212,7 @@ VALUES
     'Design a Rate Limiter',
     'Design a rate limiting system to control API request rates.',
     'easy',
-    ARRAY['api', 'rate limiting', 'distributed systems'],
-    ARRAY['rate-limit', 'throttling', 'sliding-window', 'token-bucket'],
-    ARRAY['Limit requests per user/IP', 'Support multiple rate limit algorithms', 'Distributed rate limiting', 'Handle burst traffic'],
+    ARRAY[]::text[],
     '[{"dimension": "Algorithm Design", "description": "Token bucket vs sliding window", "weight": 0.3}, {"dimension": "Distributed Design", "description": "Consistent rate limiting across servers", "weight": 0.3}, {"dimension": "Performance", "description": "Low overhead on each request", "weight": 0.2}, {"dimension": "Accuracy", "description": "Precise rate limit enforcement", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -253,9 +231,7 @@ VALUES
         "99.99% availability",
         "Support 100 million unique users/IPs",
         "Distributed across 100 servers",
-        "Rate limit accuracy within 1%"
-      ],
-      "constraints": [
+        "Rate limit accuracy within 1%",
         "Rate limits must be consistent across all servers",
         "No false positives (rejecting valid requests)",
         "Graceful degradation if rate limiter is down"
@@ -272,9 +248,7 @@ VALUES
     'Design a Search Engine',
     'Design a web search engine like Google that indexes and searches billions of web pages.',
     'hard',
-    ARRAY['search', 'indexing', 'distributed systems'],
-    ARRAY['search', 'indexing', 'crawling', 'ranking', 'distributed'],
-    ARRAY['Crawl and index web pages', 'Rank search results', 'Handle billions of documents', 'Fast search response', 'Handle typos and synonyms'],
+    ARRAY[]::text[],
     '[{"dimension": "Crawling", "description": "Web crawler design", "weight": 0.25}, {"dimension": "Indexing", "description": "Inverted index and storage", "weight": 0.3}, {"dimension": "Ranking", "description": "Search result ranking algorithm", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle billions of documents", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -295,9 +269,7 @@ VALUES
         "Crawl 1 billion pages per day",
         "Store 100TB of index data",
         "99.9% uptime",
-        "Index freshness: pages re-crawled within 7 days"
-      ],
-      "constraints": [
+        "Index freshness: pages re-crawled within 7 days",
         "Respect robots.txt",
         "Rate limit crawling per domain",
         "Maximum 10MB per page",
@@ -316,9 +288,7 @@ VALUES
     'Design a Notification System',
     'Design a notification system that sends push notifications, emails, and SMS to users.',
     'medium',
-    ARRAY['notifications', 'messaging', 'queuing'],
-    ARRAY['notifications', 'push', 'email', 'sms', 'queue'],
-    ARRAY['Send push notifications', 'Send emails', 'Send SMS', 'User preferences', 'Delivery tracking', 'Retry failed deliveries'],
+    ARRAY[]::text[],
     '[{"dimension": "Multi-channel Delivery", "description": "Push, email, SMS integration", "weight": 0.3}, {"dimension": "Reliability", "description": "Guaranteed delivery and retries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of notifications", "weight": 0.25}, {"dimension": "User Preferences", "description": "Opt-in/opt-out management", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -340,9 +310,7 @@ VALUES
         "99.9% delivery success rate",
         "Support 50 million users",
         "Store 90 days of notification history",
-        "Handle 10 different notification types"
-      ],
-      "constraints": [
+        "Handle 10 different notification types",
         "Maximum 3 retries per notification",
         "Rate limit: 10 notifications per minute per user",
         "Email size limited to 10MB",
@@ -361,9 +329,7 @@ VALUES
     'Design a Payment Processing System',
     'Design a payment processing system that handles credit card transactions securely.',
     'hard',
-    ARRAY['payments', 'security', 'transactions'],
-    ARRAY['payments', 'credit-card', 'security', 'pci', 'transactions'],
-    ARRAY['Process credit card payments', 'Handle refunds', 'Secure payment data', 'PCI compliance', 'Transaction history', 'Fraud detection'],
+    ARRAY[]::text[],
     '[{"dimension": "Security", "description": "PCI compliance and encryption", "weight": 0.3}, {"dimension": "Transaction Processing", "description": "Payment flow and idempotency", "weight": 0.3}, {"dimension": "Reliability", "description": "Guaranteed transaction processing", "weight": 0.25}, {"dimension": "Fraud Detection", "description": "Basic fraud prevention", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -384,9 +350,7 @@ VALUES
         "PCI DSS Level 1 compliance",
         "Zero data loss guarantee",
         "Support 10 million stored payment methods",
-        "Fraud detection check under 500ms"
-      ],
-      "constraints": [
+        "Fraud detection check under 500ms",
         "Never store full credit card numbers",
         "All payment data encrypted at rest",
         "PCI compliance required",
@@ -406,9 +370,7 @@ VALUES
     'Design a File Storage System',
     'Design a distributed file storage system like Dropbox or Google Drive.',
     'hard',
-    ARRAY['storage', 'files', 'distributed systems'],
-    ARRAY['storage', 'files', 'sync', 'versioning', 'distributed'],
-    ARRAY['Upload and download files', 'File versioning', 'File synchronization', 'Share files', 'Handle large files'],
+    ARRAY[]::text[],
     '[{"dimension": "Storage Architecture", "description": "Distributed storage design", "weight": 0.3}, {"dimension": "Synchronization", "description": "Multi-device file sync", "weight": 0.25}, {"dimension": "Versioning", "description": "File version history", "weight": 0.2}, {"dimension": "Scalability", "description": "Handle petabytes of data", "weight": 0.25}]'::jsonb,
     '{
       "functional": [
@@ -429,9 +391,7 @@ VALUES
         "Download latency under 200ms for small files",
         "99.9% availability",
         "Replicate files across 3 data centers",
-        "Sync changes within 5 seconds"
-      ],
-      "constraints": [
+        "Sync changes within 5 seconds",
         "Maximum file size: 10GB",
         "Maximum 100,000 files per user",
         "Files stored with 3x replication",
@@ -450,9 +410,7 @@ VALUES
     'Design a Task Queue System',
     'Design a distributed task queue system like Celery or BullMQ.',
     'medium',
-    ARRAY['queuing', 'distributed systems', 'background jobs'],
-    ARRAY['queue', 'tasks', 'jobs', 'distributed', 'priority'],
-    ARRAY['Enqueue and dequeue tasks', 'Priority queues', 'Scheduled tasks', 'Task retries', 'Task status tracking'],
+    ARRAY[]::text[],
     '[{"dimension": "Queue Design", "description": "Queue architecture and persistence", "weight": 0.3}, {"dimension": "Task Processing", "description": "Worker pool and task execution", "weight": 0.3}, {"dimension": "Reliability", "description": "Task guarantees and retries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of tasks", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -473,9 +431,7 @@ VALUES
         "99.9% availability",
         "Support 1000 concurrent workers",
         "Store 1 million pending tasks",
-        "Task retry within 1 minute of failure"
-      ],
-      "constraints": [
+        "Task retry within 1 minute of failure",
         "Maximum task payload: 1MB",
         "Maximum retry attempts: 3",
         "Task timeout: 5 minutes",
@@ -494,9 +450,7 @@ VALUES
     'Design a Leaderboard System',
     'Design a leaderboard system for games or competitions that ranks users by score.',
     'easy',
-    ARRAY['leaderboard', 'ranking', 'gaming'],
-    ARRAY['leaderboard', 'ranking', 'scores', 'redis'],
-    ARRAY['Update user scores', 'Get top N users', 'Get user rank', 'Time-based leaderboards', 'Handle high update frequency'],
+    ARRAY[]::text[],
     '[{"dimension": "Data Structure", "description": "Efficient ranking data structure", "weight": 0.3}, {"dimension": "Performance", "description": "Fast updates and queries", "weight": 0.3}, {"dimension": "Scalability", "description": "Handle millions of users", "weight": 0.25}, {"dimension": "Time Windows", "description": "Daily, weekly, all-time leaderboards", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -514,9 +468,7 @@ VALUES
         "Get top 100 users within 10ms",
         "Get user rank within 50ms",
         "99.9% availability",
-        "Store scores for 1 year"
-      ],
-      "constraints": [
+        "Store scores for 1 year",
         "Scores are non-negative integers",
         "Maximum score: 2^63 - 1",
         "Leaderboard reset at midnight UTC"
@@ -534,9 +486,7 @@ VALUES
     'Design a URL Crawler',
     'Design a web crawler that systematically browses and indexes web pages.',
     'medium',
-    ARRAY['crawling', 'web', 'distributed systems'],
-    ARRAY['crawler', 'spider', 'web', 'robots', 'sitemap'],
-    ARRAY['Crawl web pages', 'Respect robots.txt', 'Handle sitemaps', 'Avoid duplicate crawling', 'Rate limiting'],
+    ARRAY[]::text[],
     '[{"dimension": "Crawling Strategy", "description": "BFS vs DFS, politeness", "weight": 0.3}, {"dimension": "Deduplication", "description": "Avoid crawling same URL twice", "weight": 0.25}, {"dimension": "Politeness", "description": "Respect robots.txt and rate limits", "weight": 0.25}, {"dimension": "Scalability", "description": "Crawl millions of pages", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -556,9 +506,7 @@ VALUES
         "Respect 1 request per second per domain",
         "99% success rate for valid URLs",
         "Handle 1 million unique domains",
-        "Store 100TB of crawled content"
-      ],
-      "constraints": [
+        "Store 100TB of crawled content",
         "Maximum 10MB per page",
         "Timeout: 30 seconds per request",
         "Maximum 10 redirects per URL",
@@ -577,9 +525,7 @@ VALUES
     'Design a Distributed Lock',
     'Design a distributed locking mechanism for coordinating access to shared resources.',
     'hard',
-    ARRAY['distributed systems', 'locks', 'coordination'],
-    ARRAY['lock', 'distributed', 'consensus', 'lease'],
-    ARRAY['Acquire and release locks', 'Lock expiration', 'Distributed coordination', 'Handle failures', 'Prevent deadlocks'],
+    ARRAY[]::text[],
     '[{"dimension": "Consistency", "description": "Mutual exclusion guarantee", "weight": 0.3}, {"dimension": "Reliability", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Performance", "description": "Low latency lock acquisition", "weight": 0.2}, {"dimension": "Deadlock Prevention", "description": "Avoid deadlocks", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -597,9 +543,7 @@ VALUES
         "99.99% availability",
         "Handle network partitions",
         "Automatic lock release on node failure",
-        "Support 10,000 lock operations per second"
-      ],
-      "constraints": [
+        "Support 10,000 lock operations per second",
         "Lock TTL: 1 second to 1 hour",
         "Maximum lock name length: 256 characters",
         "Locks automatically expire if not renewed"
@@ -617,9 +561,7 @@ VALUES
     'Design a Metrics Collection System',
     'Design a system to collect, store, and query application metrics and time-series data.',
     'medium',
-    ARRAY['metrics', 'monitoring', 'time-series'],
-    ARRAY['metrics', 'time-series', 'monitoring', 'aggregation'],
-    ARRAY['Collect metrics', 'Store time-series data', 'Query metrics', 'Aggregate metrics', 'Alerting'],
+    ARRAY[]::text[],
     '[{"dimension": "Storage", "description": "Time-series database design", "weight": 0.3}, {"dimension": "Query Performance", "description": "Fast metric queries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle billions of data points", "weight": 0.25}, {"dimension": "Data Retention", "description": "Efficient data compression", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -637,9 +579,7 @@ VALUES
         "Query 1 year of data within 1 second",
         "99.9% availability",
         "Support 100,000 unique metric names",
-        "Data retention: 1 year for raw, 5 years for downsampled"
-      ],
-      "constraints": [
+        "Data retention: 1 year for raw, 5 years for downsampled",
         "Timestamp precision: 1 second",
         "Maximum 10 tags per metric",
         "Data points older than 1 year are downsampled to 1-hour intervals"
@@ -657,9 +597,7 @@ VALUES
     'Design a Key-Value Store',
     'Design a distributed key-value store like DynamoDB or Cassandra.',
     'hard',
-    ARRAY['database', 'storage', 'distributed systems'],
-    ARRAY['key-value', 'nosql', 'distributed', 'replication', 'partitioning'],
-    ARRAY['Store key-value pairs', 'Support replication', 'Handle partitioning', 'High availability', 'Consistent hashing'],
+    ARRAY[]::text[],
     '[{"dimension": "Partitioning", "description": "Data distribution strategy", "weight": 0.3}, {"dimension": "Replication", "description": "Data replication and consistency", "weight": 0.25}, {"dimension": "Availability", "description": "High availability design", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -679,9 +617,7 @@ VALUES
         "Write latency under 20ms (p95)",
         "99.99% availability",
         "Replicate data across 3 nodes",
-        "Support 1 billion keys"
-      ],
-      "constraints": [
+        "Support 1 billion keys",
         "Key size: maximum 64KB",
         "Value size: maximum 1MB",
         "Consistency: eventual consistency by default",
@@ -700,9 +636,7 @@ VALUES
     'Design a Load Balancer',
     'Design a load balancer that distributes incoming requests across multiple servers.',
     'medium',
-    ARRAY['networking', 'load balancing', 'infrastructure'],
-    ARRAY['load-balancer', 'routing', 'health-checks', 'session-affinity'],
-    ARRAY['Distribute requests', 'Health checks', 'Session affinity', 'Multiple algorithms', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "Load Balancing Algorithm", "description": "Round-robin, least connections, etc.", "weight": 0.3}, {"dimension": "Health Checks", "description": "Server health monitoring", "weight": 0.25}, {"dimension": "High Availability", "description": "Load balancer redundancy", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency routing", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -721,9 +655,7 @@ VALUES
         "99.99% availability",
         "Support 1000 backend servers",
         "Health check every 10 seconds",
-        "Automatic failover within 5 seconds"
-      ],
-      "constraints": [
+        "Automatic failover within 5 seconds",
         "Maximum 1000 backend servers",
         "Health check timeout: 5 seconds",
         "Session affinity timeout: 30 minutes"
@@ -741,9 +673,7 @@ VALUES
     'Design a URL Expander',
     'Design a service that expands shortened URLs and validates their destination.',
     'easy',
-    ARRAY['web services', 'url', 'validation'],
-    ARRAY['url', 'expand', 'redirect', 'validation', 'security'],
-    ARRAY['Expand short URLs', 'Validate destination', 'Detect malicious URLs', 'Cache expansions', 'Handle redirects'],
+    ARRAY[]::text[],
     '[{"dimension": "Security", "description": "Malicious URL detection", "weight": 0.3}, {"dimension": "Performance", "description": "Fast URL expansion", "weight": 0.3}, {"dimension": "Caching", "description": "Efficient caching strategy", "weight": 0.2}, {"dimension": "Reliability", "description": "Handle various redirect scenarios", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -761,9 +691,7 @@ VALUES
         "99.9% availability",
         "Cache hit rate above 80%",
         "Support 10 million unique URLs",
-        "Malicious URL detection under 100ms"
-      ],
-      "constraints": [
+        "Malicious URL detection under 100ms",
         "Maximum 10 redirects per URL",
         "Timeout: 5 seconds per expansion",
         "Cache TTL: 24 hours"
@@ -781,9 +709,7 @@ VALUES
     'Design a Distributed Counter',
     'Design a distributed counter system that can increment/decrement values across multiple servers.',
     'medium',
-    ARRAY['distributed systems', 'counters', 'consistency'],
-    ARRAY['counter', 'distributed', 'consistency', 'sharding'],
-    ARRAY['Increment/decrement counters', 'Get counter value', 'Distributed consistency', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "Consistency", "description": "Strong vs eventual consistency", "weight": 0.3}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.3}, {"dimension": "Scalability", "description": "Handle millions of counters", "weight": 0.2}, {"dimension": "Reliability", "description": "Handle node failures", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -800,9 +726,7 @@ VALUES
         "Read latency under 10ms",
         "Write latency under 20ms",
         "99.9% availability",
-        "Eventual consistency acceptable (within 1 second)"
-      ],
-      "constraints": [
+        "Eventual consistency acceptable (within 1 second)",
         "Counter values: integers from -2^63 to 2^63-1",
         "Maximum increment/decrement: 10,000 per operation",
         "Counter name: maximum 256 characters"
@@ -820,9 +744,7 @@ VALUES
     'Design a Content Delivery Network',
     'Design a CDN system that caches and delivers content from edge locations close to users.',
     'hard',
-    ARRAY['cdn', 'caching', 'networking'],
-    ARRAY['cdn', 'edge', 'caching', 'geographic', 'invalidation'],
-    ARRAY['Cache content at edge', 'Geographic distribution', 'Cache invalidation', 'Origin server', 'Handle cache misses'],
+    ARRAY[]::text[],
     '[{"dimension": "Edge Caching", "description": "Cache strategy and placement", "weight": 0.3}, {"dimension": "Geographic Distribution", "description": "Edge location selection", "weight": 0.25}, {"dimension": "Cache Invalidation", "description": "Content update propagation", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency delivery", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -842,9 +764,7 @@ VALUES
         "99.99% availability",
         "Support 1000 edge locations",
         "Cache invalidation within 5 minutes",
-        "Support 100TB cached content"
-      ],
-      "constraints": [
+        "Support 100TB cached content",
         "Maximum file size: 100MB",
         "Cache TTL: 1 hour to 1 year",
         "Maximum 100 origin servers"
@@ -862,9 +782,7 @@ VALUES
     'Design a Session Store',
     'Design a distributed session storage system for web applications.',
     'medium',
-    ARRAY['sessions', 'storage', 'distributed systems'],
-    ARRAY['session', 'storage', 'distributed', 'ttl', 'cookie'],
-    ARRAY['Store session data', 'Session expiration', 'Distributed access', 'Session invalidation'],
+    ARRAY[]::text[],
     '[{"dimension": "Storage Design", "description": "Session data structure", "weight": 0.3}, {"dimension": "Expiration", "description": "TTL and cleanup", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of sessions", "weight": 0.25}, {"dimension": "Performance", "description": "Fast session access", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -883,9 +801,7 @@ VALUES
         "Write latency under 10ms",
         "99.9% availability",
         "Session expiration accuracy within 1 minute",
-        "Support 10MB per session"
-      ],
-      "constraints": [
+        "Support 10MB per session",
         "Session ID: 32 characters",
         "Session TTL: 15 minutes to 30 days",
         "Maximum session size: 10MB"
@@ -903,9 +819,7 @@ VALUES
     'Design a Message Queue',
     'Design a message queue system like RabbitMQ or Apache Kafka.',
     'hard',
-    ARRAY['messaging', 'queuing', 'distributed systems'],
-    ARRAY['queue', 'messaging', 'pub-sub', 'durability', 'ordering'],
-    ARRAY['Publish messages', 'Subscribe to topics', 'Message durability', 'Ordering guarantees', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "Message Durability", "description": "Persistent message storage", "weight": 0.3}, {"dimension": "Ordering", "description": "Message ordering guarantees", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of messages", "weight": 0.25}, {"dimension": "Reliability", "description": "At-least-once delivery", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -925,9 +839,7 @@ VALUES
         "99.99% availability",
         "Support 10,000 topics",
         "Message retention: 7 days",
-        "Support 1000 consumer groups"
-      ],
-      "constraints": [
+        "Support 1000 consumer groups",
         "Message size: maximum 1MB",
         "Maximum 1000 partitions per topic",
         "Consumer lag monitoring"
@@ -945,9 +857,7 @@ VALUES
     'Design a Distributed Log',
     'Design a distributed logging system that aggregates logs from multiple services.',
     'medium',
-    ARRAY['logging', 'distributed systems', 'monitoring'],
-    ARRAY['logs', 'aggregation', 'distributed', 'search', 'retention'],
-    ARRAY['Collect logs', 'Aggregate logs', 'Search logs', 'Log retention', 'Real-time streaming'],
+    ARRAY[]::text[],
     '[{"dimension": "Log Collection", "description": "Efficient log ingestion", "weight": 0.3}, {"dimension": "Storage", "description": "Log storage and indexing", "weight": 0.25}, {"dimension": "Search", "description": "Fast log search", "weight": 0.25}, {"dimension": "Retention", "description": "Log retention policies", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -967,9 +877,7 @@ VALUES
         "99.9% availability",
         "Support 10,000 services",
         "Log retention: 90 days",
-        "Real-time streaming latency under 1 second"
-      ],
-      "constraints": [
+        "Real-time streaming latency under 1 second",
         "Maximum log entry size: 64KB",
         "Log levels: DEBUG, INFO, WARN, ERROR",
         "Maximum 1000 concurrent searches"
@@ -987,9 +895,7 @@ VALUES
     'Design a Distributed Lock Manager',
     'Design a system that manages distributed locks for coordinating access to shared resources.',
     'hard',
-    ARRAY['distributed systems', 'locks', 'coordination'],
-    ARRAY['lock', 'distributed', 'lease', 'consensus', 'deadlock'],
-    ARRAY['Acquire locks', 'Release locks', 'Lock expiration', 'Deadlock detection', 'Lock hierarchy'],
+    ARRAY[]::text[],
     '[{"dimension": "Consensus", "description": "Distributed consensus algorithm", "weight": 0.3}, {"dimension": "Deadlock Prevention", "description": "Prevent deadlocks", "weight": 0.25}, {"dimension": "Performance", "description": "Fast lock acquisition", "weight": 0.25}, {"dimension": "Reliability", "description": "Handle failures", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1008,9 +914,7 @@ VALUES
         "99.99% availability",
         "Handle network partitions",
         "Automatic lock release on failure",
-        "10,000 lock operations per second"
-      ],
-      "constraints": [
+        "10,000 lock operations per second",
         "Lock TTL: 1 second to 1 hour",
         "Maximum lock name: 256 characters",
         "Deadlock detection within 10 seconds"
@@ -1028,9 +932,7 @@ VALUES
     'Design a Real-time Analytics System',
     'Design a system that processes and analyzes events in real-time.',
     'hard',
-    ARRAY['analytics', 'real-time', 'streaming'],
-    ARRAY['analytics', 'real-time', 'streaming', 'aggregation', 'window'],
-    ARRAY['Process events in real-time', 'Aggregate metrics', 'Time windows', 'Handle late events', 'Query results'],
+    ARRAY[]::text[],
     '[{"dimension": "Stream Processing", "description": "Event processing pipeline", "weight": 0.3}, {"dimension": "Aggregation", "description": "Real-time aggregations", "weight": 0.25}, {"dimension": "Time Windows", "description": "Sliding and tumbling windows", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of events", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1049,9 +951,7 @@ VALUES
         "99.9% availability",
         "Support 1000 different metrics",
         "Window size: 1 second to 1 hour",
-        "Handle events up to 5 minutes late"
-      ],
-      "constraints": [
+        "Handle events up to 5 minutes late",
         "Event size: maximum 10KB",
         "Maximum 1000 concurrent queries",
         "Window size precision: 1 second"
@@ -1069,9 +969,7 @@ VALUES
     'Design a Distributed Configuration Store',
     'Design a system to store and distribute configuration settings across services.',
     'medium',
-    ARRAY['configuration', 'distributed systems', 'service discovery'],
-    ARRAY['config', 'distributed', 'watch', 'versioning', 'consistency'],
-    ARRAY['Store configurations', 'Watch for changes', 'Version configurations', 'Distribute updates', 'Handle conflicts'],
+    ARRAY[]::text[],
     '[{"dimension": "Change Distribution", "description": "Efficient config updates", "weight": 0.3}, {"dimension": "Versioning", "description": "Config version management", "weight": 0.25}, {"dimension": "Consistency", "description": "Consistent config across services", "weight": 0.25}, {"dimension": "Performance", "description": "Fast config access", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1091,9 +989,7 @@ VALUES
         "99.99% availability",
         "Support 10,000 services",
         "Store 100 versions per key",
-        "Config change notification within 500ms"
-      ],
-      "constraints": [
+        "Config change notification within 500ms",
         "Key size: maximum 256 characters",
         "Value size: maximum 1MB",
         "Maximum 1000 watchers per key"
@@ -1111,9 +1007,7 @@ VALUES
     'Design a Distributed Tracing System',
     'Design a system to trace requests across multiple microservices.',
     'hard',
-    ARRAY['tracing', 'microservices', 'observability'],
-    ARRAY['tracing', 'distributed', 'spans', 'correlation', 'sampling'],
-    ARRAY['Trace requests', 'Collect spans', 'Correlate spans', 'Query traces', 'Handle sampling'],
+    ARRAY[]::text[],
     '[{"dimension": "Span Collection", "description": "Efficient span ingestion", "weight": 0.3}, {"dimension": "Correlation", "description": "Trace correlation across services", "weight": 0.25}, {"dimension": "Storage", "description": "Trace storage and indexing", "weight": 0.25}, {"dimension": "Query Performance", "description": "Fast trace queries", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1133,9 +1027,7 @@ VALUES
         "99.9% availability",
         "Support 1000 services",
         "Sampling rate: 1% to 100%",
-        "Trace collection overhead under 1%"
-      ],
-      "constraints": [
+        "Trace collection overhead under 1%",
         "Maximum span size: 64KB",
         "Maximum trace duration: 1 hour",
         "Maximum 1000 spans per trace"
@@ -1153,9 +1045,7 @@ VALUES
     'Design a Feature Flag System',
     'Design a system to manage feature flags and A/B testing.',
     'medium',
-    ARRAY['feature flags', 'a/b testing', 'configuration'],
-    ARRAY['feature-flag', 'toggle', 'a/b-test', 'rollout', 'targeting'],
-    ARRAY['Create feature flags', 'Target users', 'Gradual rollout', 'A/B testing', 'Real-time updates'],
+    ARRAY[]::text[],
     '[{"dimension": "Targeting", "description": "User targeting logic", "weight": 0.3}, {"dimension": "Rollout", "description": "Gradual feature rollout", "weight": 0.25}, {"dimension": "Performance", "description": "Fast flag evaluation", "weight": 0.25}, {"dimension": "Real-time Updates", "description": "Flag update propagation", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1175,9 +1065,7 @@ VALUES
         "99.99% availability",
         "Support 10,000 feature flags",
         "Support 100 million users",
-        "Flag evaluation overhead under 0.1%"
-      ],
-      "constraints": [
+        "Flag evaluation overhead under 0.1%",
         "Flag name: maximum 256 characters",
         "Maximum 100 targeting rules per flag",
         "Rollout percentage: 0-100%"
@@ -1195,9 +1083,7 @@ VALUES
     'Design a Distributed ID Generator',
     'Design a system to generate unique IDs across distributed systems.',
     'medium',
-    ARRAY['id generation', 'distributed systems', 'uniqueness'],
-    ARRAY['id', 'generator', 'distributed', 'unique', 'snowflake'],
-    ARRAY['Generate unique IDs', 'Distributed generation', 'No collisions', 'Time-ordered IDs', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "Uniqueness", "description": "Guarantee unique IDs", "weight": 0.3}, {"dimension": "Performance", "description": "High ID generation rate", "weight": 0.3}, {"dimension": "Ordering", "description": "Time-ordered IDs", "weight": 0.2}, {"dimension": "Scalability", "description": "Distributed generation", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1214,9 +1100,7 @@ VALUES
         "Support 1000 nodes",
         "No ID collisions",
         "IDs valid for 69 years",
-        "99.9% availability"
-      ],
-      "constraints": [
+        "99.9% availability",
         "ID size: 64 bits",
         "Maximum 4096 IDs per millisecond per node",
         "Machine ID: 10 bits (1024 machines)"
@@ -1234,9 +1118,7 @@ VALUES
     'Design a Distributed Bloom Filter',
     'Design a distributed bloom filter for efficient membership testing.',
     'hard',
-    ARRAY['data structures', 'distributed systems', 'probabilistic'],
-    ARRAY['bloom-filter', 'probabilistic', 'distributed', 'membership', 'false-positives'],
-    ARRAY['Add elements', 'Test membership', 'Distributed updates', 'Handle false positives', 'Merge filters'],
+    ARRAY[]::text[],
     '[{"dimension": "False Positive Rate", "description": "Minimize false positives", "weight": 0.3}, {"dimension": "Distributed Updates", "description": "Merge updates across nodes", "weight": 0.3}, {"dimension": "Performance", "description": "Fast add and test operations", "weight": 0.2}, {"dimension": "Memory Efficiency", "description": "Minimize memory usage", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1253,9 +1135,7 @@ VALUES
         "Test operation latency under 5μs",
         "False positive rate under 1%",
         "Memory usage: 10 bits per element",
-        "99.9% availability"
-      ],
-      "constraints": [
+        "99.9% availability",
         "False negatives: never",
         "False positives: configurable (0.1% to 10%)",
         "Maximum elements: 1 billion"
@@ -1273,9 +1153,7 @@ VALUES
     'Design a Distributed Graph Database',
     'Design a distributed graph database for storing and querying relationships.',
     'hard',
-    ARRAY['graph', 'database', 'distributed systems'],
-    ARRAY['graph', 'database', 'nodes', 'edges', 'traversal', 'distributed'],
-    ARRAY['Store nodes and edges', 'Graph traversal', 'Distributed storage', 'Query relationships', 'Handle large graphs'],
+    ARRAY[]::text[],
     '[{"dimension": "Graph Storage", "description": "Efficient node and edge storage", "weight": 0.3}, {"dimension": "Traversal", "description": "Fast graph traversal", "weight": 0.25}, {"dimension": "Partitioning", "description": "Graph partitioning strategy", "weight": 0.25}, {"dimension": "Query Language", "description": "Graph query interface", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1294,9 +1172,7 @@ VALUES
         "Traverse 1 million nodes within 1 second",
         "Shortest path query within 5 seconds",
         "99.9% availability",
-        "Support 1000 concurrent queries"
-      ],
-      "constraints": [
+        "Support 1000 concurrent queries",
         "Maximum node properties: 100",
         "Maximum edge properties: 50",
         "Maximum path length: 1000 hops"
@@ -1314,9 +1190,7 @@ VALUES
     'Design a Distributed Hash Table',
     'Design a DHT (Distributed Hash Table) for peer-to-peer storage.',
     'hard',
-    ARRAY['dht', 'p2p', 'distributed systems'],
-    ARRAY['dht', 'p2p', 'chord', 'consistent-hashing', 'routing'],
-    ARRAY['Store key-value pairs', 'Lookup by key', 'Node joining/leaving', 'Routing table', 'Handle churn'],
+    ARRAY[]::text[],
     '[{"dimension": "Routing", "description": "Efficient key lookup", "weight": 0.3}, {"dimension": "Churn Handling", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Consistency", "description": "Data consistency", "weight": 0.2}, {"dimension": "Performance", "description": "Low lookup latency", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1334,9 +1208,7 @@ VALUES
         "Store 1TB of data",
         "Handle 10% node churn per hour",
         "Data replication: 3 copies",
-        "99% data availability"
-      ],
-      "constraints": [
+        "99% data availability",
         "Key size: 256 bits",
         "Value size: maximum 1MB",
         "Routing table size: O(log N)"
@@ -1354,9 +1226,7 @@ VALUES
     'Design a Distributed Scheduler',
     'Design a distributed job scheduler that schedules and executes tasks across multiple machines.',
     'hard',
-    ARRAY['scheduling', 'distributed systems', 'jobs'],
-    ARRAY['scheduler', 'distributed', 'cron', 'jobs', 'allocation'],
-    ARRAY['Schedule jobs', 'Execute jobs', 'Job dependencies', 'Resource allocation', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "Scheduling Algorithm", "description": "Job scheduling strategy", "weight": 0.3}, {"dimension": "Resource Allocation", "description": "Efficient resource usage", "weight": 0.25}, {"dimension": "Reliability", "description": "Handle failures", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle thousands of jobs", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1375,9 +1245,7 @@ VALUES
         "Job scheduling latency under 100ms",
         "99.9% availability",
         "Support 1000 worker nodes",
-        "Job execution overhead under 5%"
-      ],
-      "constraints": [
+        "Job execution overhead under 5%",
         "Maximum job duration: 24 hours",
         "Maximum job dependencies: 100",
         "Cron expression: standard format"
@@ -1395,9 +1263,7 @@ VALUES
     'Design a Distributed Consensus System',
     'Design a distributed consensus system using algorithms like Raft or Paxos.',
     'hard',
-    ARRAY['consensus', 'distributed systems', 'replication'],
-    ARRAY['consensus', 'raft', 'paxos', 'leader-election', 'replication'],
-    ARRAY['Leader election', 'Log replication', 'Consensus on values', 'Handle failures', 'Split-brain prevention'],
+    ARRAY[]::text[],
     '[{"dimension": "Leader Election", "description": "Efficient leader selection", "weight": 0.3}, {"dimension": "Log Replication", "description": "Replicate log entries", "weight": 0.3}, {"dimension": "Fault Tolerance", "description": "Handle node failures", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency consensus", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -1415,9 +1281,7 @@ VALUES
         "Handle up to (N-1)/2 node failures",
         "99.9% availability",
         "Replicate 10,000 entries per second",
-        "Leader election within 5 seconds"
-      ],
-      "constraints": [
+        "Leader election within 5 seconds",
         "Minimum 3 nodes for fault tolerance",
         "Majority voting required",
         "Log entries: maximum 1MB each"
@@ -1435,9 +1299,7 @@ VALUES
     'Design a Distributed Transaction System',
     'Design a system that supports distributed transactions across multiple services.',
     'hard',
-    ARRAY['transactions', 'distributed systems', 'consistency'],
-    ARRAY['transaction', 'distributed', '2pc', 'saga', 'acid'],
-    ARRAY['Begin transactions', 'Commit transactions', 'Rollback transactions', 'ACID properties', 'Handle failures'],
+    ARRAY[]::text[],
     '[{"dimension": "ACID Properties", "description": "Atomicity, consistency, isolation, durability", "weight": 0.3}, {"dimension": "Failure Handling", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Performance", "description": "Low transaction overhead", "weight": 0.2}, {"dimension": "Scalability", "description": "Handle many transactions", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1456,9 +1318,7 @@ VALUES
         "99.9% availability",
         "Support 100 participating services",
         "Transaction timeout: 30 seconds",
-        "Zero data loss"
-      ],
-      "constraints": [
+        "Zero data loss",
         "Maximum transaction duration: 30 seconds",
         "Maximum 100 participants per transaction",
         "Two-phase commit protocol"
@@ -1473,4 +1333,3 @@ VALUES
     }'::jsonb
   )
 ON CONFLICT (id) DO NOTHING;
-

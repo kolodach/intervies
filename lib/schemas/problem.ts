@@ -9,7 +9,6 @@ export const evaluationCriterionSchema = z.object({
 export const requirementsSchema = z.object({
   functional: z.array(z.string()),
   non_functional: z.array(z.string()),
-  constraints: z.array(z.string()),
   out_of_scope: z.array(z.string()),
 });
 
@@ -17,11 +16,7 @@ export const problemSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   difficulty: z.enum(["easy", "medium", "hard"]),
-  categories: z.array(z.string()).min(1, "At least one category is required"),
-  tags: z.array(z.string()).min(1, "At least one tag is required"),
-  sample_requirements: z
-    .array(z.string())
-    .min(1, "At least one sample requirement is required"),
+  industries: z.array(z.string()).optional().default([]),
   is_active: z.boolean().optional().default(true),
   requirements: requirementsSchema,
   evaluation_criteria: z
@@ -34,9 +29,7 @@ export const updateProblemSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().min(1).optional(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional(),
-  categories: z.array(z.string()).min(1).optional(),
-  tags: z.array(z.string()).min(1).optional(),
-  sample_requirements: z.array(z.string()).min(1).optional(),
+  industries: z.array(z.string()).optional(),
   is_active: z.boolean().optional(),
   requirements: requirementsSchema.optional(),
   evaluation_criteria: z.array(evaluationCriterionSchema).min(1).optional(),

@@ -152,14 +152,6 @@ const formatRequirements = (requirements: ProblemRequirements): string => {
   });
   sections.push("");
 
-  if (requirements.constraints && requirements.constraints.length > 0) {
-    sections.push("CONSTRAINTS:");
-    requirements.constraints.forEach((constraint) => {
-      sections.push(`- ${constraint}`);
-    });
-    sections.push("");
-  }
-
   if (requirements.out_of_scope && requirements.out_of_scope.length > 0) {
     sections.push("OUT OF SCOPE (mention only if candidate asks):");
     requirements.out_of_scope.forEach((item) => {

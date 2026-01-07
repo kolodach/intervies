@@ -144,44 +144,38 @@ export type Database = {
       }
       problems: {
         Row: {
-          categories: string[]
           created_at: string | null
           description: string
           difficulty: string
           evaluation_criteria: Json
           id: string
+          industries: string[]
           is_active: boolean | null
           requirements: Json
-          sample_requirements: string[]
-          tags: string[]
           title: string
           updated_at: string | null
         }
         Insert: {
-          categories?: string[]
           created_at?: string | null
           description: string
           difficulty: string
           evaluation_criteria?: Json
           id?: string
+          industries?: string[]
           is_active?: boolean | null
           requirements?: Json
-          sample_requirements?: string[]
-          tags?: string[]
           title: string
           updated_at?: string | null
         }
         Update: {
-          categories?: string[]
           created_at?: string | null
           description?: string
           difficulty?: string
           evaluation_criteria?: Json
           id?: string
+          industries?: string[]
           is_active?: boolean | null
           requirements?: Json
-          sample_requirements?: string[]
-          tags?: string[]
           title?: string
           updated_at?: string | null
         }

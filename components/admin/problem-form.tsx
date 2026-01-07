@@ -44,16 +44,10 @@ export function ProblemForm({
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     (initialData?.difficulty as "easy" | "medium" | "hard") ?? "medium"
   );
-  const [categories, setCategories] = useState<string[]>(
-    initialData?.categories ?? []
+  const [industries, setIndustries] = useState<string[]>(
+    initialData?.industries ?? []
   );
-  const [categoryInput, setCategoryInput] = useState("");
-  const [tags, setTags] = useState<string[]>(initialData?.tags ?? []);
-  const [tagInput, setTagInput] = useState("");
-  const [sampleRequirements, setSampleRequirements] = useState<string[]>(
-    initialData?.sample_requirements ?? []
-  );
-  const [sampleReqInput, setSampleReqInput] = useState("");
+  const [industryInput, setIndustryInput] = useState("");
   const [isActive, setIsActive] = useState(initialData?.is_active ?? true);
 
   // Requirements
@@ -61,14 +55,12 @@ export function ProblemForm({
     (initialData?.requirements as unknown as Requirements) ?? {
       functional: [],
       non_functional: [],
-      constraints: [],
       out_of_scope: [],
     }
   );
   const [reqInputs, setReqInputs] = useState({
     functional: "",
     non_functional: "",
-    constraints: "",
     out_of_scope: "",
   });
 
@@ -95,9 +87,7 @@ export function ProblemForm({
       title,
       description,
       difficulty,
-      categories,
-      tags,
-      sample_requirements: sampleRequirements,
+      industries,
       is_active: isActive,
       requirements,
       evaluation_criteria: evaluationCriteria,
@@ -106,9 +96,7 @@ export function ProblemForm({
       title,
       description,
       difficulty,
-      categories,
-      tags,
-      sampleRequirements,
+      industries,
       isActive,
       requirements,
       evaluationCriteria,
@@ -141,9 +129,7 @@ export function ProblemForm({
       setTitle(result.data.title);
       setDescription(result.data.description);
       setDifficulty(result.data.difficulty);
-      setCategories(result.data.categories);
-      setTags(result.data.tags);
-      setSampleRequirements(result.data.sample_requirements);
+      setIndustries(result.data.industries ?? []);
       setIsActive(result.data.is_active ?? true);
       setRequirements(result.data.requirements);
       setEvaluationCriteria(result.data.evaluation_criteria);
@@ -249,9 +235,7 @@ export function ProblemForm({
           title: result.data.title,
           description: result.data.description,
           difficulty: result.data.difficulty,
-          categories: result.data.categories,
-          tags: result.data.tags,
-          sample_requirements: result.data.sample_requirements,
+          industries: result.data.industries ?? [],
           is_active: result.data.is_active ?? true,
           requirements:
             result.data.requirements as unknown as Problem["requirements"],
@@ -270,9 +254,7 @@ export function ProblemForm({
       title,
       description,
       difficulty,
-      categories,
-      tags,
-      sample_requirements: sampleRequirements,
+      industries,
       is_active: isActive,
       requirements: requirements as unknown as Problem["requirements"],
       evaluation_criteria:
@@ -361,21 +343,25 @@ export function ProblemForm({
                 </div>
               </div>
 
-              {/* Categories */}
+              {/* Industries */}
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Categories
+                  Industries
                 </label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Industries where this question is commonly asked (e.g., FAANG,
+                  Fintech, Startup)
+                </p>
                 <div className="flex gap-2 mb-2">
                   <Input
-                    value={categoryInput}
-                    onChange={(e) => setCategoryInput(e.target.value)}
-                    placeholder="Add category..."
+                    value={industryInput}
+                    onChange={(e) => setIndustryInput(e.target.value)}
+                    placeholder="Add industry..."
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        addToArray(categories, setCategories, categoryInput);
-                        setCategoryInput("");
+                        addToArray(industries, setIndustries, industryInput);
+                        setIndustryInput("");
                       }
                     }}
                   />
@@ -384,21 +370,21 @@ export function ProblemForm({
                     variant="outline"
                     size="icon"
                     onClick={() => {
-                      addToArray(categories, setCategories, categoryInput);
-                      setCategoryInput("");
+                      addToArray(industries, setIndustries, industryInput);
+                      setIndustryInput("");
                     }}
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((cat, idx) => (
+                  {industries.map((industry, idx) => (
                     <Badge key={idx} variant="secondary">
-                      {cat}
+                      {industry}
                       <button
                         type="button"
                         onClick={() =>
-                          removeFromArray(categories, setCategories, idx)
+                          removeFromArray(industries, setIndustries, idx)
                         }
                         className="ml-1"
                       >
@@ -407,112 +393,6 @@ export function ProblemForm({
                     </Badge>
                   ))}
                 </div>
-              </div>
-
-              {/* Tags */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">Tags</label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    placeholder="Add tag..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addToArray(tags, setTags, tagInput);
-                        setTagInput("");
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      addToArray(tags, setTags, tagInput);
-                      setTagInput("");
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {tags.map((tag, idx) => (
-                    <Badge key={idx} variant="outline">
-                      {tag}
-                      <button
-                        type="button"
-                        onClick={() => removeFromArray(tags, setTags, idx)}
-                        className="ml-1"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Sample Requirements */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Sample Requirements
-                </label>
-                <div className="flex gap-2 mb-2">
-                  <Input
-                    value={sampleReqInput}
-                    onChange={(e) => setSampleReqInput(e.target.value)}
-                    placeholder="Add sample requirement..."
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addToArray(
-                          sampleRequirements,
-                          setSampleRequirements,
-                          sampleReqInput
-                        );
-                        setSampleReqInput("");
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => {
-                      addToArray(
-                        sampleRequirements,
-                        setSampleRequirements,
-                        sampleReqInput
-                      );
-                      setSampleReqInput("");
-                    }}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-                <ul className="space-y-1">
-                  {sampleRequirements.map((req, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm bg-muted p-2 rounded"
-                    >
-                      <span className="flex-1">{req}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeFromArray(
-                            sampleRequirements,
-                            setSampleRequirements,
-                            idx
-                          )
-                        }
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
               </div>
             </CardContent>
           </Card>
@@ -524,16 +404,11 @@ export function ProblemForm({
             </CardHeader>
             <CardContent className="space-y-6">
               {(
-                [
-                  "functional",
-                  "non_functional",
-                  "constraints",
-                  "out_of_scope",
-                ] as const
+                ["functional", "non_functional", "out_of_scope"] as const
               ).map((type) => (
                 <div key={type}>
                   <label className="text-sm font-medium mb-2 block capitalize">
-                    {type.replace("_", " ")}
+                    {type.replace(/_/g, " ")}
                   </label>
                   <div className="flex gap-2 mb-2">
                     <Input
@@ -541,7 +416,7 @@ export function ProblemForm({
                       onChange={(e) =>
                         setReqInputs({ ...reqInputs, [type]: e.target.value })
                       }
-                      placeholder={`Add ${type.replace("_", " ")}...`}
+                      placeholder={`Add ${type.replace(/_/g, " ")}...`}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
