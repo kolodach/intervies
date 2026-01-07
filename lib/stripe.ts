@@ -9,10 +9,7 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase/service";
 import Stripe from "stripe";
 
 // Initialize Stripe client
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  // @ts-expect-error - API version may differ between local and CI environments
-  apiVersion: "2025-11-17.clover",
-});
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "");
 
 // Stripe subscription status type
 export type StripeSubscriptionStatus = Stripe.Subscription.Status | "none";
