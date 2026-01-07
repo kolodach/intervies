@@ -31,9 +31,10 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Users, Shield, ShieldOff, Search, X, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Loader2, Users, Shield, ShieldOff, Search, X, ArrowUpDown, ArrowUp, ArrowDown, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface User {
   id: string;
@@ -430,8 +431,17 @@ export default function AdminUsersPage() {
                     {user.email}
                   </TableCell>
                   <TableCell>{getSubscriptionBadge(user.subscription_status)}</TableCell>
-                  <TableCell className="text-center font-mono">
-                    {user.interview_count}
+                  <TableCell className="text-center">
+                    {user.interview_count > 0 ? (
+                      <Button variant="ghost" size="sm" className="h-7 px-2 font-mono" asChild>
+                        <Link href={`/admin/users/${user.id}/interviews`}>
+                          <MessageSquare className="mr-1.5 h-3.5 w-3.5" />
+                          {user.interview_count}
+                        </Link>
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground font-mono">0</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right font-mono text-amber-400">
                     ${user.total_cost.toFixed(4)}
