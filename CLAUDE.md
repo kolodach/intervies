@@ -36,7 +36,7 @@ pnpm stripe:webhooks      # Forward Stripe webhooks to localhost for testing
 
 Interviews progress through explicit states:
 ```
-GREETING → REQUIREMENTS → DESIGNING → DEEP_DIVE → CONCLUSION
+GREETING → REQUIREMENTS → DESIGNING → CONCLUSION
 ```
 
 State transitions are managed via AI tool calls and stored in `solution.state`.
