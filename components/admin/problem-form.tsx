@@ -65,7 +65,7 @@ export function ProblemForm({
 
   // Requirements
   const [requirements, setRequirements] = useState<Requirements>(
-    (initialData?.requirements as Requirements) ?? {
+    (initialData?.requirements as unknown as Requirements) ?? {
       functional: [],
       non_functional: [],
       constraints: [],
@@ -83,7 +83,7 @@ export function ProblemForm({
   const [evaluationCriteria, setEvaluationCriteria] = useState<
     EvaluationCriterion[]
   >(
-    (initialData?.evaluation_criteria as EvaluationCriterion[]) ?? []
+    (initialData?.evaluation_criteria as unknown as EvaluationCriterion[]) ?? []
   );
   const [criterionInput, setCriterionInput] = useState({
     dimension: "",
