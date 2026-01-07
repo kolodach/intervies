@@ -83,9 +83,11 @@ export default function Page() {
   const allIndustries = useMemo(() => {
     if (!problemsData) return [];
     const industries = new Set<string>();
-    problemsData.forEach((problem) => {
+    problemsData.forEach((problem: Problem) => {
       if (problem.industries) {
-        problem.industries.forEach((industry) => industries.add(industry));
+        problem.industries.forEach((industry: string) =>
+          industries.add(industry)
+        );
       }
     });
     return Array.from(industries).sort();
@@ -96,13 +98,13 @@ export default function Page() {
     if (!problemsData) return [];
 
     // Filter by search
-    let filtered = problemsData.filter((problem) => {
+    let filtered = problemsData.filter((problem: Problem) => {
       const matchesSearch =
         !search ||
         problem.title.toLowerCase().includes(search.toLowerCase()) ||
         problem.difficulty.toLowerCase().includes(search.toLowerCase()) ||
         (problem.industries &&
-          problem.industries.some((industry) =>
+          problem.industries.some((industry: string) =>
             industry.toLowerCase().includes(search.toLowerCase())
           ));
 
@@ -111,7 +113,7 @@ export default function Page() {
 
     // Filter by status
     if (statusFilters.size > 0) {
-      filtered = filtered.filter((problem) => {
+      filtered = filtered.filter((problem: Problem) => {
         const status = problemStatusMap.get(problem.id) ?? "Not Started";
         const statusMap: Record<string, string> = {
           Active: "active",
@@ -127,7 +129,7 @@ export default function Page() {
 
     // Filter by difficulty
     if (difficultyFilters.size > 0) {
-      filtered = filtered.filter((problem) => {
+      filtered = filtered.filter((problem: Problem) => {
         const difficultyMap: Record<string, string> = {
           Easy: "easy",
           Normal: "medium",
@@ -142,7 +144,7 @@ export default function Page() {
 
     // Filter by industry
     if (industryFilters.size > 0) {
-      filtered = filtered.filter((problem) => {
+      filtered = filtered.filter((problem: Problem) => {
         if (!problem.industries) return false;
         return Array.from(industryFilters).some((filter) =>
           problem.industries.includes(filter)
@@ -152,7 +154,7 @@ export default function Page() {
 
     // Sort
     if (sortBy) {
-      filtered = [...filtered].sort((a, b) => {
+      filtered = [...filtered].sort((a: Problem, b: Problem) => {
         let comparison = 0;
 
         if (sortBy === "title") {

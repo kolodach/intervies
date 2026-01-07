@@ -562,7 +562,7 @@ export default function AdminDashboardPage() {
                         padding: "8px 12px",
                       }}
                       labelStyle={{ color: "hsl(var(--popover-foreground))", fontWeight: 600, marginBottom: 4 }}
-                      formatter={(value: number, name: string) => [value, name]}
+                      formatter={(value, name) => [value ?? 0, name]}
                       labelFormatter={(_, payload) => payload?.[0]?.payload?.fullName || ""}
                       cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }}
                     />
