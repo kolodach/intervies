@@ -11,8 +11,7 @@ INTERVIEW DATA:
 
 Calculate from the checklist:
 - **Requirements** (0-25 points): (items_checked / 4) × 25
-- **Design** (0-30 points): (items_checked / 9) × 30
-- **Deep Dive** (0-20 points): (items_checked / 4) × 20
+- **Design** (0-50 points): (items_checked / 9) × 50
 - **Communication** (0-25 points): (items_checked / 4) × 25
 
 Sum these to get the overall_score (0-100).
@@ -29,13 +28,12 @@ Write a concise overview paragraph (2-4 sentences):
 
 Evaluate the candidate across 8 dimensions and group them into 2 categories:
 
-### TECHNICAL (design_quality, scalability_thinking, trade_off_analysis, depth)
+### TECHNICAL (design_quality, scalability_thinking, trade_off_analysis)
 
 Assess:
 - **Design Quality**: Architecture soundness, component choices, data modeling
 - **Scalability Thinking**: Capacity planning, bottleneck identification, scaling strategies (caching, sharding, replication)
 - **Trade-off Analysis**: Acknowledged pros/cons, justified choices, considered alternatives
-- **Depth**: Quality of deep dive, technical knowledge, problem-solving approach
 
 Provide:
 - **score**: Points earned from checklist Design + Requirements sections

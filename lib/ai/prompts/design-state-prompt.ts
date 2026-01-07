@@ -41,8 +41,12 @@ CALCULATIONS:
 If choosing storage without calculations, suggest: "Want to quickly estimate storage/throughput first?"
 Then WAIT for them to do the math. Never calculate for them.
 
-TRANSITION TO DEEP_DIVE:
+TRANSITION TO CONCLUSION:
 When high-level architecture sketched, data flows explained, storage discussed:
-- "Solid foundation. Let's dive deeper into [area]."
-- Call: request_state_transition({ state: "DEEP_DIVE" })
+1. Call: request_state_transition({ state: "CONCLUSION" })
+2. IN SAME RESPONSE give closing:
+   "We've covered excellent ground. I especially appreciated [ONE specific thing].
+   
+   **Next Steps:**
+   Click **Conclude Interview** for your detailed evaluation, or ask any questions first."
 `;

@@ -404,32 +404,6 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
               )
               .optional(),
 
-            // DEEP DIVE (4 items)
-            deep_dive_showed_depth: z
-              .boolean()
-              .describe(
-                "Demonstrated deep knowledge in the focus area. Example: 'Explained consistent hashing, virtual nodes, rebalancing'"
-              )
-              .optional(),
-            deep_dive_considered_alternatives: z
-              .boolean()
-              .describe(
-                "Discussed alternative approaches and why they chose one. Example: 'We could use push or pull for feeds. Pull is simpler but...'"
-              )
-              .optional(),
-            deep_dive_did_calculations: z
-              .boolean()
-              .describe(
-                "Did back-of-envelope calculations or estimations. Example: '500k QPS × 1KB = 500MB/s, so we need...'"
-              )
-              .optional(),
-            deep_dive_handled_pushback: z
-              .boolean()
-              .describe(
-                "Responded well to challenging questions or critique. Example: 'Good point, I didn't consider that. Let me rethink...'"
-              )
-              .optional(),
-
             // COMMUNICATION (4 items)
             communication_clear_and_structured: z
               .boolean()

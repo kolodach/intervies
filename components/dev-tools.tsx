@@ -172,7 +172,6 @@ export function DevTools({
                 <option value="GREETING">Greeting</option>
                 <option value="REQUIREMENTS">Gathering requirements</option>
                 <option value="DESIGNING">Designing</option>
-                <option value="DEEP_DIVE">Deep dive</option>
                 <option value="CONCLUSION">Conclusion</option>
               </select>
             </div>

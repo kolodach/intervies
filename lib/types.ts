@@ -5,13 +5,11 @@ export type SolutionState =
   | "GREETING"
   | "REQUIREMENTS"
   | "DESIGNING"
-  | "DEEP_DIVE"
   | "CONCLUSION";
 export const SolutionStates: SolutionState[] = [
   "GREETING",
   "REQUIREMENTS",
   "DESIGNING",
-  "DEEP_DIVE",
   "CONCLUSION",
 ];
 
@@ -43,12 +41,6 @@ export type EvaluationChecklist = {
   design_discussed_tradeoffs: boolean;
   design_did_capacity_planning: boolean;
   design_over_engineered: boolean; // RED FLAG: inverted scoring
-
-  // DEEP DIVE (4 items)
-  deep_dive_showed_depth: boolean;
-  deep_dive_considered_alternatives: boolean;
-  deep_dive_did_calculations: boolean;
-  deep_dive_handled_pushback: boolean;
 
   // COMMUNICATION (4 items)
   communication_clear_and_structured: boolean;

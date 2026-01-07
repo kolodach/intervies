@@ -1,5 +1,4 @@
 import { CONCLUSION_STATE_PROMPT } from "@/lib/ai/prompts/conclusion-state-prompt ";
-import { DEEP_DIVE_STATE_PROMPT } from "@/lib/ai/prompts/deep-dive-state-prompt";
 import { DESIGN_STATE_PROMPT } from "@/lib/ai/prompts/design-state-prompt";
 import { GREETING_STATE_PROMPT } from "@/lib/ai/prompts/greeting-state-prompt";
 import { INTERVIEWER_BASE_PROMPT } from "@/lib/ai/prompts/interviewer-prompt";
@@ -86,8 +85,6 @@ export const getStateSpecificInstructions = (currentState: SolutionState) => {
       return REQUIREMENT_STATE_PROMPT;
     case "DESIGNING":
       return DESIGN_STATE_PROMPT;
-    case "DEEP_DIVE":
-      return DEEP_DIVE_STATE_PROMPT;
     case "CONCLUSION":
       return CONCLUSION_STATE_PROMPT;
     default:
@@ -171,8 +168,6 @@ export const getActiveTools = (currentState: SolutionState) => {
     case "REQUIREMENTS":
       return [...commonTools, "request_state_transition", "get_board_state"];
     case "DESIGNING":
-      return [...commonTools, "request_state_transition", "get_board_state"];
-    case "DEEP_DIVE":
       return [...commonTools, "request_state_transition", "get_board_state"];
     case "CONCLUSION":
       return [...commonTools, "conclude_interview"];
