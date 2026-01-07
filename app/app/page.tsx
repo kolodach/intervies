@@ -26,6 +26,7 @@ import {
   useQuery,
 } from "@supabase-cache-helpers/postgrest-react-query";
 import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
+import { Header } from "@/components/header";
 
 export default function Page() {
   const { data: session } = useSession();
@@ -286,64 +287,76 @@ export default function Page() {
   };
 
   return (
-    <div className="w-full h-full flex flex-col items-center p-4">
-      <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
-      {error && <div className="text-red-500">{error.message}</div>}
-      {/* Mobile: Cards stacked in two rows */}
-      {/* Medium: Cards at top in one row */}
-      {/* Large: Cards to the right of table */}
-      <div className="w-full max-w-[1200px]">
-        <div className="flex flex-col lg:flex-row gap-4">
-          {/* Left side: Table (or cards on medium) */}
-          <div className="flex-1 flex flex-col">
-            {/* Cards at top for medium screens */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-3 mb-4">
-              <ContinueWidget
-                solutions={solutionsData ?? undefined}
-                problems={problemsData ?? undefined}
-                onStart={handleStart}
-              />
-              <ProgressChartCard
-                solutions={solutionsData ?? undefined}
-                problems={problemsData ?? undefined}
-              />
+    <>
+      <Header>
+        <Header.Left>
+          <Header.DefaultLeft />
+        </Header.Left>
+        <Header.Right>
+          <Header.DefaultRight />
+        </Header.Right>
+      </Header>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="w-full h-full flex flex-col items-center p-4">
+          <PaywallModal open={showPaywall} onOpenChange={setShowPaywall} />
+          {error && <div className="text-red-500">{error.message}</div>}
+          {/* Mobile: Cards stacked in two rows */}
+          {/* Medium: Cards at top in one row */}
+          {/* Large: Cards to the right of table */}
+          <div className="w-full max-w-[1200px]">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Left side: Table (or cards on medium) */}
+              <div className="flex-1 flex flex-col">
+                {/* Cards at top for medium screens */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:hidden gap-3 mb-4">
+                  <ContinueWidget
+                    solutions={solutionsData ?? undefined}
+                    problems={problemsData ?? undefined}
+                    onStart={handleStart}
+                  />
+                  <ProgressChartCard
+                    solutions={solutionsData ?? undefined}
+                    problems={problemsData ?? undefined}
+                  />
+                </div>
+                {/* Table */}
+                <div className="w-full mb-4">
+                  <ProblemsTable
+                    problems={problems}
+                    getProblemStatus={getProblemStatus}
+                    onRowClick={handleStart}
+                    search={search}
+                    onSearchChange={setSearch}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    statusFilters={statusFilters}
+                    difficultyFilters={difficultyFilters}
+                    industryFilters={industryFilters}
+                    onToggleStatusFilter={toggleStatusFilter}
+                    onToggleDifficultyFilter={toggleDifficultyFilter}
+                    onToggleIndustryFilter={toggleIndustryFilter}
+                    onClearFilters={clearFilters}
+                    allIndustries={allIndustries}
+                  />
+                </div>
+              </div>
+              {/* Right side: Cards for large screens */}
+              <div className="hidden lg:flex lg:flex-col gap-3 w-96 shrink-0">
+                <ContinueWidget
+                  solutions={solutionsData ?? undefined}
+                  problems={problemsData ?? undefined}
+                  onStart={handleStart}
+                />
+                <ProgressChartCard
+                  solutions={solutionsData ?? undefined}
+                  problems={problemsData ?? undefined}
+                />
+              </div>
             </div>
-            {/* Table */}
-            <div className="w-full mb-4">
-              <ProblemsTable
-                problems={problems}
-                getProblemStatus={getProblemStatus}
-                onRowClick={handleStart}
-                search={search}
-                onSearchChange={setSearch}
-                sortBy={sortBy}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-                statusFilters={statusFilters}
-                difficultyFilters={difficultyFilters}
-                industryFilters={industryFilters}
-                onToggleStatusFilter={toggleStatusFilter}
-                onToggleDifficultyFilter={toggleDifficultyFilter}
-                onToggleIndustryFilter={toggleIndustryFilter}
-                onClearFilters={clearFilters}
-                allIndustries={allIndustries}
-              />
-            </div>
-          </div>
-          {/* Right side: Cards for large screens */}
-          <div className="hidden lg:flex lg:flex-col gap-3 w-96 shrink-0">
-            <ContinueWidget
-              solutions={solutionsData ?? undefined}
-              problems={problemsData ?? undefined}
-              onStart={handleStart}
-            />
-            <ProgressChartCard
-              solutions={solutionsData ?? undefined}
-              problems={problemsData ?? undefined}
-            />
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

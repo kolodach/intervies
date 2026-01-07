@@ -46,7 +46,7 @@ export async function POST() {
       stripeCustomerId,
       priceId,
       `${baseUrl}/api/stripe/success`,
-      `${baseUrl}/app/subscription?canceled=true`
+      `${baseUrl}/app/settings?canceled=true`
     );
 
     return NextResponse.json({ url: checkoutSession.url });

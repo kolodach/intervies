@@ -18,7 +18,7 @@ export async function GET() {
 
   if (planError || !userPlan?.stripe_customer_id) {
     console.error("[STRIPE SUCCESS] No Stripe customer found:", planError);
-    redirect("/app/subscription?error=no_customer");
+    redirect("/app/settings?error=no_customer");
   }
 
   // Sync subscription data from Stripe to database
@@ -32,6 +32,6 @@ export async function GET() {
     // Continue to redirect even if sync fails - webhooks will update later
   }
 
-  // Redirect to subscription page
-  redirect("/app/subscription?success=true");
+  // Redirect to settings page
+  redirect("/app/settings?success=true");
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSupabaseBrowserClient } from "@/lib/supabase/client";
+import { Header } from "@/components/header";
 
 export default function Home() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -36,28 +37,41 @@ export default function Home() {
   }
 
   return (
-    <div>
-      <h1>Tasks</h1>
+    <>
+      <Header>
+        <Header.Left>
+          <Header.DefaultLeft />
+        </Header.Left>
+        <Header.Right>
+          <Header.NewInterviewButton />
+          <Header.DefaultRight />
+        </Header.Right>
+      </Header>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div>
+          <h1>Tasks</h1>
 
-      {loading && <p>Loading...</p>}
+          {loading && <p>Loading...</p>}
 
-      {!loading &&
-        tasks.length > 0 &&
-        tasks.map((task: any) => <p key={task.id}>{task.name}</p>)}
+          {!loading &&
+            tasks.length > 0 &&
+            tasks.map((task: any) => <p key={task.id}>{task.name}</p>)}
 
-      {!loading && tasks.length === 0 && <p>No tasks found</p>}
+          {!loading && tasks.length === 0 && <p>No tasks found</p>}
 
-      <form onSubmit={createTask}>
-        <input
-          autoFocus
-          type="text"
-          name="name"
-          placeholder="Enter new task"
-          onChange={(e) => setName(e.target.value)}
-          value={name}
-        />
-        <button type="submit">Add</button>
-      </form>
-    </div>
+          <form onSubmit={createTask}>
+            <input
+              autoFocus
+              type="text"
+              name="name"
+              placeholder="Enter new task"
+              onChange={(e) => setName(e.target.value)}
+              value={name}
+            />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+      </div>
+    </>
   );
 }

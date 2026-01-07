@@ -26,6 +26,7 @@ import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { DevTools } from "@/components/dev-tools";
 import { useMutation } from "@tanstack/react-query";
 import { useUsageLimits } from "@/lib/hooks/use-usage-limits";
+import { Header } from "@/components/header";
 
 export default function Page() {
   const { id } = useParams();
@@ -292,43 +293,56 @@ export default function Page() {
   }
 
   return (
-    <div className="grid grid-cols-[450px_1fr] h-full">
-      <div className="h-full px-2 pb-2 min-h-0">
-        {/* Evaluation Status */}
-        <Chat
-          isConcludingInterview={isConcludingInterview || isEvaluating}
-          isEvaluationCompleted={isEvaluationCompleted}
-          onConcludeInterview={concludeInterview}
-          readonly={isCanvasReadOnly}
-          solution={solution}
-          interviewState={currentState as SolutionState}
-          interviewStatus={currentStatus as Solution["status"]}
-          onRegenerate={handleRegenerate}
-          onReset={handleReset}
-          onMessageSent={onMessageSent}
-          boardChanged={boardChanged}
+    <>
+      <Header>
+        <Header.Left>
+          <Header.DefaultLeft />
+        </Header.Left>
+        <Header.Right>
+          <Header.NewInterviewButton />
+          <Header.DefaultRight />
+        </Header.Right>
+      </Header>
+      <div className="flex-1 overflow-y-auto min-h-0">
+        <div className="grid grid-cols-[450px_1fr] h-full">
+        <div className="h-full px-2 pb-2 min-h-0">
+          {/* Evaluation Status */}
+          <Chat
+            isConcludingInterview={isConcludingInterview || isEvaluating}
+            isEvaluationCompleted={isEvaluationCompleted}
+            onConcludeInterview={concludeInterview}
+            readonly={isCanvasReadOnly}
+            solution={solution}
+            interviewState={currentState as SolutionState}
+            interviewStatus={currentStatus as Solution["status"]}
+            onRegenerate={handleRegenerate}
+            onReset={handleReset}
+            onMessageSent={onMessageSent}
+            boardChanged={boardChanged}
+            messages={messages}
+            sendMessage={sendMessage}
+            status={status}
+            userId={user?.id}
+            usageLimitReached={usageLimitReached}
+            freeLimitExceeded={freeLimitExceeded}
+            currentPeriodEnd={currentPeriodEnd}
+          />
+        </div>
+        <div className="h-full relative pb-2 pr-2">
+          <Canvas
+            readonly={isCanvasReadOnly}
+            elements={initialElements}
+            excalidrawRef={excalidrawRef}
+            onChange={debouncedOnChange.maybeExecute}
+          />
+        </div>
+        <DevTools
           messages={messages}
-          sendMessage={sendMessage}
-          status={status}
-          userId={user?.id}
-          usageLimitReached={usageLimitReached}
-          freeLimitExceeded={freeLimitExceeded}
-          currentPeriodEnd={currentPeriodEnd}
+          solution={solution}
+          refetchSolution={refetchWithMessages}
         />
+        </div>
       </div>
-      <div className="h-full relative pb-2 pr-2">
-        <Canvas
-          readonly={isCanvasReadOnly}
-          elements={initialElements}
-          excalidrawRef={excalidrawRef}
-          onChange={debouncedOnChange.maybeExecute}
-        />
-      </div>
-      <DevTools
-        messages={messages}
-        solution={solution}
-        refetchSolution={refetchWithMessages}
-      />
-    </div>
+    </>
   );
 }

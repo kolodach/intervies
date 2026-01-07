@@ -28,7 +28,7 @@ export async function POST() {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const portalSession = await createBillingPortalSession(
       userPlan.stripe_customer_id,
-      `${baseUrl}/app/subscription`
+      `${baseUrl}/app/settings`
     );
 
     return NextResponse.json({ url: portalSession.url });
