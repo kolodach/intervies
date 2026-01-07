@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { capitalize } from "@/lib/utils";
 import type { Problem } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
 interface ProblemsTableProps {
   problems: Problem[];
@@ -41,8 +42,12 @@ interface ProblemsTableProps {
   onSort: (column: "status" | "title" | "difficulty") => void;
   statusFilters: Set<string>;
   difficultyFilters: Set<string>;
+  industryFilters: Set<string>;
   onToggleStatusFilter: (status: string) => void;
   onToggleDifficultyFilter: (difficulty: string) => void;
+  onToggleIndustryFilter: (industry: string) => void;
+  onClearFilters: () => void;
+  allIndustries: string[];
 }
 
 export function ProblemsTable({
@@ -56,8 +61,12 @@ export function ProblemsTable({
   onSort,
   statusFilters,
   difficultyFilters,
+  industryFilters,
   onToggleStatusFilter,
   onToggleDifficultyFilter,
+  onToggleIndustryFilter,
+  onClearFilters,
+  allIndustries,
 }: ProblemsTableProps) {
   const getSortLabel = () => {
     if (!sortBy) return null;
@@ -151,14 +160,25 @@ export function ProblemsTable({
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="h-9">
               <Filter className="w-4 h-4" />
-              {(statusFilters.size > 0 || difficultyFilters.size > 0) && (
+              {(statusFilters.size > 0 || difficultyFilters.size > 0 || industryFilters.size > 0) && (
                 <span className="ml-2">
-                  {statusFilters.size + difficultyFilters.size}
+                  {statusFilters.size + difficultyFilters.size + industryFilters.size}
                 </span>
               )}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 max-h-[500px] overflow-y-auto">
+            {(statusFilters.size > 0 || difficultyFilters.size > 0 || industryFilters.size > 0) && (
+              <>
+                <DropdownMenuItem 
+                  onClick={onClearFilters}
+                  className="text-muted-foreground"
+                >
+                  Clear all filters
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuLabel>Status</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuCheckboxItem
@@ -200,6 +220,18 @@ export function ProblemsTable({
             >
               Hard
             </DropdownMenuCheckboxItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Industry</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {allIndustries.map((industry) => (
+              <DropdownMenuCheckboxItem
+                key={industry}
+                checked={industryFilters.has(industry)}
+                onCheckedChange={() => onToggleIndustryFilter(industry)}
+              >
+                {industry}
+              </DropdownMenuCheckboxItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -215,12 +247,12 @@ export function ProblemsTable({
                   onClick={() => onRowClick(problem)}
                   className="cursor-pointer hover:bg-muted/50"
                 >
-                  {/* Status and Title merged */}
+                  {/* Status and Title */}
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <div className="flex items-center">
+                          <div className="flex items-center flex-shrink-0">
                             {status === "completed" ? (
                               <CircleCheck className="w-5 h-5 text-green-600" />
                             ) : status === "active" ? (
@@ -241,16 +273,32 @@ export function ProblemsTable({
                       <span className="font-medium">{problem.title}</span>
                     </div>
                   </TableCell>
+                  {/* Industries */}
+                  <TableCell>
+                    {problem.industries && problem.industries.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {problem.industries.map((industry) => (
+                          <Badge
+                            key={industry}
+                            variant="secondary"
+                            className="text-xs"
+                          >
+                            {industry}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </TableCell>
                   {/* Difficulty */}
-                  <TableCell className="text-right">
+                  <TableCell className="text-right w-24">
                     <span
                       className={
                         problem.difficulty === "easy"
-                          ? "text-green-600"
+                          ? "text-green-600 font-medium"
                           : problem.difficulty === "medium"
-                          ? "text-yellow-600"
+                          ? "text-yellow-600 font-medium"
                           : problem.difficulty === "hard"
-                          ? "text-red-600"
+                          ? "text-red-600 font-medium"
                           : undefined
                       }
                     >

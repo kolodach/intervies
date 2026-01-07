@@ -41,6 +41,9 @@ export default function Page() {
   const [difficultyFilters, setDifficultyFilters] = useState<Set<string>>(
     new Set()
   );
+  const [industryFilters, setIndustryFilters] = useState<Set<string>>(
+    new Set()
+  );
   const [showPaywall, setShowPaywall] = useState(false);
   const supabase = useSupabaseBrowserClient();
   const { canStartInterview, refetch: refetchUsage } = useUsageLimits();
@@ -75,6 +78,18 @@ export default function Page() {
     return problemStatusMap.get(problemId) ?? "Not Started";
   };
 
+  // Get all unique industries from problems
+  const allIndustries = useMemo(() => {
+    if (!problemsData) return [];
+    const industries = new Set<string>();
+    problemsData.forEach((problem) => {
+      if (problem.industries) {
+        problem.industries.forEach((industry) => industries.add(industry));
+      }
+    });
+    return Array.from(industries).sort();
+  }, [problemsData]);
+
   // Filter and sort problems
   const filteredAndSortedProblems = useMemo(() => {
     if (!problemsData) return [];
@@ -84,7 +99,11 @@ export default function Page() {
       const matchesSearch =
         !search ||
         problem.title.toLowerCase().includes(search.toLowerCase()) ||
-        problem.difficulty.toLowerCase().includes(search.toLowerCase());
+        problem.difficulty.toLowerCase().includes(search.toLowerCase()) ||
+        (problem.industries &&
+          problem.industries.some((industry) =>
+            industry.toLowerCase().includes(search.toLowerCase())
+          ));
 
       return matchesSearch;
     });
@@ -117,6 +136,16 @@ export default function Page() {
           const mappedDifficulty = difficultyMap[filter];
           return mappedDifficulty === problem.difficulty;
         });
+      });
+    }
+
+    // Filter by industry
+    if (industryFilters.size > 0) {
+      filtered = filtered.filter((problem) => {
+        if (!problem.industries) return false;
+        return Array.from(industryFilters).some((filter) =>
+          problem.industries.includes(filter)
+        );
       });
     }
 
@@ -155,6 +184,7 @@ export default function Page() {
     search,
     statusFilters,
     difficultyFilters,
+    industryFilters,
     sortBy,
     sortDirection,
     problemStatusMap,
@@ -197,6 +227,24 @@ export default function Page() {
       }
       return newSet;
     });
+  };
+
+  const toggleIndustryFilter = (industry: string) => {
+    setIndustryFilters((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(industry)) {
+        newSet.delete(industry);
+      } else {
+        newSet.add(industry);
+      }
+      return newSet;
+    });
+  };
+
+  const clearFilters = () => {
+    setStatusFilters(new Set());
+    setDifficultyFilters(new Set());
+    setIndustryFilters(new Set());
   };
 
   const handleStart = async (problem: Problem) => {
@@ -273,8 +321,12 @@ export default function Page() {
                 onSort={handleSort}
                 statusFilters={statusFilters}
                 difficultyFilters={difficultyFilters}
+                industryFilters={industryFilters}
                 onToggleStatusFilter={toggleStatusFilter}
                 onToggleDifficultyFilter={toggleDifficultyFilter}
+                onToggleIndustryFilter={toggleIndustryFilter}
+                onClearFilters={clearFilters}
+                allIndustries={allIndustries}
               />
             </div>
           </div>

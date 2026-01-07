@@ -5,7 +5,7 @@ VALUES
     'Design a URL Shortener',
     'Design a URL shortening service like bit.ly that takes long URLs and converts them to short URLs.',
     'easy',
-    ARRAY[]::text[],
+    ARRAY['SaaS', 'Marketing']::text[],
     '[{"dimension": "API Design", "description": "Clear REST API design", "weight": 0.25}, {"dimension": "Data Storage", "description": "Efficient storage strategy", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle high traffic", "weight": 0.25}, {"dimension": "Collision Handling", "description": "Handle hash collisions", "weight": 0.25}]'::jsonb,
     '{
       "functional": [
@@ -46,7 +46,7 @@ VALUES
     'Design Instagram',
     'Design a photo-sharing social media platform like Instagram.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Social Media', 'Consumer']::text[],
     '[{"dimension": "Architecture", "description": "Overall system design", "weight": 0.3}, {"dimension": "Storage", "description": "Photo and metadata storage", "weight": 0.25}, {"dimension": "Feed Generation", "description": "News feed algorithm", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of users", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -87,7 +87,7 @@ VALUES
     'Design Netflix',
     'Design a video streaming service like Netflix.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Entertainment', 'Streaming', 'Media']::text[],
     '[{"dimension": "Video Delivery", "description": "CDN and streaming strategy", "weight": 0.3}, {"dimension": "Encoding", "description": "Video encoding and quality", "weight": 0.2}, {"dimension": "Recommendations", "description": "Content recommendation system", "weight": 0.2}, {"dimension": "Scalability", "description": "Global scale architecture", "weight": 0.3}]'::jsonb,
     '{
       "functional": [
@@ -130,7 +130,7 @@ VALUES
     'Design a Chat Application',
     'Design a real-time chat application like Slack or Discord.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Communication', 'Collaboration', 'Enterprise']::text[],
     '[{"dimension": "Real-time Communication", "description": "WebSocket and message delivery", "weight": 0.3}, {"dimension": "Message Storage", "description": "Efficient message history storage", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of concurrent connections", "weight": 0.25}, {"dimension": "Presence System", "description": "User online/offline status", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -172,7 +172,7 @@ VALUES
     'Design a Distributed Cache',
     'Design a distributed caching system like Redis or Memcached.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'Database']::text[],
     '[{"dimension": "Architecture", "description": "Distributed system design", "weight": 0.3}, {"dimension": "Eviction Policies", "description": "LRU, LFU, TTL handling", "weight": 0.25}, {"dimension": "Consistency", "description": "Cache coherence across nodes", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -212,7 +212,7 @@ VALUES
     'Design a Rate Limiter',
     'Design a rate limiting system to control API request rates.',
     'easy',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Security', 'API']::text[],
     '[{"dimension": "Algorithm Design", "description": "Token bucket vs sliding window", "weight": 0.3}, {"dimension": "Distributed Design", "description": "Consistent rate limiting across servers", "weight": 0.3}, {"dimension": "Performance", "description": "Low overhead on each request", "weight": 0.2}, {"dimension": "Accuracy", "description": "Precise rate limit enforcement", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -248,7 +248,7 @@ VALUES
     'Design a Search Engine',
     'Design a web search engine like Google that indexes and searches billions of web pages.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Search', 'Advertising', 'Information']::text[],
     '[{"dimension": "Crawling", "description": "Web crawler design", "weight": 0.25}, {"dimension": "Indexing", "description": "Inverted index and storage", "weight": 0.3}, {"dimension": "Ranking", "description": "Search result ranking algorithm", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle billions of documents", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -288,7 +288,7 @@ VALUES
     'Design a Notification System',
     'Design a notification system that sends push notifications, emails, and SMS to users.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Communication', 'SaaS', 'Messaging']::text[],
     '[{"dimension": "Multi-channel Delivery", "description": "Push, email, SMS integration", "weight": 0.3}, {"dimension": "Reliability", "description": "Guaranteed delivery and retries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of notifications", "weight": 0.25}, {"dimension": "User Preferences", "description": "Opt-in/opt-out management", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -329,7 +329,7 @@ VALUES
     'Design a Payment Processing System',
     'Design a payment processing system that handles credit card transactions securely.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Fintech', 'E-commerce', 'Payments']::text[],
     '[{"dimension": "Security", "description": "PCI compliance and encryption", "weight": 0.3}, {"dimension": "Transaction Processing", "description": "Payment flow and idempotency", "weight": 0.3}, {"dimension": "Reliability", "description": "Guaranteed transaction processing", "weight": 0.25}, {"dimension": "Fraud Detection", "description": "Basic fraud prevention", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -370,7 +370,7 @@ VALUES
     'Design a File Storage System',
     'Design a distributed file storage system like Dropbox or Google Drive.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Cloud Storage', 'SaaS', 'Enterprise']::text[],
     '[{"dimension": "Storage Architecture", "description": "Distributed storage design", "weight": 0.3}, {"dimension": "Synchronization", "description": "Multi-device file sync", "weight": 0.25}, {"dimension": "Versioning", "description": "File version history", "weight": 0.2}, {"dimension": "Scalability", "description": "Handle petabytes of data", "weight": 0.25}]'::jsonb,
     '{
       "functional": [
@@ -410,7 +410,7 @@ VALUES
     'Design a Task Queue System',
     'Design a distributed task queue system like Celery or BullMQ.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'Messaging']::text[],
     '[{"dimension": "Queue Design", "description": "Queue architecture and persistence", "weight": 0.3}, {"dimension": "Task Processing", "description": "Worker pool and task execution", "weight": 0.3}, {"dimension": "Reliability", "description": "Task guarantees and retries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of tasks", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -450,7 +450,7 @@ VALUES
     'Design a Leaderboard System',
     'Design a leaderboard system for games or competitions that ranks users by score.',
     'easy',
-    ARRAY[]::text[],
+    ARRAY['Gaming', 'Sports', 'Entertainment']::text[],
     '[{"dimension": "Data Structure", "description": "Efficient ranking data structure", "weight": 0.3}, {"dimension": "Performance", "description": "Fast updates and queries", "weight": 0.3}, {"dimension": "Scalability", "description": "Handle millions of users", "weight": 0.25}, {"dimension": "Time Windows", "description": "Daily, weekly, all-time leaderboards", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -486,7 +486,7 @@ VALUES
     'Design a URL Crawler',
     'Design a web crawler that systematically browses and indexes web pages.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Search', 'Data', 'Web']::text[],
     '[{"dimension": "Crawling Strategy", "description": "BFS vs DFS, politeness", "weight": 0.3}, {"dimension": "Deduplication", "description": "Avoid crawling same URL twice", "weight": 0.25}, {"dimension": "Politeness", "description": "Respect robots.txt and rate limits", "weight": 0.25}, {"dimension": "Scalability", "description": "Crawl millions of pages", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -525,7 +525,7 @@ VALUES
     'Design a Distributed Lock',
     'Design a distributed locking mechanism for coordinating access to shared resources.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'Database']::text[],
     '[{"dimension": "Consistency", "description": "Mutual exclusion guarantee", "weight": 0.3}, {"dimension": "Reliability", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Performance", "description": "Low latency lock acquisition", "weight": 0.2}, {"dimension": "Deadlock Prevention", "description": "Avoid deadlocks", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -561,7 +561,7 @@ VALUES
     'Design a Metrics Collection System',
     'Design a system to collect, store, and query application metrics and time-series data.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Observability', 'Infrastructure', 'DevOps']::text[],
     '[{"dimension": "Storage", "description": "Time-series database design", "weight": 0.3}, {"dimension": "Query Performance", "description": "Fast metric queries", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle billions of data points", "weight": 0.25}, {"dimension": "Data Retention", "description": "Efficient data compression", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -597,7 +597,7 @@ VALUES
     'Design a Key-Value Store',
     'Design a distributed key-value store like DynamoDB or Cassandra.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Database', 'Cloud']::text[],
     '[{"dimension": "Partitioning", "description": "Data distribution strategy", "weight": 0.3}, {"dimension": "Replication", "description": "Data replication and consistency", "weight": 0.25}, {"dimension": "Availability", "description": "High availability design", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -636,7 +636,7 @@ VALUES
     'Design a Load Balancer',
     'Design a load balancer that distributes incoming requests across multiple servers.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'Networking']::text[],
     '[{"dimension": "Load Balancing Algorithm", "description": "Round-robin, least connections, etc.", "weight": 0.3}, {"dimension": "Health Checks", "description": "Server health monitoring", "weight": 0.25}, {"dimension": "High Availability", "description": "Load balancer redundancy", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency routing", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -673,7 +673,7 @@ VALUES
     'Design a URL Expander',
     'Design a service that expands shortened URLs and validates their destination.',
     'easy',
-    ARRAY[]::text[],
+    ARRAY['Security', 'SaaS', 'Web']::text[],
     '[{"dimension": "Security", "description": "Malicious URL detection", "weight": 0.3}, {"dimension": "Performance", "description": "Fast URL expansion", "weight": 0.3}, {"dimension": "Caching", "description": "Efficient caching strategy", "weight": 0.2}, {"dimension": "Reliability", "description": "Handle various redirect scenarios", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -709,7 +709,7 @@ VALUES
     'Design a Distributed Counter',
     'Design a distributed counter system that can increment/decrement values across multiple servers.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Analytics', 'Cloud']::text[],
     '[{"dimension": "Consistency", "description": "Strong vs eventual consistency", "weight": 0.3}, {"dimension": "Performance", "description": "Low latency operations", "weight": 0.3}, {"dimension": "Scalability", "description": "Handle millions of counters", "weight": 0.2}, {"dimension": "Reliability", "description": "Handle node failures", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -744,7 +744,7 @@ VALUES
     'Design a Content Delivery Network',
     'Design a CDN system that caches and delivers content from edge locations close to users.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Media', 'Networking']::text[],
     '[{"dimension": "Edge Caching", "description": "Cache strategy and placement", "weight": 0.3}, {"dimension": "Geographic Distribution", "description": "Edge location selection", "weight": 0.25}, {"dimension": "Cache Invalidation", "description": "Content update propagation", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency delivery", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -782,7 +782,7 @@ VALUES
     'Design a Session Store',
     'Design a distributed session storage system for web applications.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Security', 'Web']::text[],
     '[{"dimension": "Storage Design", "description": "Session data structure", "weight": 0.3}, {"dimension": "Expiration", "description": "TTL and cleanup", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of sessions", "weight": 0.25}, {"dimension": "Performance", "description": "Fast session access", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -819,7 +819,7 @@ VALUES
     'Design a Message Queue',
     'Design a message queue system like RabbitMQ or Apache Kafka.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Messaging', 'Cloud']::text[],
     '[{"dimension": "Message Durability", "description": "Persistent message storage", "weight": 0.3}, {"dimension": "Ordering", "description": "Message ordering guarantees", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of messages", "weight": 0.25}, {"dimension": "Reliability", "description": "At-least-once delivery", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -857,7 +857,7 @@ VALUES
     'Design a Distributed Log',
     'Design a distributed logging system that aggregates logs from multiple services.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Observability', 'Infrastructure', 'DevOps']::text[],
     '[{"dimension": "Log Collection", "description": "Efficient log ingestion", "weight": 0.3}, {"dimension": "Storage", "description": "Log storage and indexing", "weight": 0.25}, {"dimension": "Search", "description": "Fast log search", "weight": 0.25}, {"dimension": "Retention", "description": "Log retention policies", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -895,7 +895,7 @@ VALUES
     'Design a Distributed Lock Manager',
     'Design a system that manages distributed locks for coordinating access to shared resources.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'Database']::text[],
     '[{"dimension": "Consensus", "description": "Distributed consensus algorithm", "weight": 0.3}, {"dimension": "Deadlock Prevention", "description": "Prevent deadlocks", "weight": 0.25}, {"dimension": "Performance", "description": "Fast lock acquisition", "weight": 0.25}, {"dimension": "Reliability", "description": "Handle failures", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -932,7 +932,7 @@ VALUES
     'Design a Real-time Analytics System',
     'Design a system that processes and analyzes events in real-time.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Analytics', 'Data', 'Infrastructure']::text[],
     '[{"dimension": "Stream Processing", "description": "Event processing pipeline", "weight": 0.3}, {"dimension": "Aggregation", "description": "Real-time aggregations", "weight": 0.25}, {"dimension": "Time Windows", "description": "Sliding and tumbling windows", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle millions of events", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -969,7 +969,7 @@ VALUES
     'Design a Distributed Configuration Store',
     'Design a system to store and distribute configuration settings across services.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'DevOps', 'Cloud']::text[],
     '[{"dimension": "Change Distribution", "description": "Efficient config updates", "weight": 0.3}, {"dimension": "Versioning", "description": "Config version management", "weight": 0.25}, {"dimension": "Consistency", "description": "Consistent config across services", "weight": 0.25}, {"dimension": "Performance", "description": "Fast config access", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1007,7 +1007,7 @@ VALUES
     'Design a Distributed Tracing System',
     'Design a system to trace requests across multiple microservices.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Observability', 'Infrastructure', 'DevOps']::text[],
     '[{"dimension": "Span Collection", "description": "Efficient span ingestion", "weight": 0.3}, {"dimension": "Correlation", "description": "Trace correlation across services", "weight": 0.25}, {"dimension": "Storage", "description": "Trace storage and indexing", "weight": 0.25}, {"dimension": "Query Performance", "description": "Fast trace queries", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1045,7 +1045,7 @@ VALUES
     'Design a Feature Flag System',
     'Design a system to manage feature flags and A/B testing.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['DevOps', 'SaaS', 'Product']::text[],
     '[{"dimension": "Targeting", "description": "User targeting logic", "weight": 0.3}, {"dimension": "Rollout", "description": "Gradual feature rollout", "weight": 0.25}, {"dimension": "Performance", "description": "Fast flag evaluation", "weight": 0.25}, {"dimension": "Real-time Updates", "description": "Flag update propagation", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1083,7 +1083,7 @@ VALUES
     'Design a Distributed ID Generator',
     'Design a system to generate unique IDs across distributed systems.',
     'medium',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Database', 'Cloud']::text[],
     '[{"dimension": "Uniqueness", "description": "Guarantee unique IDs", "weight": 0.3}, {"dimension": "Performance", "description": "High ID generation rate", "weight": 0.3}, {"dimension": "Ordering", "description": "Time-ordered IDs", "weight": 0.2}, {"dimension": "Scalability", "description": "Distributed generation", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1118,7 +1118,7 @@ VALUES
     'Design a Distributed Bloom Filter',
     'Design a distributed bloom filter for efficient membership testing.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Data', 'Algorithms']::text[],
     '[{"dimension": "False Positive Rate", "description": "Minimize false positives", "weight": 0.3}, {"dimension": "Distributed Updates", "description": "Merge updates across nodes", "weight": 0.3}, {"dimension": "Performance", "description": "Fast add and test operations", "weight": 0.2}, {"dimension": "Memory Efficiency", "description": "Minimize memory usage", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1153,7 +1153,7 @@ VALUES
     'Design a Distributed Graph Database',
     'Design a distributed graph database for storing and querying relationships.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Database', 'Social', 'Data']::text[],
     '[{"dimension": "Graph Storage", "description": "Efficient node and edge storage", "weight": 0.3}, {"dimension": "Traversal", "description": "Fast graph traversal", "weight": 0.25}, {"dimension": "Partitioning", "description": "Graph partitioning strategy", "weight": 0.25}, {"dimension": "Query Language", "description": "Graph query interface", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1190,7 +1190,7 @@ VALUES
     'Design a Distributed Hash Table',
     'Design a DHT (Distributed Hash Table) for peer-to-peer storage.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'P2P', 'Networking']::text[],
     '[{"dimension": "Routing", "description": "Efficient key lookup", "weight": 0.3}, {"dimension": "Churn Handling", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Consistency", "description": "Data consistency", "weight": 0.2}, {"dimension": "Performance", "description": "Low lookup latency", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1226,7 +1226,7 @@ VALUES
     'Design a Distributed Scheduler',
     'Design a distributed job scheduler that schedules and executes tasks across multiple machines.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Cloud', 'DevOps']::text[],
     '[{"dimension": "Scheduling Algorithm", "description": "Job scheduling strategy", "weight": 0.3}, {"dimension": "Resource Allocation", "description": "Efficient resource usage", "weight": 0.25}, {"dimension": "Reliability", "description": "Handle failures", "weight": 0.25}, {"dimension": "Scalability", "description": "Handle thousands of jobs", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
@@ -1263,7 +1263,7 @@ VALUES
     'Design a Distributed Consensus System',
     'Design a distributed consensus system using algorithms like Raft or Paxos.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Database', 'Algorithms']::text[],
     '[{"dimension": "Leader Election", "description": "Efficient leader selection", "weight": 0.3}, {"dimension": "Log Replication", "description": "Replicate log entries", "weight": 0.3}, {"dimension": "Fault Tolerance", "description": "Handle node failures", "weight": 0.25}, {"dimension": "Performance", "description": "Low latency consensus", "weight": 0.15}]'::jsonb,
     '{
       "functional": [
@@ -1299,7 +1299,7 @@ VALUES
     'Design a Distributed Transaction System',
     'Design a system that supports distributed transactions across multiple services.',
     'hard',
-    ARRAY[]::text[],
+    ARRAY['Infrastructure', 'Database', 'Fintech']::text[],
     '[{"dimension": "ACID Properties", "description": "Atomicity, consistency, isolation, durability", "weight": 0.3}, {"dimension": "Failure Handling", "description": "Handle node failures", "weight": 0.3}, {"dimension": "Performance", "description": "Low transaction overhead", "weight": 0.2}, {"dimension": "Scalability", "description": "Handle many transactions", "weight": 0.2}]'::jsonb,
     '{
       "functional": [
