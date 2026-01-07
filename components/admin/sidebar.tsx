@@ -9,12 +9,18 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  BarChart3,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const navItems = [
+  {
+    title: "Dashboard",
+    href: "/admin/dashboard",
+    icon: BarChart3,
+  },
   {
     title: "Problems",
     href: "/admin/problems",
