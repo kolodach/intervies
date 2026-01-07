@@ -32,10 +32,14 @@ export const buildDynamicContext = (
   evaluationChecklist: Record<string, boolean>
 ): string => {
   const checklistStatus = formatChecklistStatus(evaluationChecklist);
+  const transitionReminder = getTransitionReminder(currentState);
 
   const sections = [
     "=== CURRENT INTERVIEW STATE ===",
     `STATE: ${currentState}`,
+    "",
+    "=== BEFORE RESPONDING - CHECK STATE TRANSITION ===",
+    transitionReminder,
     "",
     "=== EVALUATION STATUS ===",
     checklistStatus,
@@ -51,6 +55,30 @@ export const buildDynamicContext = (
   }
 
   return sections.join("\n");
+};
+
+/**
+ * Returns a state-specific reminder about transition criteria.
+ */
+const getTransitionReminder = (currentState: SolutionState): string => {
+  switch (currentState) {
+    case "GREETING":
+      return `⚠️ TRANSITION CHECK: If user sent a real message (not just BEGIN_INTERVIEW):
+- Just greeting ("Hi", "Hello") → stay in GREETING, prompt for questions
+- Contains ANY question about the problem → call request_state_transition({ state: "REQUIREMENTS" }) IMMEDIATELY`;
+    case "REQUIREMENTS":
+      return `⚠️ TRANSITION CHECK: If user understands core requirements OR says "let's design" / "ready to design":
+1. Summarize key points briefly
+2. Ask "Ready for design?"
+3. When they confirm → call request_state_transition({ state: "DESIGNING" })`;
+    case "DESIGNING":
+      return `⚠️ TRANSITION CHECK: If high-level architecture is sketched, data flows explained, and core storage discussed:
+→ Call request_state_transition({ state: "CONCLUSION" }) and give closing message in SAME response`;
+    case "CONCLUSION":
+      return `Interview is concluding. Answer any remaining questions briefly. If user says "ready" or "no questions" → call conclude_interview({})`;
+    default:
+      return "";
+  }
 };
 
 /**
