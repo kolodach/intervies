@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Development Commands
 
+**Package Manager:** Always use `pnpm` (not npm or yarn).
+
 ```bash
 pnpm dev                  # Start development server on :3000
 pnpm build                # Production build

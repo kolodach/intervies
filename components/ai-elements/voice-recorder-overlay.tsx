@@ -217,7 +217,7 @@ export const VoiceRecorderOverlay = forwardRef<
   const startMeter = useCallback(
     (stream: MediaStream) => {
       stopMeter();
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
       if (!AudioCtx) {
         return;
       }

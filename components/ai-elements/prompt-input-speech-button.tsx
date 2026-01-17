@@ -73,16 +73,8 @@ interface SpeechRecognitionErrorEvent extends Event {
   error: string;
 }
 
-declare global {
-  interface Window {
-    SpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-    webkitSpeechRecognition: {
-      new (): SpeechRecognition;
-    };
-  }
-}
+// Type for accessing SpeechRecognition from window (handles vendor prefixes)
+type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
 export type PromptInputSpeechButtonProps = PromptInputButtonProps & {
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
@@ -151,9 +143,11 @@ export const PromptInputSpeechButton = ({
       typeof window !== "undefined" &&
       ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
     ) {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
-      const speechRecognition = new SpeechRecognition();
+      const SpeechRecognitionCtor = (
+        (window as unknown as { SpeechRecognition?: SpeechRecognitionConstructor }).SpeechRecognition ||
+        (window as unknown as { webkitSpeechRecognition?: SpeechRecognitionConstructor }).webkitSpeechRecognition
+      ) as SpeechRecognitionConstructor;
+      const speechRecognition = new SpeechRecognitionCtor();
       speechRecognition.continuous = true;
       speechRecognition.interimResults = true;
       speechRecognition.lang = "en-US";
