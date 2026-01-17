@@ -276,6 +276,7 @@ export default function Page() {
       conversation: [] as unknown as Json[],
       evaluated_at: null,
       evaluation: null,
+      evaluation_checklist: null,
     });
     if (updateError) {
       toast.error("Error resetting solution");

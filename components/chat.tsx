@@ -86,20 +86,29 @@ import {
 } from "./candidate-progress";
 import { getDefaultChecklist } from "@/lib/evaluation/criteria";
 
-const THINKING_TAG_REGEX = /<thinking>[\s\S]*?<\/thinking>\s*/gi;
-
 /**
- * Checks if text contains <thinking> tags.
+ * Analyzes text for thinking state:
+ * - isThinking: has <thinking> but no </thinking> yet (streaming)
+ * - hadThinking: has complete <thinking>...</thinking> block
  */
-function hasThinkingText(text: string): boolean {
-  return THINKING_TAG_REGEX.test(text);
+function getThinkingState(text: string): {
+  isThinking: boolean;
+  hadThinking: boolean;
+} {
+  const hasOpenTag = /<thinking>/i.test(text);
+  const hasCloseTag = /<\/thinking>/i.test(text);
+
+  return {
+    isThinking: hasOpenTag && !hasCloseTag,
+    hadThinking: hasOpenTag && hasCloseTag,
+  };
 }
 
 /**
  * Strips <thinking>...</thinking> blocks from AI responses.
  */
 function stripThinkingText(text: string): string {
-  return text.replace(THINKING_TAG_REGEX, "").trim();
+  return text.replace(/<thinking>[\s\S]*?<\/thinking>\s*/gi, "").trim();
 }
 
 // Scroll to bottom when triggered (must be inside Conversation context)
@@ -325,7 +334,26 @@ export default function Chat({
                       }
                       switch (part.type) {
                         case "text": {
-                          const hadThinking = hasThinkingText(part.text);
+                          const { isThinking, hadThinking } = getThinkingState(
+                            part.text
+                          );
+
+                          // Still streaming thinking - show indicator only
+                          if (isThinking) {
+                            return (
+                              <div
+                                className="inline-flex items-center gap-2 text-xs py-2 px-2 rounded-md text-muted-foreground"
+                                key={key}
+                              >
+                                <Brain className="size-3 shrink-0" />
+                                <span className="font-medium animate-pulse">
+                                  Thinking...
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          // Finished thinking - show "Thought" + response
                           return (
                             <div
                               className="flex flex-col items-start gap-2 group"
