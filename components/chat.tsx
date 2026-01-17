@@ -46,6 +46,7 @@ import {
 } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Brain,
   CheckCircle,
   Circle,
   CircleCheck,
@@ -78,6 +79,28 @@ import { ToolCallStatus } from "./ai-elements/tool-call-status";
 import { getToolCallLabels } from "./ai-elements/tool-call-labels";
 import { UsageLimitBanner } from "./usage-limit-banner";
 import { FreeLimitExceededBanner } from "./free-limit-exceeded-banner";
+import {
+  ProgressPanel,
+  ChecklistUpdateCard,
+  isChecklistUpdateTool,
+} from "./candidate-progress";
+import { getDefaultChecklist } from "@/lib/evaluation/criteria";
+
+const THINKING_TAG_REGEX = /<thinking>[\s\S]*?<\/thinking>\s*/gi;
+
+/**
+ * Checks if text contains <thinking> tags.
+ */
+function hasThinkingText(text: string): boolean {
+  return THINKING_TAG_REGEX.test(text);
+}
+
+/**
+ * Strips <thinking>...</thinking> blocks from AI responses.
+ */
+function stripThinkingText(text: string): string {
+  return text.replace(THINKING_TAG_REGEX, "").trim();
+}
 
 // Scroll to bottom when triggered (must be inside Conversation context)
 function ScrollToBottomEffect({ trigger }: { trigger: boolean }) {
@@ -138,6 +161,7 @@ export default function Chat({
   usageLimitReached = false,
   freeLimitExceeded = false,
   currentPeriodEnd = null,
+  evaluationChecklist = null,
 }: {
   solution: Solution;
   interviewState: SolutionState;
@@ -176,12 +200,17 @@ export default function Chat({
   usageLimitReached?: boolean;
   freeLimitExceeded?: boolean;
   currentPeriodEnd?: string | null;
+  evaluationChecklist?: Record<string, boolean> | null;
 }) {
   const [text, setText] = useState<string>("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [isProgressExpanded, setIsProgressExpanded] = useState(false);
 
   const [useWebSearch, setUseWebSearch] = useState<boolean>(false);
   const client = useSupabaseBrowserClient();
+
+  // Use provided checklist or default
+  const checklist = evaluationChecklist ?? getDefaultChecklist();
 
   // Use the passed state/status props (which come from the lightweight query for freshness)
   const isInterviewCompleted = interviewStatus === "completed";
@@ -268,6 +297,19 @@ export default function Chat({
                       const isTool = part.type.startsWith("tool-");
                       if (isTool) {
                         const toolPart = part as ToolUIPart;
+
+                        // Use custom card for update_checklist tool
+                        if (isChecklistUpdateTool(toolPart)) {
+                          return (
+                            <ChecklistUpdateCard
+                              key={key}
+                              toolPart={toolPart}
+                              onViewClick={() => setIsProgressExpanded(true)}
+                            />
+                          );
+                        }
+
+                        // Default tool call status for other tools
                         const { presentTense, pastTense, icon } =
                           getToolCallLabels(toolPart.type);
                         return (
@@ -282,30 +324,25 @@ export default function Chat({
                         );
                       }
                       switch (part.type) {
-                        case "text":
+                        case "text": {
+                          const hadThinking = hasThinkingText(part.text);
                           return (
                             <div
-                              className="flex flex-col items-center gap-2 group"
+                              className="flex flex-col items-start gap-2 group"
                               key={key}
                             >
-                              <MessageResponse>{part.text}</MessageResponse>
-                              {/* <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    onClick={() => onRegenerate(message.id)}
-                                    variant="ghost"
-                                    size="icon"
-                                    className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity"
-                                  >
-                                    <RotateCcw />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  Regenerate response
-                                </TooltipContent>
-                              </Tooltip> */}
+                              {hadThinking && (
+                                <div className="inline-flex items-center gap-2 text-xs py-2 px-2 rounded-md text-muted-foreground">
+                                  <Brain className="size-3 shrink-0" />
+                                  <span className="font-medium">Thought</span>
+                                </div>
+                              )}
+                              <MessageResponse>
+                                {stripThinkingText(part.text)}
+                              </MessageResponse>
                             </div>
                           );
+                        }
                         case "step-start":
                           return null;
                         default:
@@ -339,7 +376,7 @@ export default function Chat({
           <ConversationScrollButton />
         </Conversation>
         <div className="relative">
-          <div className="px-2 pb-2 bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2 pt-2">
+          <div className="bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2">
             {isConcludingInterview && (
               <div className="mb-4 flex items-center gap-2">
                 <Loader2 className="size-4 animate-spin" />
@@ -378,17 +415,13 @@ export default function Chat({
                 </div>
               </div>
             )}
-            <div className="flex items-center gap-[4px]">
-              {SolutionStates.map((state, index) => (
-                <div
-                  key={state}
-                  className={cn(
-                    "flex-1 h-[3px] rounded-full",
-                    index <= currentStepIndex ? "bg-green-500/80" : "bg-muted"
-                  )}
-                />
-              ))}
-            </div>
+            {/* Progress Panel with interview state stepper */}
+            <ProgressPanel
+              checklist={checklist}
+              interviewState={interviewState}
+              isExpanded={isProgressExpanded}
+              onExpandedChange={setIsProgressExpanded}
+            />
           </div>
           <PromptInput onSubmit={handleSubmit} globalDrop multiple>
             {/* <PromptInputHeader>

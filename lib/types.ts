@@ -24,27 +24,10 @@ export type ProblemRequirements = {
   out_of_scope?: string[];
 };
 
-export type EvaluationChecklist = {
-  // REQUIREMENTS GATHERING (4 items)
-  requirements_asked_clarifying_questions: boolean;
-  requirements_discussed_scale_and_performance: boolean;
-  requirements_stated_assumptions: boolean;
-  requirements_validated_understanding: boolean;
+import type { CriterionKey } from "@/lib/evaluation/criteria";
 
-  // DESIGN (9 items)
-  design_started_with_high_level: boolean;
-  design_drew_diagram: boolean;
-  design_explained_data_flow: boolean;
-  design_justified_technology_choices: boolean;
-  design_discussed_scalability: boolean;
-  design_considered_failures: boolean;
-  design_discussed_tradeoffs: boolean;
-  design_did_capacity_planning: boolean;
-  design_over_engineered: boolean; // RED FLAG: inverted scoring
-
-  // COMMUNICATION (4 items)
-  communication_clear_and_structured: boolean;
-  communication_collaborative: boolean;
-  communication_thought_out_loud: boolean;
-  communication_got_defensive: boolean; // RED FLAG: inverted scoring
-};
+/**
+ * Evaluation checklist tracks which criteria have been observed during the interview.
+ * Keys correspond to CriterionKey from criteria.ts.
+ */
+export type EvaluationChecklist = Record<CriterionKey, boolean>;

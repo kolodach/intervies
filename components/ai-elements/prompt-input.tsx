@@ -37,9 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { ChatStatus, FileUIPart } from "ai";
 import {
-  CheckIcon,
   CornerDownLeftIcon,
-  CornerDownRightIcon,
   ImageIcon,
   Loader2Icon,
   MicIcon,
@@ -49,7 +47,6 @@ import {
   XIcon,
 } from "lucide-react";
 import { nanoid } from "nanoid";
-import { toast } from "sonner";
 import {
   type ChangeEvent,
   type ChangeEventHandler,
@@ -153,7 +150,7 @@ export function PromptInputProvider({
   const clearInput = useCallback(() => setTextInput(""), []);
 
   // ----- attachments state (global when wrapped)
-  const [attachements, setAttachements] = useState<
+  const [attachmentFiles, setAttachmentFiles] = useState<
     (FileUIPart & { id: string })[]
   >([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -165,7 +162,7 @@ export function PromptInputProvider({
       return;
     }
 
-    setAttachements((prev) =>
+    setAttachmentFiles((prev) =>
       prev.concat(
         incoming.map((file) => ({
           id: nanoid(),
@@ -179,7 +176,7 @@ export function PromptInputProvider({
   }, []);
 
   const remove = useCallback((id: string) => {
-    setAttachements((prev) => {
+    setAttachmentFiles((prev) => {
       const found = prev.find((f) => f.id === id);
       if (found?.url) {
         URL.revokeObjectURL(found.url);
@@ -189,7 +186,7 @@ export function PromptInputProvider({
   }, []);
 
   const clear = useCallback(() => {
-    setAttachements((prev) => {
+    setAttachmentFiles((prev) => {
       for (const f of prev) {
         if (f.url) {
           URL.revokeObjectURL(f.url);
@@ -199,20 +196,35 @@ export function PromptInputProvider({
     });
   }, []);
 
+  // Keep a ref to attachments for cleanup on unmount (avoids stale closure)
+  const attachmentsRef = useRef(attachmentFiles);
+  attachmentsRef.current = attachmentFiles;
+
+  // Cleanup blob URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      for (const f of attachmentsRef.current) {
+        if (f.url) {
+          URL.revokeObjectURL(f.url);
+        }
+      }
+    };
+  }, []);
+
   const openFileDialog = useCallback(() => {
     openRef.current?.();
   }, []);
 
   const attachments = useMemo<AttachmentsContext>(
     () => ({
-      files: attachements,
+      files: attachmentFiles,
       add,
       remove,
       clear,
       openFileDialog,
       fileInputRef,
     }),
-    [attachements, add, remove, clear, openFileDialog]
+    [attachmentFiles, add, remove, clear, openFileDialog]
   );
 
   const __registerFileInput = useCallback(
@@ -289,7 +301,7 @@ export function PromptInputAttachment({
       <HoverCardTrigger asChild>
         <div
           className={cn(
-            "group relative flex h-8 cursor-default select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+            "group relative flex h-8 cursor-pointer select-none items-center gap-1.5 rounded-md border border-border px-1.5 font-medium text-sm transition-all hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
             className
           )}
           key={data.id}
@@ -380,7 +392,7 @@ export function PromptInputAttachments({
 
   return (
     <div
-      className={cn("flex flex-wrap items-center gap-2 p-3", className)}
+      className={cn("flex flex-wrap items-center gap-2 p-3 w-full", className)}
       {...props}
     >
       {attachments.files.map((file) => (
@@ -462,20 +474,15 @@ export const PromptInput = ({
 
   // Refs
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const anchorRef = useRef<HTMLSpanElement>(null);
   const formRef = useRef<HTMLFormElement | null>(null);
-
-  // Find nearest form to scope drag & drop
-  useEffect(() => {
-    const root = anchorRef.current?.closest("form");
-    if (root instanceof HTMLFormElement) {
-      formRef.current = root;
-    }
-  }, []);
 
   // ----- Local attachments (only used when no provider)
   const [items, setItems] = useState<(FileUIPart & { id: string })[]>([]);
   const files = usingProvider ? controller.attachments.files : items;
+
+  // Keep a ref to files for cleanup on unmount (avoids stale closure)
+  const filesRef = useRef(files);
+  filesRef.current = files;
 
   const openFileDialogLocal = useCallback(() => {
     inputRef.current?.click();
@@ -486,11 +493,19 @@ export const PromptInput = ({
       if (!accept || accept.trim() === "") {
         return true;
       }
-      if (accept.includes("image/*")) {
-        return f.type.startsWith("image/");
-      }
-      // NOTE: keep simple; expand as needed
-      return true;
+
+      const patterns = accept
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      return patterns.some((pattern) => {
+        if (pattern.endsWith("/*")) {
+          const prefix = pattern.slice(0, -1); // e.g: image/* -> image/
+          return f.type.startsWith(prefix);
+        }
+        return f.type === pattern;
+      });
     },
     [accept]
   );
@@ -546,35 +561,36 @@ export const PromptInput = ({
     [matchesAccept, maxFiles, maxFileSize, onError]
   );
 
-  const add = usingProvider
-    ? (files: File[] | FileList) => controller.attachments.add(files)
-    : addLocal;
+  const removeLocal = useCallback(
+    (id: string) =>
+      setItems((prev) => {
+        const found = prev.find((file) => file.id === id);
+        if (found?.url) {
+          URL.revokeObjectURL(found.url);
+        }
+        return prev.filter((file) => file.id !== id);
+      }),
+    []
+  );
 
-  const remove = usingProvider
-    ? (id: string) => controller.attachments.remove(id)
-    : (id: string) =>
-        setItems((prev) => {
-          const found = prev.find((file) => file.id === id);
-          if (found?.url) {
-            URL.revokeObjectURL(found.url);
+  const clearLocal = useCallback(
+    () =>
+      setItems((prev) => {
+        for (const file of prev) {
+          if (file.url) {
+            URL.revokeObjectURL(file.url);
           }
-          return prev.filter((file) => file.id !== id);
-        });
+        }
+        return [];
+      }),
+    []
+  );
 
-  const clear = usingProvider
-    ? () => controller.attachments.clear()
-    : () =>
-        setItems((prev) => {
-          for (const file of prev) {
-            if (file.url) {
-              URL.revokeObjectURL(file.url);
-            }
-          }
-          return [];
-        });
-
+  const add = usingProvider ? controller.attachments.add : addLocal;
+  const remove = usingProvider ? controller.attachments.remove : removeLocal;
+  const clear = usingProvider ? controller.attachments.clear : clearLocal;
   const openFileDialog = usingProvider
-    ? () => controller.attachments.openFileDialog()
+    ? controller.attachments.openFileDialog
     : openFileDialogLocal;
 
   // Let provider know about our hidden file input so external menus can call openFileDialog()
@@ -595,6 +611,7 @@ export const PromptInput = ({
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
+    if (globalDrop) return // when global drop is on, let the document-level handler own drops
 
     const onDragOver = (e: DragEvent) => {
       if (e.dataTransfer?.types?.includes("Files")) {
@@ -615,7 +632,7 @@ export const PromptInput = ({
       form.removeEventListener("dragover", onDragOver);
       form.removeEventListener("drop", onDrop);
     };
-  }, [add]);
+  }, [add, globalDrop]);
 
   useEffect(() => {
     if (!globalDrop) return;
@@ -644,29 +661,38 @@ export const PromptInput = ({
   useEffect(
     () => () => {
       if (!usingProvider) {
-        for (const f of files) {
+        for (const f of filesRef.current) {
           if (f.url) URL.revokeObjectURL(f.url);
         }
       }
     },
-    [usingProvider, files]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup only on unmount; filesRef always current
+    [usingProvider]
   );
 
   const handleChange: ChangeEventHandler<HTMLInputElement> = (event) => {
     if (event.currentTarget.files) {
       add(event.currentTarget.files);
     }
+    // Reset input value to allow selecting files that were previously removed
+    event.currentTarget.value = "";
   };
 
-  const convertBlobUrlToDataUrl = async (url: string): Promise<string> => {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
+  const convertBlobUrlToDataUrl = async (
+    url: string
+  ): Promise<string | null> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      return null;
+    }
   };
 
   const ctx = useMemo<AttachmentsContext>(
@@ -701,47 +727,52 @@ export const PromptInput = ({
     // Convert blob URLs to data URLs asynchronously
     Promise.all(
       files.map(async ({ id, ...item }) => {
-        if (item.url?.startsWith("blob:")) {
+        if (item.url && item.url.startsWith("blob:")) {
+          const dataUrl = await convertBlobUrlToDataUrl(item.url);
+          // If conversion failed, keep the original blob URL
           return {
             ...item,
-            url: await convertBlobUrlToDataUrl(item.url),
+            url: dataUrl ?? item.url,
           };
         }
         return item;
       })
-    ).then((convertedFiles: FileUIPart[]) => {
-      try {
-        const result = onSubmit({ text, files: convertedFiles }, event);
+    )
+      .then((convertedFiles: FileUIPart[]) => {
+        try {
+          const result = onSubmit({ text, files: convertedFiles }, event);
 
-        // Handle both sync and async onSubmit
-        if (result instanceof Promise) {
-          result
-            .then(() => {
-              clear();
-              if (usingProvider) {
-                controller.textInput.clear();
-              }
-            })
-            .catch(() => {
-              // Don't clear on error - user may want to retry
-            });
-        } else {
-          // Sync function completed without throwing, clear attachments
-          clear();
-          if (usingProvider) {
-            controller.textInput.clear();
+          // Handle both sync and async onSubmit
+          if (result instanceof Promise) {
+            result
+              .then(() => {
+                clear();
+                if (usingProvider) {
+                  controller.textInput.clear();
+                }
+              })
+              .catch(() => {
+                // Don't clear on error - user may want to retry
+              });
+          } else {
+            // Sync function completed without throwing, clear attachments
+            clear();
+            if (usingProvider) {
+              controller.textInput.clear();
+            }
           }
+        } catch {
+          // Don't clear on error - user may want to retry
         }
-      } catch (error) {
+      })
+      .catch(() => {
         // Don't clear on error - user may want to retry
-      }
-    });
+      });
   };
 
   // Render with or without local provider
   const inner = (
     <>
-      <span aria-hidden="true" className="hidden" ref={anchorRef} />
       <input
         accept={accept}
         aria-label="Upload files"
@@ -755,6 +786,7 @@ export const PromptInput = ({
       <form
         className={cn("w-full", className)}
         onSubmit={handleSubmit}
+        ref={formRef}
         {...props}
       >
         <InputGroup className="overflow-hidden">{children}</InputGroup>
@@ -868,10 +900,7 @@ export const PromptInputTextarea = ({
 
   return (
     <InputGroupTextarea
-      className={cn(
-        "field-sizing-content max-h-48 min-h-16 dark:bg-card",
-        className
-      )}
+      className={cn("field-sizing-content max-h-48 min-h-16", className)}
       name="message"
       onCompositionEnd={() => setIsComposing(false)}
       onCompositionStart={() => setIsComposing(true)}
@@ -911,7 +940,7 @@ export const PromptInputFooter = ({
 }: PromptInputFooterProps) => (
   <InputGroupAddon
     align="block-end"
-    className={cn("relative justify-between gap-1", className)}
+    className={cn("justify-between gap-1", className)}
     {...props}
   />
 );
@@ -1031,13 +1060,13 @@ interface SpeechRecognition extends EventTarget {
   lang: string;
   start(): void;
   stop(): void;
-  onstart: ((this: SpeechRecognition, ev: Event) => void) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => void) | null;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
   onresult:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => void)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any)
     | null;
   onerror:
-    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => void)
+    | ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any)
     | null;
 }
 
@@ -1076,7 +1105,6 @@ declare global {
     webkitSpeechRecognition: {
       new (): SpeechRecognition;
     };
-    webkitAudioContext?: typeof AudioContext;
   }
 }
 
@@ -1094,405 +1122,10 @@ export const PromptInputSpeechButton = ({
   ...props
 }: PromptInputSpeechButtonProps) => {
   const [isListening, setIsListening] = useState(false);
-  const baseValueRef = useRef<string>("");
-  const finalTranscriptRef = useRef<string>("");
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(
     null
   );
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const recordedChunksRef = useRef<BlobPart[]>([]);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const timerIntervalRef = useRef<number | null>(null);
-  const recordingStartedAtRef = useRef<number>(0);
-  const meterCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const meterRafRef = useRef<number | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const mediaSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const meterDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
-  const meterHistoryRef = useRef<number[]>([]);
-  const meterSmoothedLevelRef = useRef(0);
-  const meterLastSampleAtRef = useRef<number>(0);
-  const meterPeakRef = useRef<number>(0.02);
-
-  const applyText = useCallback(
-    (value: string) => {
-      if (textareaRef?.current) {
-        const textarea = textareaRef.current;
-        textarea.value = value;
-        // Ensure React-controlled textareas receive the change
-        textarea.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-      onTranscriptionChange?.(value);
-    },
-    [onTranscriptionChange, textareaRef]
-  );
-
-  const appendToBase = useCallback(
-    (addition: string) => {
-      const base = baseValueRef.current;
-      const trimmed = addition.trim();
-      const next = trimmed
-        ? base
-          ? `${base.replace(/\s+$/, "")} ${trimmed}`
-          : trimmed
-        : base;
-      applyText(next);
-    },
-    [applyText]
-  );
-
-  const clearTimer = useCallback(() => {
-    if (timerIntervalRef.current) {
-      window.clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
-  }, []);
-
-  const startTimer = useCallback(() => {
-    clearTimer();
-    recordingStartedAtRef.current = Date.now();
-    setElapsedMs(0);
-    timerIntervalRef.current = window.setInterval(() => {
-      setElapsedMs(Date.now() - recordingStartedAtRef.current);
-    }, 250);
-  }, [clearTimer]);
-
-  const stopMeter = useCallback(() => {
-    if (meterRafRef.current) {
-      window.cancelAnimationFrame(meterRafRef.current);
-      meterRafRef.current = null;
-    }
-    try {
-      mediaSourceRef.current?.disconnect();
-    } catch {}
-    mediaSourceRef.current = null;
-    analyserRef.current = null;
-    meterDataRef.current = null;
-    if (audioContextRef.current) {
-      // Close releases audio resources; ignore errors if already closed.
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
-    }
-    const canvas = meterCanvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    }
-  }, []);
-
-  const startMeter = useCallback(
-    (stream: MediaStream) => {
-      stopMeter();
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) {
-        return;
-      }
-
-      // Reuse an AudioContext created during the user gesture (startVoice) when possible.
-      // This avoids Chrome autoplay-policy issues where a context created later stays suspended.
-      const audioContext =
-        audioContextRef.current && audioContextRef.current.state !== "closed"
-          ? audioContextRef.current
-          : new AudioCtx();
-      audioContextRef.current = audioContext;
-      audioContext.resume().catch(() => {});
-      const analyser = audioContext.createAnalyser();
-      // Time-domain analysis for "spikes over time" recorder UI (not an equalizer).
-      analyser.fftSize = 1024;
-      analyser.smoothingTimeConstant = 0.9;
-      analyserRef.current = analyser;
-      const source = audioContext.createMediaStreamSource(stream);
-      mediaSourceRef.current = source;
-      source.connect(analyser);
-
-      // getByteTimeDomainData expects a buffer sized to analyser.fftSize.
-      const data = new Uint8Array(analyser.fftSize) as Uint8Array<ArrayBuffer>;
-      meterDataRef.current = data;
-      meterHistoryRef.current = [];
-      meterSmoothedLevelRef.current = 0;
-      meterLastSampleAtRef.current = performance.now();
-      meterPeakRef.current = 0.02;
-
-      const drawRoundRect = (
-        ctx: CanvasRenderingContext2D,
-        x: number,
-        y: number,
-        w: number,
-        h: number,
-        r: number
-      ) => {
-        const radius = Math.min(r, w / 2, h / 2);
-        // `roundRect` is supported in modern browsers; fallback for older ones.
-        const rr = (
-          ctx as CanvasRenderingContext2D & {
-            roundRect?: (
-              x: number,
-              y: number,
-              w: number,
-              h: number,
-              radii: number
-            ) => void;
-          }
-        ).roundRect;
-        if (typeof rr === "function") {
-          rr.call(ctx, x, y, w, h, radius);
-          return;
-        }
-        ctx.beginPath();
-        ctx.moveTo(x + radius, y);
-        ctx.lineTo(x + w - radius, y);
-        ctx.arcTo(x + w, y, x + w, y + radius, radius);
-        ctx.lineTo(x + w, y + h - radius);
-        ctx.arcTo(x + w, y + h, x + w - radius, y + h, radius);
-        ctx.lineTo(x + radius, y + h);
-        ctx.arcTo(x, y + h, x, y + h - radius, radius);
-        ctx.lineTo(x, y + radius);
-        ctx.arcTo(x, y, x + radius, y, radius);
-        ctx.closePath();
-      };
-
-      const draw = () => {
-        const canvas = meterCanvasRef.current;
-        const analyser = analyserRef.current;
-        const data = meterDataRef.current;
-        if (!canvas || !analyser || !data) {
-          return;
-        }
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          return;
-        }
-
-        // Keep canvas resolution in sync with CSS size.
-        const rect = canvas.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
-        const width = Math.max(1, Math.floor(rect.width * dpr));
-        const height = Math.max(1, Math.floor(rect.height * dpr));
-        if (canvas.width !== width || canvas.height !== height) {
-          canvas.width = width;
-          canvas.height = height;
-        }
-
-        // Compute per-frame RMS from time-domain samples.
-        analyser.getByteTimeDomainData(data);
-        let sumSq = 0;
-        for (let i = 0; i < data.length; i++) {
-          const v = (data[i] - 128) / 128;
-          sumSq += v * v;
-        }
-        const rms = Math.sqrt(sumSq / data.length);
-        const prev = meterSmoothedLevelRef.current;
-        const smoothed = prev * 0.85 + rms * 0.15;
-        meterSmoothedLevelRef.current = smoothed;
-
-        // Auto-gain: Chrome often reports much lower amplitude than Safari/Firefox.
-        // Track a slowly-decaying peak and normalize by it so spikes are visible.
-        const peakPrev = meterPeakRef.current;
-        const peak = Math.max(smoothed, peakPrev * 0.995);
-        meterPeakRef.current = peak;
-        const normalized = Math.min(1, smoothed / Math.max(peak, 0.01));
-
-        // Draw "spikes over time": sample at a fixed interval so the waveform
-        // persists instead of scrolling off in ~1s (was effectively sampling at ~60fps).
-        const gap = 2 * dpr;
-        const barWidth = 2 * dpr;
-        const bars = Math.max(24, Math.floor(width / (barWidth + gap)));
-
-        // Target how much recording history is visible across the bar.
-        const maxSecondsVisible = 3;
-        const sampleEveryMs = (maxSecondsVisible * 1000) / bars;
-
-        const now = performance.now();
-        const last = meterLastSampleAtRef.current;
-        const elapsed = now - last;
-        if (elapsed >= sampleEveryMs) {
-          const steps = Math.min(10, Math.floor(elapsed / sampleEveryMs));
-          const history = meterHistoryRef.current;
-          for (let s = 0; s < steps; s++) {
-            history.push(normalized);
-          }
-          if (history.length > bars) {
-            history.splice(0, history.length - bars);
-          }
-          meterLastSampleAtRef.current = last + steps * sampleEveryMs;
-        }
-
-        const midY = height / 2;
-
-        ctx.clearRect(0, 0, width, height);
-        ctx.fillStyle = "rgba(255,255,255,0.65)";
-
-        // Draw left→right, newest on the right (like recorder timelines).
-        const history = meterHistoryRef.current;
-        const startIndex = Math.max(0, bars - history.length);
-        for (let i = 0; i < bars; i++) {
-          const hIdx = i - startIndex;
-          const level = hIdx >= 0 ? history[hIdx] : 0;
-          // Shape/clamp for a pleasant visual response.
-          const shaped = Math.min(1, (level * 1.35) ** 0.7);
-          const barH = Math.max(2 * dpr, shaped * (height * 0.85));
-
-          const x = i * (barWidth + gap);
-          const y = midY - barH / 2;
-          const radius = barWidth / 2; // rounded caps
-          ctx.beginPath();
-          drawRoundRect(ctx, x, y, barWidth, barH, radius);
-          ctx.fill();
-        }
-
-        meterRafRef.current = window.requestAnimationFrame(draw);
-      };
-
-      meterRafRef.current = window.requestAnimationFrame(draw);
-    },
-    [stopMeter]
-  );
-
-  const pickSupportedMimeType = useCallback(() => {
-    // Try common types across browsers.
-    const candidates = [
-      "audio/webm;codecs=opus",
-      "audio/webm",
-      "audio/mp4",
-      "audio/aac",
-    ];
-    for (const type of candidates) {
-      if (
-        typeof MediaRecorder !== "undefined" &&
-        MediaRecorder.isTypeSupported(type)
-      ) {
-        return type;
-      }
-    }
-    return "";
-  }, []);
-
-  const startRecording = useCallback(async () => {
-    recordedChunksRef.current = [];
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaStreamRef.current = stream;
-    startMeter(stream);
-
-    const mimeType = pickSupportedMimeType();
-    const recorder = new MediaRecorder(
-      stream,
-      mimeType ? { mimeType } : undefined
-    );
-    mediaRecorderRef.current = recorder;
-
-    recorder.ondataavailable = (e) => {
-      if (e.data && e.data.size > 0) {
-        recordedChunksRef.current.push(e.data);
-      }
-    };
-
-    recorder.start();
-  }, [pickSupportedMimeType, startMeter]);
-
-  const stopRecording = useCallback(() => {
-    const recorder = mediaRecorderRef.current;
-    if (recorder && recorder.state !== "inactive") {
-      try {
-        recorder.requestData?.();
-      } catch {}
-      recorder.stop();
-    }
-    // Stop tracks ASAP to release mic indicator even if onstop comes later.
-    const stream = mediaStreamRef.current;
-    if (stream) {
-      for (const track of stream.getTracks()) {
-        track.stop();
-      }
-    }
-    mediaStreamRef.current = null;
-    stopMeter();
-  }, [stopMeter]);
-
-  const transcribeRecordingIfNeeded = useCallback(async () => {
-    // Prefer native SpeechRecognition when it produced anything.
-    if (finalTranscriptRef.current.trim()) {
-      appendToBase(finalTranscriptRef.current);
-      return;
-    }
-    // If SpeechRecognition ran but yielded no text, fall back to server transcription.
-    const chunks = recordedChunksRef.current;
-    if (!chunks.length) {
-      return;
-    }
-
-    const blob = new Blob(chunks, {
-      type: chunks[0] instanceof Blob ? (chunks[0] as Blob).type : undefined,
-    });
-    if (!blob.size) {
-      return;
-    }
-
-    try {
-      setIsTranscribing(true);
-      const file = new File([blob], "voice-input.webm", {
-        type: blob.type || "audio/webm",
-      });
-      const form = new FormData();
-      form.append("file", file);
-      const res = await fetch("/api/transcribe", {
-        method: "POST",
-        body: form,
-      });
-      if (!res.ok) {
-        const details = await res.text().catch(() => "");
-        throw new Error(details || "Transcription failed");
-      }
-      const json = (await res.json()) as { text?: string };
-      if (json.text?.trim()) {
-        appendToBase(json.text);
-      } else {
-        toast.error("Couldn’t transcribe audio. Try again.");
-      }
-    } catch (e) {
-      toast.error("Transcription failed. Check `/api/transcribe` logs/config.");
-      console.error(e);
-    } finally {
-      setIsTranscribing(false);
-    }
-  }, [appendToBase]);
-
-  const cancelVoice = useCallback(() => {
-    clearTimer();
-    setElapsedMs(0);
-    recordedChunksRef.current = [];
-    finalTranscriptRef.current = "";
-    try {
-      recognitionRef.current?.stop();
-    } catch {}
-    stopRecording();
-    setIsTranscribing(false);
-    setIsListening(false);
-  }, [clearTimer, stopRecording]);
-
-  const confirmVoice = useCallback(async () => {
-    if (isTranscribing) {
-      return;
-    }
-    clearTimer();
-
-    try {
-      recognitionRef.current?.stop();
-    } catch {}
-    stopRecording();
-
-    // Give MediaRecorder a brief moment to flush final chunks.
-    await new Promise((r) => setTimeout(r, 250));
-    await transcribeRecordingIfNeeded();
-
-    setIsListening(false);
-  }, [clearTimer, isTranscribing, stopRecording, transcribeRecordingIfNeeded]);
 
   useEffect(() => {
     if (
@@ -1508,40 +1141,38 @@ export const PromptInputSpeechButton = ({
       speechRecognition.lang = "en-US";
 
       speechRecognition.onstart = () => {
-        // We intentionally don't mutate the textarea during recording mode.
+        setIsListening(true);
       };
 
       speechRecognition.onend = () => {
-        // Commit happens on explicit confirmation (✓), not on end.
+        setIsListening(false);
       };
 
       speechRecognition.onresult = (event) => {
-        let nextFinal = finalTranscriptRef.current;
+        let finalTranscript = "";
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
           if (result.isFinal) {
-            nextFinal += result[0]?.transcript ?? "";
+            finalTranscript += result[0]?.transcript ?? "";
           }
         }
 
-        finalTranscriptRef.current = nextFinal;
+        if (finalTranscript && textareaRef?.current) {
+          const textarea = textareaRef.current;
+          const currentValue = textarea.value;
+          const newValue =
+            currentValue + (currentValue ? " " : "") + finalTranscript;
+
+          textarea.value = newValue;
+          textarea.dispatchEvent(new Event("input", { bubbles: true }));
+          onTranscriptionChange?.(newValue);
+        }
       };
 
       speechRecognition.onerror = (event) => {
         console.error("Speech recognition error:", event.error);
-        const message =
-          event.error === "not-allowed" || event.error === "service-not-allowed"
-            ? "Microphone permission denied. Please allow microphone access for this site."
-            : event.error === "no-speech"
-            ? "No speech detected. Try speaking closer to the microphone."
-            : event.error === "audio-capture"
-            ? "No microphone was found or it is unavailable."
-            : event.error === "network"
-            ? "Speech recognition network error. Please try again."
-            : `Speech recognition error: ${event.error}`;
-        toast.error(message);
-        // Keep recording UI alive; we can still fall back to server transcription.
+        setIsListening(false);
       };
 
       recognitionRef.current = speechRecognition;
@@ -1549,147 +1180,37 @@ export const PromptInputSpeechButton = ({
     }
 
     return () => {
-      clearTimer();
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      stopRecording();
-      stopMeter();
     };
-  }, [clearTimer, stopRecording, stopMeter]);
+  }, [textareaRef, onTranscriptionChange]);
 
-  const startVoice = useCallback(() => {
-    if (isListening || isTranscribing) {
-      return;
-    }
-    if (
-      !navigator.mediaDevices?.getUserMedia ||
-      typeof MediaRecorder === "undefined"
-    ) {
-      toast.error("Voice recording isn’t supported in this browser.");
+  const toggleListening = useCallback(() => {
+    if (!recognition) {
       return;
     }
 
-    baseValueRef.current = textareaRef?.current?.value ?? "";
-    finalTranscriptRef.current = "";
-    recordedChunksRef.current = [];
-
-    startTimer();
-    setIsListening(true);
-
-    // Create/resume AudioContext inside the click handler (user gesture) for Chrome.
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        const ctx =
-          audioContextRef.current && audioContextRef.current.state !== "closed"
-            ? audioContextRef.current
-            : new AudioCtx();
-        audioContextRef.current = ctx;
-        ctx.resume().catch(() => {});
-      }
-    } catch {}
-
-    // Start audio capture first (requires user gesture).
-    startRecording().catch((e) => {
-      console.error("Microphone capture failed:", e);
-      toast.error(
-        "Could not access microphone. Check browser + OS microphone permissions."
-      );
-      cancelVoice();
-    });
-
-    // Start native speech recognition when available (Safari/Chrome). If it errors,
-    // we still have MediaRecorder to fall back on.
-    try {
-      recognition?.start();
-    } catch (e) {
-      console.error("SpeechRecognition start failed:", e);
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
     }
-  }, [
-    cancelVoice,
-    isListening,
-    isTranscribing,
-    recognition,
-    startRecording,
-    startTimer,
-    textareaRef,
-  ]);
-
-  const formatTime = useCallback((ms: number) => {
-    const totalSeconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  }, []);
+  }, [recognition, isListening]);
 
   return (
-    <>
-      {/* Idle state: mic button */}
-      {!isListening && !isTranscribing && (
-        <PromptInputButton
-          className={cn("relative transition-all duration-200", className)}
-          aria-label="Start voice recording"
-          onClick={startVoice}
-          title="Start voice recording"
-          {...props}
-        >
-          <MicIcon className="size-4" />
-        </PromptInputButton>
+    <PromptInputButton
+      className={cn(
+        "relative transition-all duration-200",
+        isListening && "animate-pulse bg-accent text-accent-foreground",
+        className
       )}
-
-      {/* Recorder / transcribing overlay (covers the entire footer row). */}
-      {(isListening || isTranscribing) && (
-        <div className="absolute inset-0 z-20 flex items-center">
-          <div className="flex w-full items-center gap-2 bg-card px-2 py-1">
-            <PromptInputButton
-              disabled={isTranscribing}
-              aria-label="Cancel recording"
-              onClick={cancelVoice}
-              size="icon-sm"
-              title="Cancel"
-              variant="ghost"
-            >
-              <XIcon className="size-4" />
-            </PromptInputButton>
-
-            <div className="flex flex-1 items-center gap-3 px-1">
-              <div className="flex flex-1 items-center rounded-full bg-card px-2 py-1">
-                <canvas
-                  ref={meterCanvasRef}
-                  className={cn(
-                    "h-5 w-full",
-                    isListening ? "opacity-100" : "opacity-60"
-                  )}
-                />
-              </div>
-
-              <span className="tabular-nums text-xs text-muted-foreground">
-                {formatTime(elapsedMs)}
-              </span>
-
-              {isTranscribing && (
-                <Loader2Icon
-                  aria-label="Transcribing"
-                  className="size-4 animate-spin text-muted-foreground"
-                />
-              )}
-            </div>
-
-            <PromptInputButton
-              aria-label="Stop and transcribe"
-              disabled={isTranscribing}
-              onClick={confirmVoice}
-              size="icon-sm"
-              title={isTranscribing ? "Transcribing…" : "Stop and transcribe"}
-              variant="ghost"
-            >
-              <CheckIcon className="size-4" />
-            </PromptInputButton>
-          </div>
-        </div>
-      )}
-    </>
+      disabled={!recognition}
+      onClick={toggleListening}
+      {...props}
+    >
+      <MicIcon className="size-4" />
+    </PromptInputButton>
   );
 };
 

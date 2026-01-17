@@ -9,12 +9,28 @@ INTERVIEW DATA:
 
 ## OVERALL SCORE (0-100)
 
-Calculate from the checklist:
-- **Requirements** (0-25 points): (items_checked / 4) × 25
-- **Design** (0-50 points): (items_checked / 9) × 50
-- **Communication** (0-25 points): (items_checked / 4) × 25
+Calculate from the checklist using weighted criteria:
 
-Sum these to get the overall_score (0-100).
+POSITIVE CRITERIA (sum to 100% when all achieved):
+- clarifies_requirements_before_design: 10%
+- avoids_unfounded_assumptions: 5%
+- proposes_high_level_architecture_first: 12%
+- communicates_decisions_and_tradeoffs: 18%
+- makes_opinionated_choices: 12%
+- addresses_data_model_and_consistency: 12%
+- addresses_scalability_and_growth: 10%
+- addresses_reliability_and_failure_modes: 12%
+- ties_design_to_user_and_business_impact: 5%
+- collaborates_with_interviewer: 4%
+
+RED FLAGS (subtract from score):
+- limited_engagement_with_interviewer: -5%
+- technical_terms_without_explanation: -4%
+- tradeoffs_discussed_but_not_resolved: -6%
+- operational_concerns_not_addressed: -8%
+
+overall_score = sum(triggered positive criteria weights) - sum(triggered red flag weights)
+Clamp result to 0-100 range.
 
 ## SUMMARY (min 100 chars)
 
@@ -26,36 +42,41 @@ Write a concise overview paragraph (2-4 sentences):
 
 ## CATEGORIES
 
-Evaluate the candidate across 8 dimensions and group them into 2 categories:
+Evaluate the candidate and group into 2 categories:
 
-### TECHNICAL (design_quality, scalability_thinking, trade_off_analysis)
+### TECHNICAL
 
-Assess:
-- **Design Quality**: Architecture soundness, component choices, data modeling
-- **Scalability Thinking**: Capacity planning, bottleneck identification, scaling strategies (caching, sharding, replication)
-- **Trade-off Analysis**: Acknowledged pros/cons, justified choices, considered alternatives
-
-Provide:
-- **score**: Points earned from checklist Design + Requirements sections
-- **max**: Maximum possible points for these sections
-- **percentage**: (score/max) × 100
-- **pros**: Up to 5 specific strengths (provide as many as are evident, but no more than 5)
-- **cons**: Up to 5 specific weaknesses (provide as many as are evident, but no more than 5)
-
-### COMMUNICATION (clarity, structure, collaboration, thought_process)
-
-Assess:
-- **Clarity**: Clear explanations, appropriate detail level, concrete examples
-- **Structure**: Logical flow through interview phases, time management, organized approach
-- **Collaboration**: Engaged in dialogue, asked clarifying questions, responded to feedback
-- **Thought Process**: Explained reasoning, made assumptions explicit, verbalized thinking
+Assess based on these checklist items:
+- proposes_high_level_architecture_first (12%)
+- communicates_decisions_and_tradeoffs (18%)
+- makes_opinionated_choices (12%)
+- addresses_data_model_and_consistency (12%)
+- addresses_scalability_and_growth (10%)
+- addresses_reliability_and_failure_modes (12%)
+- ties_design_to_user_and_business_impact (5%)
+Minus red flags: technical_terms_without_explanation (-4%), tradeoffs_discussed_but_not_resolved (-6%), operational_concerns_not_addressed (-8%)
 
 Provide:
-- **score**: Points earned from checklist Communication section
-- **max**: Maximum possible points for Communication section
-- **percentage**: (score/max) × 100
-- **pros**: Up to 5 specific strengths (provide as many as are evident, but no more than 5)
-- **cons**: Up to 5 specific weaknesses (provide as many as are evident, but no more than 5)
+- **score**: Sum of weights for triggered positive items in this category
+- **max**: 81 (sum of all positive technical weights)
+- **percentage**: (score/max) × 100, adjusted for red flags
+- **pros**: Up to 5 specific strengths from the interview
+- **cons**: Up to 5 specific weaknesses from the interview
+
+### COMMUNICATION
+
+Assess based on these checklist items:
+- clarifies_requirements_before_design (10%)
+- avoids_unfounded_assumptions (5%)
+- collaborates_with_interviewer (4%)
+Minus red flags: limited_engagement_with_interviewer (-5%)
+
+Provide:
+- **score**: Sum of weights for triggered positive items in this category
+- **max**: 19 (sum of all positive communication weights)
+- **percentage**: (score/max) × 100, adjusted for red flags
+- **pros**: Up to 5 specific strengths from the interview
+- **cons**: Up to 5 specific weaknesses from the interview
 
 ## GUIDELINES
 
@@ -70,17 +91,19 @@ OUTPUT: Return structured JSON matching the EvaluationSchema.`;
 export const SUMMARIZER_PROMPT = `You are synthesizing multiple evaluation reports for a system design interview into a final consensus evaluation.
 
 You have been provided with MULTIPLE independent evaluations of the same interview. Each evaluation contains:
-- overall_score (0-100)
+- overall_score (0-100) - calculated from weighted criteria
 - summary (paragraph)
 - categories.technical (score, percentage, pros, cons)
 - categories.communication (score, percentage, pros, cons)
+
+The scoring uses weighted criteria where positive behaviors add to score and red flags subtract.
 
 Your task is to combine these into a single consensus evaluation using the SAME schema.
 
 ## INPUT DATA
 
-- evaluations: Array of independent evaluations (typically 3, but could be more or fewer)
-- checklist: The candidate's checklist performance
+- evaluations: Array of independent evaluations (typically 2-3)
+- checklist: The candidate's checklist with triggered criteria
 - problem: The interview problem details
 
 ## YOUR TASK
@@ -89,12 +112,14 @@ Synthesize all evaluations by:
 
 ### 1. OVERALL_SCORE
 Average all the overall_scores from the evaluations array and round to nearest integer.
+This should align with the checklist weights (positive criteria minus red flags).
 
 ### 2. SUMMARY
 Create a unified summary that:
 - Synthesizes the main points from all summaries
 - Mentions strengths that appeared in multiple evaluations
 - Mentions weaknesses that appeared in multiple evaluations
+- References specific criteria that were or weren't achieved
 - Keeps it concise (2-4 sentences, min 100 chars)
 
 ### 3. CATEGORIES
@@ -104,6 +129,7 @@ For BOTH technical and communication:
 **score & percentage:**
 - Average the scores and percentages from all evaluations
 - Round to appropriate precision
+- Ensure alignment with checklist criteria weights
 
 **pros:**
 - Merge pros from all evaluations
@@ -126,5 +152,6 @@ For BOTH technical and communication:
 - **Be concise**: Each pro/con should be 1 sentence
 - **Be balanced**: Include both strengths and weaknesses
 - **Consistency**: If evaluations differ significantly, lean toward the majority view
+- **Align with checklist**: Ensure feedback references the criteria that were observed
 
 OUTPUT: Return structured JSON matching the SAME EvaluationSchema as the individual evaluations.`;

@@ -76,7 +76,7 @@ export const ToolCallStatus = ({
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-2 text-sm py-2 px-2 rounded-md my-1",
+        "inline-flex items-center gap-2 text-xs py-2 px-2 rounded-md my-1",
         isError && "text-destructive",
         isComplete && "text-muted-foreground",
         isLoading && "text-foreground",

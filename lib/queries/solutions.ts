@@ -30,11 +30,12 @@ export function fetchSolutionById(client: TypedSupabaseClient, id: string) {
 /**
  * Lightweight query for solution state only (excludes conversation to avoid re-renders)
  * Use this when you need to refresh state/status without triggering message sync
+ * Includes evaluation_checklist for real-time progress updates
  */
 export function fetchSolutionState(client: TypedSupabaseClient, id: string) {
   return client
     .from("solutions")
-    .select("id, status, state, problem_id, user_id, evaluated_at, evaluation")
+    .select("id, status, state, problem_id, user_id, evaluated_at, evaluation, evaluation_checklist")
     .eq("id", id)
     .throwOnError()
     .single();

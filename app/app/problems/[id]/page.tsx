@@ -60,6 +60,8 @@ export default function Page() {
   // Derived state: prefer the lightweight solutionState for up-to-date values
   const currentStatus = solutionState?.status ?? solution?.status;
   const currentState = solutionState?.state ?? solution?.state;
+  const currentChecklist = (solutionState?.evaluation_checklist ?? 
+    solution?.evaluation_checklist) as Record<string, boolean> | null;
 
   // Flag to force message sync on next solution refetch
   const forceMessageSyncRef = useRef(false);
@@ -326,6 +328,7 @@ export default function Page() {
             usageLimitReached={usageLimitReached}
             freeLimitExceeded={freeLimitExceeded}
             currentPeriodEnd={currentPeriodEnd}
+            evaluationChecklist={currentChecklist}
           />
         </div>
         <div className="h-full relative pb-2 pr-2">

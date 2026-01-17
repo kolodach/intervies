@@ -11,7 +11,7 @@
     "db:gen": "supabase gen types typescript --db-url 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' --schema=public > lib/database.types.ts",
     "stripe:webhooks": "stripe listen --forward-to localhost:3000/api/stripe/webhooks"
   },
-  "dependencies": {
+"dependencies": {
     "@ai-sdk/openai": "^2.0.71",
     "@ai-sdk/react": "^2.0.101",
     "@auth/supabase-adapter": "^1.11.1",

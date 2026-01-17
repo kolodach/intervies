@@ -13,6 +13,11 @@ import {
   type SolutionState,
   type EvaluationChecklist,
 } from "@/lib/types";
+import {
+  CRITERIA,
+  type CriterionKey,
+  calculateScore,
+} from "@/lib/evaluation/criteria";
 import { logger } from "@/lib/logger";
 import { auth } from "@/lib/auth";
 import {
@@ -297,124 +302,120 @@ The interview will become read-only and evaluation will begin immediately.`,
         },
       },
       update_checklist: {
-        description: `Update evaluation checklist when candidate demonstrates competencies or red flags.
+        description: `Update evaluation criteria when candidate demonstrates competencies or red flags.
 Call immediately when you observe behaviors - don't batch at end of phase.
 Can update multiple items at once if candidate demonstrates multiple competencies.
 Only include the fields you want to mark as true.
 
-NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (being true is BAD).`,
+POSITIVE CRITERIA (add to score):
+- clarifies_requirements_before_design: Asks functional/non-functional questions before designing
+- avoids_unfounded_assumptions: States assumptions explicitly instead of assuming silently
+- proposes_high_level_architecture_first: Outlines end-to-end architecture before details
+- communicates_decisions_and_tradeoffs: Explains why choices were made and alternatives rejected
+- makes_opinionated_choices: Selects and defends a concrete approach
+- addresses_data_model_and_consistency: Defines schemas, consistency, correctness guarantees
+- addresses_scalability_and_growth: Explains how system scales and when redesigns needed
+- addresses_reliability_and_failure_modes: Covers failures, retries, monitoring, recovery
+- ties_design_to_user_and_business_impact: Connects architecture to UX, SLAs, business
+- collaborates_with_interviewer: Treats interview as discussion, incorporates feedback
+
+RED FLAGS (subtract from score - only mark if clearly observed):
+- limited_engagement_with_interviewer: Proceeds without incorporating feedback
+- technical_terms_without_explanation: Names tech without explaining fit
+- tradeoffs_discussed_but_not_resolved: Mentions options but doesn't commit
+- operational_concerns_not_addressed: Skips monitoring, failure modes, ops readiness`,
         inputSchema: z
           .object({
-            // REQUIREMENTS GATHERING (4 items)
-            requirements_asked_clarifying_questions: z
+            // POSITIVE CRITERIA (10 items, sum to 100%)
+            clarifies_requirements_before_design: z
               .boolean()
               .describe(
-                "Asked questions to understand features, constraints, or scope. Example: 'What features should we support? What scale?'"
+                "Asks functional and non-functional questions that affect design before proposing solutions. Example: 'What scale? What latency requirements? What consistency guarantees?'"
               )
               .optional(),
-            requirements_discussed_scale_and_performance: z
+            avoids_unfounded_assumptions: z
               .boolean()
               .describe(
-                "Asked about or discussed QPS, users, latency, availability. Example: 'What's the expected QPS? Any latency requirements?'"
+                "Explicitly states assumptions or asks clarifying questions instead of silently assuming. Example: 'I'm assuming we need strong consistency for payments'"
               )
               .optional(),
-            requirements_stated_assumptions: z
+            proposes_high_level_architecture_first: z
               .boolean()
               .describe(
-                "Explicitly called out assumptions when requirements were unclear. Example: 'I'm assuming we need strong consistency for payments'"
+                "Outlines clear end-to-end architecture before component details. Example: 'Let me start with the big picture: clients → API gateway → services → databases'"
               )
               .optional(),
-            requirements_validated_understanding: z
+            communicates_decisions_and_tradeoffs: z
               .boolean()
               .describe(
-                "Confirmed understanding before moving to design. Example: 'So to summarize: 10M DAU, 99.9% uptime. Ready to design?'"
+                "Explains why specific choices were made and why alternatives rejected. Example: 'I chose Cassandra over DynamoDB because we need tunable consistency'"
               )
               .optional(),
-
-            // DESIGN (8 items)
-            design_started_with_high_level: z
+            makes_opinionated_choices: z
               .boolean()
               .describe(
-                "Provided high-level architecture before diving into details. Example: 'Let me start with the big picture: clients, API, services, databases'"
+                "Selects a concrete approach and defends it rather than listing options. Example: 'I'll use Redis for caching because...' not 'We could use Redis or Memcached or...'"
               )
               .optional(),
-            design_drew_diagram: z
+            addresses_data_model_and_consistency: z
               .boolean()
               .describe(
-                "Used the whiteboard to draw components and connections. Example: Board shows boxes/arrows with labeled components"
+                "Defines schemas, ownership, consistency expectations, correctness guarantees. Example: 'The URL table has id, original_url, short_code with unique constraint on short_code'"
               )
               .optional(),
-            design_explained_data_flow: z
+            addresses_scalability_and_growth: z
               .boolean()
               .describe(
-                "Walked through how requests flow through the system. Example: 'When user clicks, request goes from client → LB → service → DB'"
+                "Explains how system scales and when redesigns become necessary. Example: 'At 10x current scale, we'd need to shard the database by user_id'"
               )
               .optional(),
-            design_justified_technology_choices: z
+            addresses_reliability_and_failure_modes: z
               .boolean()
               .describe(
-                "Explained WHY they chose specific technologies. Example: 'I chose Cassandra because we need high write throughput'"
+                "Identifies failure cases, retries, idempotency, monitoring, recovery. Example: 'If the cache fails, we fall back to DB with circuit breaker'"
               )
               .optional(),
-            design_discussed_scalability: z
+            ties_design_to_user_and_business_impact: z
               .boolean()
               .describe(
-                "Addressed how the system handles scale requirements. Example: 'We'll shard by user_id, use caching, add read replicas'"
+                "Connects architecture to UX, SLAs, or business priorities. Example: 'We prioritize read latency because users expect instant redirects'"
               )
               .optional(),
-            design_considered_failures: z
+            collaborates_with_interviewer: z
               .boolean()
               .describe(
-                "Discussed what happens when components fail. Example: 'If primary DB fails, we failover to replica'"
-              )
-              .optional(),
-            design_discussed_tradeoffs: z
-              .boolean()
-              .describe(
-                "Acknowledged pros/cons of design decisions. Example: 'SQL gives us ACID, but NoSQL scales better for our use case'"
-              )
-              .optional(),
-            design_did_capacity_planning: z
-              .boolean()
-              .describe(
-                "Did back-of-envelope calculations for capacity/storage/bandwidth before choosing technologies. Example: '500k QPS × 1KB = 500MB/s throughput, 100M URLs × 500 bytes = 50GB storage'"
-              )
-              .optional(),
-            design_over_engineered: z
-              .boolean()
-              .describe(
-                "RED FLAG: Added unnecessary complexity or premature optimization. Example: 'Designed microservices with service mesh for a simple CRUD app'. This is INVERTED: true is BAD."
+                "Treats interview as design discussion, incorporates feedback. Example: 'That's a good point about consistency - let me reconsider...'"
               )
               .optional(),
 
-            // COMMUNICATION (4 items)
-            communication_clear_and_structured: z
+            // RED FLAGS (4 items, subtract from score)
+            limited_engagement_with_interviewer: z
               .boolean()
               .describe(
-                "Explained thoughts in organized, easy-to-follow manner. Example: 'First I'll cover requirements, then design, then dive into X'"
+                "RED FLAG: Proceeds without incorporating interviewer signals or feedback. Monologues without checking in or ignores hints."
               )
               .optional(),
-            communication_collaborative: z
+            technical_terms_without_explanation: z
               .boolean()
               .describe(
-                "Engaged in dialogue, asked for feedback, not monologuing. Example: 'Does this make sense? What do you think about this approach?'"
+                "RED FLAG: Names technologies or patterns without explaining why they fit. Example: 'We'll use Kafka' without explaining why message queue is needed."
               )
               .optional(),
-            communication_thought_out_loud: z
+            tradeoffs_discussed_but_not_resolved: z
               .boolean()
               .describe(
-                "Shared their thinking process, not just conclusions. Example: 'I'm thinking we need caching because of the read:write ratio'"
+                "RED FLAG: Mentions multiple options but does not commit to or defend a decision. Stays wishy-washy instead of making a choice."
               )
               .optional(),
-            communication_got_defensive: z
+            operational_concerns_not_addressed: z
               .boolean()
               .describe(
-                "RED FLAG: Became defensive, dismissive, or argumentative. Example: 'That wouldn't be a problem because... (without considering the concern)'. This is INVERTED: true is BAD."
+                "RED FLAG: Does not discuss monitoring, failure recovery, or operational readiness when design is otherwise complete."
               )
               .optional(),
           })
           .describe(
-            "Checklist items to mark as demonstrated. Only include fields you want to update (mark as true)."
+            "Criteria to mark as observed. Only include fields you want to update (mark as true)."
           ),
         execute: async (updates = {}) => {
           // Filter out undefined values to get only the fields that were provided
@@ -438,9 +439,8 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
               (solution.evaluation_checklist as Record<string, boolean>) || {};
             return {
               success: true,
-              updated_items: [],
-              total_checked:
-                Object.values(currentChecklist).filter(Boolean).length,
+              noted: [],
+              current_score: calculateScore(currentChecklist),
               message: "No updates provided - returning current state",
             };
           }
@@ -461,10 +461,26 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
           const currentChecklist =
             (solution.evaluation_checklist as Record<string, boolean>) || {};
 
+          // Only apply changes that differ from current values
+          const effectiveUpdates = Object.fromEntries(
+            Object.entries(providedUpdates).filter(([key, value]) => {
+              return currentChecklist[key] !== value;
+            })
+          ) as Record<string, boolean>;
+
+          if (Object.keys(effectiveUpdates).length === 0) {
+            return {
+              success: true,
+              noted: [],
+              current_score: calculateScore(currentChecklist),
+              message: "No new criteria to update",
+            };
+          }
+
           // Merge updates (simple spread, no nesting)
           const updatedChecklist = {
             ...currentChecklist,
-            ...providedUpdates,
+            ...effectiveUpdates,
           };
 
           const { error } = await updateSolution(supabase, solutionId, {
@@ -477,11 +493,20 @@ NOTE: design_over_engineered and communication_got_defensive are RED FLAGS (bein
             throw error;
           }
 
+          // Build noted items with metadata for frontend display
+          const notedItems = Object.keys(effectiveUpdates).map((key) => {
+            const criterion = CRITERIA[key as CriterionKey];
+            return {
+              key,
+              name: criterion?.name ?? key,
+              is_red_flag: criterion?.is_red_flag ?? false,
+            };
+          });
+
           return {
             success: true,
-            updated_items: Object.keys(providedUpdates),
-            total_checked:
-              Object.values(updatedChecklist).filter(Boolean).length,
+            noted: notedItems,
+            current_score: calculateScore(updatedChecklist),
           };
         },
       },
