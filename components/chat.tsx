@@ -22,7 +22,6 @@ import {
   PromptInputBody,
   PromptInputButton,
   PromptInputFooter,
-  PromptInputHeader,
   type PromptInputMessage,
   PromptInputSubmit,
   PromptInputTextarea,
@@ -405,44 +404,6 @@ export default function Chat({
         </Conversation>
         <div className="relative">
           <div className="bg-card/80 border rounded-md border-b-0 rounded-b-none mx-2">
-            {isConcludingInterview && (
-              <div className="mb-4 flex items-center gap-2">
-                <Loader2 className="size-4 animate-spin" />
-                <p className="text-sm text-muted-foreground">
-                  Interview evaluation is in progress...
-                </p>
-              </div>
-            )}
-            {isInterviewCompleted && (
-              <div className="mb-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-medium">Interview Completed</h3>
-                  <CheckCircle className="size-4 text-green-500" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  The interview is complete and your evaluation is ready.
-                  <b> Both chat and board are now read-only.</b>
-                </p>
-              </div>
-            )}
-            {!isInterviewCompleted && canConcludeInterview && (
-              <div className="mb-4 mt-1">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-medium text-muted-foreground">
-                    Interview is ready to be concluded
-                  </h3>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="ml-2"
-                    onClick={handleConcludeInterview}
-                  >
-                    <CheckCircle className="size-4 text-green-800" />
-                    Conclude Interview
-                  </Button>
-                </div>
-              </div>
-            )}
             {/* Progress Panel with interview state stepper */}
             <ProgressPanel
               checklist={checklist}
@@ -452,64 +413,110 @@ export default function Chat({
             />
           </div>
           <PromptInput onSubmit={handleSubmit} globalDrop multiple>
-            {/* <PromptInputHeader>
-            <PromptInputAttachments>
-              {(attachment) => <PromptInputAttachment data={attachment} />}
-            </PromptInputAttachments>
-          </PromptInputHeader> */}
             <PromptInputBody>
-              <PromptInputTextarea
-                disabled={
-                  readonly ||
-                  status === "streaming" ||
-                  usageLimitReached ||
-                  freeLimitExceeded
-                }
-                className="text-sm p-2"
-                onChange={(e) => setText(e.target.value)}
-                ref={textareaRef}
-                value={text}
-              />
+              {isInterviewCompleted ? (
+                <div className="p-4">
+                  <h3 className="text-base font-semibold">Interview Completed</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    The interview is complete and your evaluation is ready.{" "}
+                    <span className="font-medium">Both chat and board are now read-only.</span>
+                  </p>
+                </div>
+              ) : isConcludingInterview ? (
+                <div className="p-4">
+                  <h3 className="text-base font-semibold">Evaluating Your Interview</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Interview evaluation is in progress. This might take up to a minute.
+                  </p>
+                </div>
+              ) : (
+                <PromptInputTextarea
+                  disabled={
+                    readonly ||
+                    status === "streaming" ||
+                    usageLimitReached ||
+                    freeLimitExceeded
+                  }
+                  className="text-sm p-2"
+                  onChange={(e) => setText(e.target.value)}
+                  ref={textareaRef}
+                  value={text}
+                />
+              )}
             </PromptInputBody>
-            <PromptInputFooter className="dark:bg-card">
-              <PromptInputTools>
-                {/* <PromptInputActionMenu>
-                  <PromptInputActionMenuTrigger />
-                  <PromptInputActionMenuContent>
-                    <PromptInputActionAddAttachments />
-                  </PromptInputActionMenuContent>
-                </PromptInputActionMenu> */}
-                <PromptInputSpeechButton
-                  disabled={
-                    readonly ||
-                    status === "streaming" ||
-                    usageLimitReached ||
-                    freeLimitExceeded
-                  }
-                  onTranscriptionChange={setText}
-                  textareaRef={textareaRef}
-                />
-                <ResetDialog onReset={onReset} />
-                {/* <PromptInputButton
-                  onClick={() => setUseWebSearch(!useWebSearch)}
-                  variant={useWebSearch ? "default" : "ghost"}
-                >
-                  <GlobeIcon size={16} />
-                  <span>Search</span>
-                </PromptInputButton> */}
-              </PromptInputTools>
-              <div className="flex items-center gap-2">
-                <PromptInputSubmit
-                  disabled={
-                    (!text && !status) ||
-                    readonly ||
-                    status === "streaming" ||
-                    usageLimitReached ||
-                    freeLimitExceeded
-                  }
-                  status={status}
-                />
-              </div>
+            <PromptInputFooter className="flex-col gap-2">
+              <div className="flex items-center justify-between w-full">
+                <PromptInputTools>
+                  {/* <PromptInputActionMenu>
+                    <PromptInputActionMenuTrigger />
+                    <PromptInputActionMenuContent>
+                      <PromptInputActionAddAttachments />
+                    </PromptInputActionMenuContent>
+                  </PromptInputActionMenu> */}
+                  <PromptInputSpeechButton
+                    disabled={
+                      readonly ||
+                      status === "streaming" ||
+                      usageLimitReached ||
+                      freeLimitExceeded
+                    }
+                    onTranscriptionChange={setText}
+                    textareaRef={textareaRef}
+                  />
+                  <ResetDialog onReset={onReset} />
+                  {/* <PromptInputButton
+                    onClick={() => setUseWebSearch(!useWebSearch)}
+                    variant={useWebSearch ? "default" : "ghost"}
+                  >
+                    <GlobeIcon size={16} />
+                    <span>Search</span>
+                  </PromptInputButton> */}
+                </PromptInputTools>
+                <div className="flex items-center gap-2">
+                  {isInterviewCompleted ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      className="gap-1.5"
+                    >
+                      Interview Completed
+                      <CheckCircle className="size-4 text-green-500" />
+                    </Button>
+                  ) : isConcludingInterview ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled
+                      className="gap-1.5"
+                    >
+                      Concluding Interview
+                      <Loader2 className="size-4 animate-spin" />
+                    </Button>
+                  ) : canConcludeInterview ? (
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleConcludeInterview}
+                      className="gap-1.5"
+                    >
+                      <CheckCircle className="size-4" />
+                      Conclude Interview
+                    </Button>
+                  ) : (
+                    <PromptInputSubmit
+                      disabled={
+                        (!text && !status) ||
+                        readonly ||
+                        status === "streaming" ||
+                        usageLimitReached ||
+                        freeLimitExceeded
+                      }
+                      status={status}
+                    />
+                  )}
+                </div>
+              </div> 
             </PromptInputFooter>
           </PromptInput>
         </div>
